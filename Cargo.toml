@@ -1,2 +1,6 @@
 [workspace]
-members = []
+members = [
+    "gateway",
+    "transport",
+    "util",
+]

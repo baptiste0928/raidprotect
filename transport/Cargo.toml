@@ -1,0 +1,15 @@
+[package]
+name = "raidprotect_transport"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+raidprotect_util = { path = "../util" }
+
+anyhow = "1"
+remoc = { version = "0.9", features = ["serde", "rch", "rtc", "default-codec-cbor"], default-features = false }
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1.14", features = ["macros", "net", "sync"] }
+tracing = { version = "0.1" }

@@ -1,0 +1,13 @@
+[package]
+name = "raidprotect_util"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1", features = ["macros", "signal", "sync", "time"] }
+tracing = { version = "0.1", features = ["release_max_level_info"] }
+tracing-appender = "0.2"
+tracing-subscriber = { version = "0.3", features = ["std", "fmt", "ansi"], default-features = false }
