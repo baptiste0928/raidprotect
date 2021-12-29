@@ -3,4 +3,5 @@ members = [
     "gateway",
     "transport",
     "util",
+    "workspace-hack",
 ]

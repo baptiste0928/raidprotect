@@ -1,0 +1,105 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Run cargo check
+        run: cargo check --all-features --tests
+
+  clippy:
+    name: Clippy
+    needs: [check]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Run clippy
+        env:
+          RUSTFLAGS: -D warnings
+        run: cargo clippy --all-features --tests
+
+  build-docs:
+    name: Build docs
+    needs: [check]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Build docs
+        env:
+          RUSTDOCFLAGS: -D rustdoc::broken_intra_doc_links
+        run: cargo doc --no-deps --all-features
+
+  deps:
+    name: Lint dependencies
+    needs: [check]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install cargo-audit
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-audit
+
+      - name: Install cargo-hakari
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-hakari
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Check security advisories
+        run: cargo-audit audit
+
+      - name: Check workspace-hack is up to date
+        run: cargo-hakari generate --diff
+
+      - name: Check all crates depend on workspace-hack
+        run: cargo-hakari manage-deps --dry-run
+
+  rustfmt:
+    name: Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Run cargo fmt
+        run: cargo fmt --all -- --check
+
+  codespell:
+    name: Spelling
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Run Codespell
+        uses: codespell-project/actions-codespell@master

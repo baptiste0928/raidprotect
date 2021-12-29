@@ -1,0 +1,4 @@
+hakari-package = "workspace-hack"
+
+resolver = "2"
+platforms = ["x86_64-unknown-linux-gnu"]

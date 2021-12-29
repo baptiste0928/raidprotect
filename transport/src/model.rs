@@ -13,7 +13,7 @@ pub enum BaseRequest {
     ///
     /// The channel will be sent using the provided callback channel.
     EventBroadcast {
-        callback: rch::oneshot::Sender<EventBroadcastResponse>
+        callback: rch::oneshot::Sender<EventBroadcastResponse>,
     },
 }
 

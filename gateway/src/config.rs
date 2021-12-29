@@ -1,7 +1,7 @@
 //! Configuration model.
 //!
 //! Configuration is loaded at runtime from a `Settings.toml` file
-//! or environement prefixed with `GATEWAY_`.
+//! or environment prefixed with `GATEWAY_`.
 
 use figment::{
     providers::{Env, Format, Toml},
@@ -10,7 +10,7 @@ use figment::{
 use raidprotect_util::logging::LogConfig;
 use serde::Deserialize;
 
-/// Parse configuration from `Settings.toml` or environement variables.
+/// Parse configuration from `Settings.toml` or environment variables.
 pub fn parse_config() -> Result<Config, figment::Error> {
     Figment::new()
         .merge(Toml::file("Settings.toml"))

@@ -2,8 +2,8 @@
 This repository contain source code of the RaidProtect Discord bot and its API.
 
 ## Overview
-The bot is actually splitted in three services :
-- **Gateway**: connects to Discord, receive events and store cache. Events and cache are accessed with an internal communication based on a [remoc](https://docs.rs/remoc/) channel with TCP transport. An ratelimited HTTP proxy for the Discord API is also provided.
+The bot is actually split in three services :
+- **Gateway**: connects to Discord, receive events and store cache. Events and cache are accessed with an internal communication based on a [remoc](https://docs.rs/remoc/) channel with TCP transport. An rate-limited HTTP proxy for the Discord API is also provided.
 - **Event handler**: receive events from the gateway and handle them. Splitting the receiving part and the handling part allow for minor updates of the bot without restarting connection.
 - **HTTP api**: public api used by the web dashboard to get information about guilds using the bot.
 
@@ -14,8 +14,8 @@ The dashboard can be considered as a separate service as it does not run in serv
 ## Crates hierarchy
 The three services shares common libraries:
 - **`model`**: contains the models used by the services (database, communication, ...).
-- **`transport`**: servers and clients used to communicate beetween services.
-- **`database`**: types and methods to interract with the database (MongoDB).
+- **`transport`**: servers and clients used to communicate between services.
+- **`database`**: types and methods to interact with the database (MongoDB).
 - **`util`**: various utility functions (logging, shutdown handling, ...).
 
 Each service has a dedicated binary crate: `gateway`, `bot` and `api`.

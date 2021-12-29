@@ -1,0 +1,50 @@
+version: v1
+
+labels:
+  - label: c-all
+    matcher:
+      files: '*'
+
+  - label: c-gateway
+    sync: true
+    matcher:
+      files: 'gateway/**/*'
+
+  - label: c-transport
+    sync: true
+    matcher:
+      files: 'transport/**/*'
+
+  - label: c-util
+    sync: true
+    matcher:
+      files: 'util/**/*'
+
+  - label: t-dependencies
+    matcher:
+      files: 'Cargo.lock'
+      title: '^deps(\\(.+\\))?!?: .*'
+
+  - label: t-fix
+    matcher:
+      title: '^fix(\\(.+\\))?!?: .*'
+
+  - label: t-feature
+    matcher:
+      title: '^feat(\\(.+\\))?!?: .*'
+
+  - label: t-enhancement
+    matcher:
+      title: '^enhancement(\\(.+\\))?!?: .*'
+
+  - label: t-chore
+    matcher:
+      title: '^chore(\\(.+\\))?!?: .*'
+
+  - label: t-refactor
+    matcher:
+      title: '^refactor(\\(.+\\))?!?: .*'
+
+  - label: t-actions
+    matcher:
+      title: '^ci(\\(.+\\))?!?: .*'

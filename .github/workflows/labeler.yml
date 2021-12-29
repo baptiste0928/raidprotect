@@ -1,0 +1,15 @@
+name: "Pull Request Labeler"
+on:
+  pull_request_target:
+    types: [opened, synchronize, edited, reopened]
+
+jobs:
+  labeler:
+    name: Label pull request
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Add labels to pull request
+        uses: fuxingloh/multi-labeler@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
