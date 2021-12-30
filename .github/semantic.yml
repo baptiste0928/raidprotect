@@ -1,0 +1,10 @@
+titleOnly: true
+
+types:
+  - ci
+  - chore
+  - deps
+  - enhancement
+  - feat
+  - fix
+  - refactor
