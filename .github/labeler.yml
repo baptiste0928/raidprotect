@@ -3,7 +3,8 @@ version: v1
 labels:
   - label: c-all
     matcher:
-      files: '*'
+      files:
+        all: ['*', '!Cargo.lock']
 
   - label: c-gateway
     sync: true
