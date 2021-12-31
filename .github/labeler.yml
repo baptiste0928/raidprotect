@@ -11,6 +11,11 @@ labels:
     matcher:
       files: 'gateway/**/*'
 
+  - label: c-model
+    sync: true
+    matcher:
+      files: 'model/**/*'
+
   - label: c-transport
     sync: true
     matcher:
