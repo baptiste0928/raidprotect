@@ -27,7 +27,7 @@ pub struct CachedGuild {
     icon: Option<String>,
     /// Id of the guild's owner.
     owner_id: UserId,
-    /// Information about the bot [`Member`] in the guild.
+    /// Information about the bot member in the guild.
     ///
     /// If this field is [`None`], the information has not been
     /// properly received and all permission calculations should fail.
