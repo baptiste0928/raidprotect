@@ -1,6 +1,8 @@
 # RaidProtect
 This repository contain source code of the RaidProtect Discord bot and its API.
 
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/baptiste/raidprotect)
+
 ## Overview
 The bot is actually split in three services :
 - **Gateway**: connects to Discord, receive events and store cache. Events and cache are accessed with an internal communication based on a [remoc](https://docs.rs/remoc/) channel with TCP transport. An rate-limited HTTP proxy for the Discord API is also provided.
