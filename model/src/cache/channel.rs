@@ -4,6 +4,10 @@ use twilight_model::{
     id::{ChannelId, GuildId},
 };
 
+use super::partial::{
+    IntoPartial, PartialCategoryChannel, PartialChannel, PartialTextChannel, PartialThread,
+};
+
 /// Cached model of a [`GuildChannel`].
 ///
 /// Only text channels and threads are cached as the bot
@@ -18,6 +22,18 @@ pub enum CachedChannel {
     Category(CachedCategoryChannel),
     /// Public or private thread.
     Thread(CachedThread),
+}
+
+impl IntoPartial for CachedChannel {
+    type Partial = PartialChannel;
+
+    fn into_partial(&self) -> Self::Partial {
+        match self {
+            CachedChannel::Text(channel) => PartialChannel::Text(channel.into_partial()),
+            CachedChannel::Category(channel) => PartialChannel::Category(channel.into_partial()),
+            CachedChannel::Thread(channel) => PartialChannel::Thread(channel.into_partial()),
+        }
+    }
 }
 
 /// Cached model of a [`TextChannel`].
@@ -41,6 +57,17 @@ pub struct CachedTextChannel {
     pub rate_limit_per_user: Option<u64>,
 }
 
+impl IntoPartial for CachedTextChannel {
+    type Partial = PartialTextChannel;
+
+    fn into_partial(&self) -> Self::Partial {
+        PartialTextChannel {
+            parent_id: self.parent_id,
+            permission_overwrites: self.permission_overwrites.clone(),
+        }
+    }
+}
+
 /// Cached model of a [`CategoryChannel`].
 ///
 /// [`CategoryChannel`]: twilight_model::channel::CategoryChannel
@@ -56,6 +83,16 @@ pub struct CachedCategoryChannel {
     pub position: i64,
     /// Permission overwrites of the category.
     pub permission_overwrites: Vec<PermissionOverwrite>,
+}
+
+impl IntoPartial for CachedCategoryChannel {
+    type Partial = PartialCategoryChannel;
+
+    fn into_partial(&self) -> Self::Partial {
+        PartialCategoryChannel {
+            permission_overwrites: self.permission_overwrites.clone(),
+        }
+    }
 }
 
 /// Cached model of a [`PublicThread`] or [`PrivateThread`].
@@ -81,4 +118,14 @@ pub struct CachedThread {
     pub parent_id: Option<ChannelId>,
     /// Amount of seconds a user has to wait between two message.
     pub rate_limit_per_user: Option<u64>,
+}
+
+impl IntoPartial for CachedThread {
+    type Partial = PartialThread;
+
+    fn into_partial(&self) -> Self::Partial {
+        PartialThread {
+            parent_id: self.parent_id,
+        }
+    }
 }

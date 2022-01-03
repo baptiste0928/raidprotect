@@ -2,7 +2,7 @@
 //!
 //! This module expose partial models that only contain required fields
 //! for permissions calculation. These models are used to improve performance
-//! by avoiding sending unecessary data to clients.
+//! by avoiding sending unnecessary data to clients.
 //!
 //! The [`IntoPartial`] can be used to create partial models from regular ones.
 

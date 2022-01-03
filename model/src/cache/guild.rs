@@ -5,6 +5,8 @@ use twilight_model::{
     id::{ChannelId, GuildId, RoleId, UserId},
 };
 
+use super::partial::{IntoPartial, PartialRole};
+
 /// Cached model of a [`Guild`].
 ///
 /// [`Guild`]: twilight_model::guild::Guild
@@ -76,4 +78,15 @@ pub struct CachedRole {
     ///
     /// Managed roles include bot, integration or boost roles.
     pub managed: bool,
+}
+
+impl IntoPartial for CachedRole {
+    type Partial = PartialRole;
+
+    fn into_partial(&self) -> Self::Partial {
+        PartialRole {
+            position: self.position,
+            permissions: self.permissions,
+        }
+    }
 }
