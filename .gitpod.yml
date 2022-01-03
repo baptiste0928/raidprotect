@@ -1,4 +1,5 @@
 tasks:
+  - before: rustup component add clippy
   - init: cargo build
 
 vscode:

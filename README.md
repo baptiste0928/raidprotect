@@ -1,7 +1,7 @@
 # RaidProtect
 This repository contain source code of the RaidProtect Discord bot and its API.
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/baptiste/raidprotect)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/baptiste0928/raidprotect)
 
 ## Overview
 The bot is actually split in three services :
