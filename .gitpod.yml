@@ -1,0 +1,9 @@
+tasks:
+  - init: cargo build
+
+vscode:
+  extensions:
+    - editorconfig.editorconfig
+    - matklad.rust-analyzer
+    - bungcip.better-toml
+    - eamodio.gitlens
