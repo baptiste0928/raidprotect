@@ -20,7 +20,7 @@ pub trait IntoPartial: Sized {
     /// This method take a `&self` to only allocate necessary
     /// variables. The method should take care to clone values
     /// when required.
-    fn into_partial(&self) -> Self::Partial;
+    fn as_partial(&self) -> Self::Partial;
 }
 
 /// Partial model of a [`Role`].

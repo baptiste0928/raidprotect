@@ -27,11 +27,11 @@ pub enum CachedChannel {
 impl IntoPartial for CachedChannel {
     type Partial = PartialChannel;
 
-    fn into_partial(&self) -> Self::Partial {
+    fn as_partial(&self) -> Self::Partial {
         match self {
-            CachedChannel::Text(channel) => PartialChannel::Text(channel.into_partial()),
-            CachedChannel::Category(channel) => PartialChannel::Category(channel.into_partial()),
-            CachedChannel::Thread(channel) => PartialChannel::Thread(channel.into_partial()),
+            CachedChannel::Text(channel) => PartialChannel::Text(channel.as_partial()),
+            CachedChannel::Category(channel) => PartialChannel::Category(channel.as_partial()),
+            CachedChannel::Thread(channel) => PartialChannel::Thread(channel.as_partial()),
         }
     }
 }
@@ -60,7 +60,7 @@ pub struct CachedTextChannel {
 impl IntoPartial for CachedTextChannel {
     type Partial = PartialTextChannel;
 
-    fn into_partial(&self) -> Self::Partial {
+    fn as_partial(&self) -> Self::Partial {
         PartialTextChannel {
             parent_id: self.parent_id,
             permission_overwrites: self.permission_overwrites.clone(),
@@ -88,7 +88,7 @@ pub struct CachedCategoryChannel {
 impl IntoPartial for CachedCategoryChannel {
     type Partial = PartialCategoryChannel;
 
-    fn into_partial(&self) -> Self::Partial {
+    fn as_partial(&self) -> Self::Partial {
         PartialCategoryChannel {
             permission_overwrites: self.permission_overwrites.clone(),
         }
@@ -123,7 +123,7 @@ pub struct CachedThread {
 impl IntoPartial for CachedThread {
     type Partial = PartialThread;
 
-    fn into_partial(&self) -> Self::Partial {
+    fn as_partial(&self) -> Self::Partial {
         PartialThread {
             parent_id: self.parent_id,
         }

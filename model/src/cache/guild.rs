@@ -83,7 +83,7 @@ pub struct CachedRole {
 impl IntoPartial for CachedRole {
     type Partial = PartialRole;
 
-    fn into_partial(&self) -> Self::Partial {
+    fn as_partial(&self) -> Self::Partial {
         PartialRole {
             position: self.position,
             permissions: self.permissions,
