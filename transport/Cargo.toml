@@ -11,7 +11,7 @@ raidprotect_util = { path = "../util" }
 workspace-hack = { path = "../workspace-hack"}
 
 anyhow = "1"
-remoc = { version = "0.9", features = ["serde", "rch", "rtc", "default-codec-cbor"], default-features = false }
+remoc = { version = "0.9.10", features = ["serde", "rch", "rtc", "default-codec-ciborium"], default-features = false }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1.14", features = ["macros", "net", "sync"] }
 tracing = { version = "0.1" }
