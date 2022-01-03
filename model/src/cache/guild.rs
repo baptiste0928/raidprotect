@@ -1,9 +1,9 @@
-use std::collections::HashMap;
-
-use serde::{Serialize, Deserialize};
-use twilight_model::{id::{GuildId, UserId, RoleId, ChannelId}, datetime::Timestamp};
-
-use super::{role::PartialRole, channel::PartialChannel};
+use serde::{Deserialize, Serialize};
+use twilight_model::{
+    datetime::Timestamp,
+    guild::Permissions,
+    id::{ChannelId, GuildId, RoleId, UserId},
+};
 
 /// Cached model of a [`Guild`].
 ///
@@ -24,9 +24,9 @@ pub struct CachedGuild {
     /// properly received and all permission calculations should fail.
     pub current_member: Option<CurrentMember>,
     /// List of roles of the guild.
-    pub roles: HashMap<RoleId, PartialRole>,
+    pub roles: Vec<RoleId>,
     /// List of channels of the guild.
-    pub channels: HashMap<ChannelId, PartialChannel>,
+    pub channels: Vec<ChannelId>,
 }
 
 /// Information about the bot [`Member`] in a guild.
@@ -43,4 +43,37 @@ pub struct CurrentMember {
     pub communication_disabled_until: Option<Timestamp>,
     /// Roles of the bot.
     pub roles: Vec<RoleId>,
+}
+
+/// Cached model of a [`Role`].
+///
+/// This model is not cached within guilds to limit
+/// data to send when requesting a [`CachedGuild`].
+///
+/// [`Role`]: twilight_model::guild::Role
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct CachedRole {
+    /// Id of the role.
+    pub id: RoleId,
+    /// Id of the guild to which the role belongs.
+    pub guild_id: GuildId,
+    /// Name of the role.
+    pub name: String,
+    /// Color of the role.
+    pub color: u32,
+    /// Icon image hash.
+    pub icon: Option<String>,
+    /// Icon unicode emoji.
+    ///
+    /// This field is set if the role has an icon which is
+    /// not a custom image but an existing unicode emoji.
+    pub unicode_emoji: Option<String>,
+    /// Position of the role.
+    pub position: i64,
+    /// Permissions of the role.
+    pub permissions: Permissions,
+    /// Whether the role is managed.
+    ///
+    /// Managed roles include bot, integration or boost roles.
+    pub managed: bool,
 }

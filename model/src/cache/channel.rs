@@ -1,5 +1,8 @@
-use serde::{Serialize, Deserialize};
-use twilight_model::{id::{ChannelId, GuildId}, channel::permission_overwrite::PermissionOverwrite};
+use serde::{Deserialize, Serialize};
+use twilight_model::{
+    channel::permission_overwrite::PermissionOverwrite,
+    id::{ChannelId, GuildId},
+};
 
 /// Cached model of a [`GuildChannel`].
 ///
@@ -78,51 +81,4 @@ pub struct CachedThread {
     pub parent_id: Option<ChannelId>,
     /// Amount of seconds a user has to wait between two message.
     pub rate_limit_per_user: Option<u64>,
-}
-
-/// Partial model of a [`GuildChannel`].
-///
-/// This type is used in [`CachedGuild`] and only contain fields
-/// required for permissions calculation. Only text channels and threads
-/// are cached as the bot does not interact with voice channels.
-///
-/// [`GuildChannel`]: twilight_model::channel::GuildChannel
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub enum PartialChannel {
-    /// Partial text channel.
-    Text(PartialTextChannel),
-    /// Partial category channel.
-    Category(PartialCategoryChannel),
-    /// Partial thread.
-    Thread(PartialThread),
-}
-
-/// Partial model of a [`TextChannel`].
-///
-/// [`TextChannel`]: twilight_model::channel::TextChannel
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub struct PartialTextChannel {
-    /// If the channel is in a category, the category id.
-    pub parent_id: Option<ChannelId>,
-    /// Permission overwrites of the channel.
-    pub permission_overwrites: Vec<PermissionOverwrite>,
-}
-
-/// Partial model of a [`CategoryChannel`].
-///
-/// [`CategoryChannel`]: twilight_model::channel::CategoryChannel
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub struct PartialCategoryChannel {
-    /// Permission overwrites of the channel.
-    pub permission_overwrites: Vec<PermissionOverwrite>,
-}
-
-/// Cached model of a [`PublicThread`] or [`PrivateThread`].
-///
-/// [`PublicThread`]: twilight_model::channel::thread::PublicThread
-/// [`PrivateThread`]: twilight_model::channel::thread::PrivateThread
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub struct PartialThread {
-    /// Parent channel of the thread.
-    pub parent_id: Option<ChannelId>,
 }
