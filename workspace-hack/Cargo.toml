@@ -17,6 +17,7 @@ futures-channel = { version = "0.3", features = ["alloc", "futures-sink", "sink"
 futures-core = { version = "0.3", features = ["alloc", "std"] }
 futures-sink = { version = "0.3", features = ["alloc", "std"] }
 mio = { version = "0.7", features = ["net", "os-ext", "os-poll", "os-util", "tcp", "udp", "uds"] }
+serde = { version = "1", features = ["alloc", "derive", "serde_derive", "std"] }
 time = { version = "0.3", default-features = false, features = ["alloc", "formatting", "itoa", "parsing", "std"] }
 tokio = { version = "1", features = ["bytes", "io-util", "libc", "macros", "memchr", "mio", "net", "num_cpus", "once_cell", "rt", "rt-multi-thread", "signal", "signal-hook-registry", "sync", "time", "tokio-macros", "winapi"] }
 tracing = { version = "0.1", features = ["attributes", "release_max_level_info", "std", "tracing-attributes"] }
