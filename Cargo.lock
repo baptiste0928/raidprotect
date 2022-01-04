@@ -758,6 +758,7 @@ name = "raidprotect_transport"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "raidprotect_model",
  "raidprotect_util",
  "remoc",
  "serde",
