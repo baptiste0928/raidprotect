@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use serde::{Deserialize, Serialize};
 use twilight_model::{
     datetime::Timestamp,
@@ -26,9 +28,9 @@ pub struct CachedGuild {
     /// properly received and all permission calculations should fail.
     pub current_member: Option<CurrentMember>,
     /// List of roles of the guild.
-    pub roles: Vec<RoleId>,
+    pub roles: HashSet<RoleId>,
     /// List of channels of the guild.
-    pub channels: Vec<ChannelId>,
+    pub channels: HashSet<ChannelId>,
 }
 
 /// Information about the bot [`Member`] in a guild.
@@ -44,7 +46,7 @@ pub struct CurrentMember {
     /// also check that the given timestamp is not in the past.
     pub communication_disabled_until: Option<Timestamp>,
     /// Roles of the bot.
-    pub roles: Vec<RoleId>,
+    pub roles: HashSet<RoleId>,
 }
 
 /// Cached model of a [`Role`].

@@ -7,13 +7,16 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+raidprotect_model = { path = "../model" }
 raidprotect_transport = { path = "../transport" }
 raidprotect_util = { path = "../util" }
 workspace-hack = { path = "../workspace-hack"}
 
 anyhow = "1"
+dashmap = "5"
 figment = { version = "0.10", features = ["env", "toml"] }
 futures = "0.3"
+remoc = { version = "0.9.10", features = ["serde", "rch", "rtc"], default-features = false }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1.14", features = ["macros", "rt-multi-thread", "sync"] }
 tracing = { version = "0.1" }

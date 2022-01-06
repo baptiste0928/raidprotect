@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use twilight_model::{
-    channel::permission_overwrite::PermissionOverwrite,
+    channel::{permission_overwrite::PermissionOverwrite, Channel},
     id::{ChannelId, GuildId},
 };
 
@@ -22,6 +22,26 @@ pub enum CachedChannel {
     Category(CachedCategoryChannel),
     /// Public or private thread.
     Thread(CachedThread),
+}
+
+impl CachedChannel {
+    /// Get the [`ChannelId`] of the channel.
+    pub fn id(&self) -> ChannelId {
+        match self {
+            CachedChannel::Text(channel) => channel.id,
+            CachedChannel::Category(channel) => channel.id,
+            CachedChannel::Thread(channel) => channel.id,
+        }
+    }
+
+    /// Get the [`GuildId`] of the channel guild.
+    pub fn guild_id(&self) -> GuildId {
+        match self {
+            CachedChannel::Text(channel) => channel.guild_id,
+            CachedChannel::Category(channel) => channel.guild_id,
+            CachedChannel::Thread(channel) => channel.guild_id,
+        }
+    }
 }
 
 impl IntoPartial for CachedChannel {

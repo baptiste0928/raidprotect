@@ -8,6 +8,7 @@
 //!   RPC.
 //! - The HTTP proxy provides global limiting for requests to the REST API.
 
+mod cache;
 mod cluster;
 mod config;
 
