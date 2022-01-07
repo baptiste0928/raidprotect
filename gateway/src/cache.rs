@@ -3,12 +3,11 @@
 //! Cache is stored into [`DashMap`] in the memory. Methods are
 //! available to update or query it.
 
-
 use dashmap::{mapref::one::Ref, DashMap};
-use raidprotect_model::cache::{CachedChannel, CachedGuild, CachedRole, CurrentMember};
-use twilight_model::{
-    id::{ChannelId, GuildId, RoleId},
-};
+use raidprotect_model::cache::{CachedChannel, CachedGuild, CachedRole};
+use raidprotect_transport::cache::{Cache, CacheResult};
+use remoc::rtc;
+use twilight_model::id::{ChannelId, GuildId, RoleId};
 
 /// In-memory cache.
 ///
@@ -28,94 +27,64 @@ impl InMemoryCache {
     }
 
     /// Get a [`CachedGuild`] by id.
-    pub fn get_guild(&self, id: GuildId) -> Option<Ref<'_, GuildId, CachedGuild>> {
+    pub fn guild(&self, id: GuildId) -> Option<Ref<'_, GuildId, CachedGuild>> {
         self.guilds.get(&id)
     }
 
     /// Get a [`CachedChannel`] by id.
-    pub fn get_channel(&self, id: ChannelId) -> Option<Ref<'_, ChannelId, CachedChannel>> {
+    pub fn channel(&self, id: ChannelId) -> Option<Ref<'_, ChannelId, CachedChannel>> {
         self.channels.get(&id)
     }
 
     /// Get a [`CachedRole`] by id.
-    pub fn get_role(&self, id: RoleId) -> Option<Ref<'_, RoleId, CachedRole>> {
+    pub fn role(&self, id: RoleId) -> Option<Ref<'_, RoleId, CachedRole>> {
         self.roles.get(&id)
     }
+}
 
-    /// Insert a [`CachedGuild`] in the cache.
-    ///
-    /// The old value is returned if existing.
-    pub fn insert_guild(&self, guild: CachedGuild) -> Option<CachedGuild> {
-        self.guilds.insert(guild.id, guild)
+#[rtc::async_trait]
+impl Cache for InMemoryCache {
+    async fn guild(&self, id: GuildId) -> CacheResult<CachedGuild> {
+        Ok(self.guild(id).as_deref().cloned())
     }
 
-    /// Insert a [`CurrentMember`] in the cache.
-    pub fn insert_current_member(&self, id: GuildId, member: CurrentMember) {
-        if let Some(mut guild) = self.guilds.get_mut(&id) {
-            guild.current_member = Some(member)
-        }
+    async fn channel(&self, id: ChannelId) -> CacheResult<CachedChannel> {
+        Ok(self.channel(id).as_deref().cloned())
     }
 
-    /// Insert a [`CachedChannel`] in the cache.
-    ///
-    /// The old value is returned if existing.
-    pub fn insert_channel(&self, channel: CachedChannel) -> Option<CachedChannel> {
-        if let Some(mut guild) = self.guilds.get_mut(&channel.guild_id()) {
-            guild.channels.insert(channel.id());
-        }
+    async fn channels(&self, id: GuildId) -> CacheResult<Vec<CachedChannel>> {
+        if let Some(guild) = self.guild(id) {
+            let channels: Vec<CachedChannel> = guild
+                .channels
+                .iter()
+                .filter_map(|id| self.channel(*id).as_deref().cloned())
+                .collect();
 
-        self.channels.insert(channel.id(), channel)
-    }
-
-    /// Insert a [`CachedRole`] in the cache.
-    ///
-    /// The old value is returned if existing.
-    pub fn insert_role(&self, role: CachedRole) -> Option<CachedRole> {
-        if let Some(mut guild) = self.guilds.get_mut(&role.guild_id) {
-            guild.roles.insert(role.id);
-        }
-
-        self.roles.insert(role.id, role)
-    }
-
-    /// Remove a guild and associated items from the cache.
-    ///
-    /// The removed value is returned if existing.
-    pub fn remove_guild(&self, guild: GuildId) -> Option<CachedGuild> {
-        if let Some((_, guild)) = self.guilds.remove(&guild) {
-            for channel in &guild.channels {
-                self.channels.remove(channel);
+            if !channels.is_empty() {
+                return Ok(Some(channels));
             }
+        }
 
-            for role in &guild.roles {
-                self.roles.remove(role);
+        Ok(None)
+    }
+
+    async fn role(&self, id: RoleId) -> CacheResult<CachedRole> {
+        Ok(self.role(id).as_deref().cloned())
+    }
+
+    async fn roles(&self, id: GuildId) -> CacheResult<Vec<CachedRole>> {
+        if let Some(guild) = self.guild(id) {
+            let roles: Vec<CachedRole> = guild
+                .roles
+                .iter()
+                .filter_map(|id| self.role(*id).as_deref().cloned())
+                .collect();
+
+            if !roles.is_empty() {
+                return Ok(Some(roles));
             }
-
-            Some(guild)
-        } else {
-            None
-        }
-    }
-
-    /// Remove a channel from the cache.
-    ///
-    /// The removed value is returned if existing.
-    pub fn remove_channel(&self, guild: GuildId, channel: ChannelId) -> Option<CachedChannel> {
-        if let Some(mut guild) = self.guilds.get_mut(&guild) {
-            guild.channels.remove(&channel);
         }
 
-        self.channels.remove(&channel).map(|(_, value)| value)
-    }
-
-    /// Remove a role from the cache.
-    ///
-    /// The removed value is returned if existing.
-    pub fn remove_role(&self, guild: GuildId, role: RoleId) -> Option<CachedRole> {
-        if let Some(mut guild) = self.guilds.get_mut(&guild) {
-            guild.roles.remove(&role);
-        }
-
-        self.roles.remove(&role).map(|(_, value)| value)
+        Ok(None)
     }
 }

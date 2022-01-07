@@ -31,7 +31,7 @@ pub trait Cache {
     async fn channels(&self, id: GuildId) -> CacheResult<Vec<CachedChannel>>;
 
     /// Get a [`CachedRole`] by ID.
-    async fn role(&self, id: RoleId) -> CacheResult<CachedChannel>;
+    async fn role(&self, id: RoleId) -> CacheResult<CachedRole>;
 
     /// Get all [`CachedRole`] of a guild.
     async fn roles(&self, id: GuildId) -> CacheResult<Vec<CachedRole>>;

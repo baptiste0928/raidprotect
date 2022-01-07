@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use twilight_model::{
-    channel::{permission_overwrite::PermissionOverwrite, Channel},
+    channel::permission_overwrite::PermissionOverwrite,
     id::{ChannelId, GuildId},
 };
 
