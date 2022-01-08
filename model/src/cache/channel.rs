@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use twilight_model::{
-    channel::permission_overwrite::PermissionOverwrite,
+    channel::{permission_overwrite::PermissionOverwrite, ChannelType},
     id::{ChannelId, GuildId},
 };
 
@@ -42,6 +42,19 @@ impl CachedChannel {
             CachedChannel::Thread(channel) => channel.guild_id,
         }
     }
+
+    /// Whether a [`ChannelType`] can be cached with this model.
+    pub fn is_cached(kind: ChannelType) -> bool {
+        matches!(
+            kind,
+            ChannelType::GuildText
+                | ChannelType::GuildCategory
+                | ChannelType::GuildNews
+                | ChannelType::GuildPublicThread
+                | ChannelType::GuildPrivateThread
+                | ChannelType::GuildNewsThread
+        )
+    }
 }
 
 impl IntoPartial for CachedChannel {
@@ -77,6 +90,12 @@ pub struct CachedTextChannel {
     pub rate_limit_per_user: Option<u64>,
 }
 
+impl From<CachedTextChannel> for CachedChannel {
+    fn from(channel: CachedTextChannel) -> Self {
+        CachedChannel::Text(channel)
+    }
+}
+
 impl IntoPartial for CachedTextChannel {
     type Partial = PartialTextChannel;
 
@@ -103,6 +122,12 @@ pub struct CachedCategoryChannel {
     pub position: i64,
     /// Permission overwrites of the category.
     pub permission_overwrites: Vec<PermissionOverwrite>,
+}
+
+impl From<CachedCategoryChannel> for CachedChannel {
+    fn from(channel: CachedCategoryChannel) -> Self {
+        CachedChannel::Category(channel)
+    }
 }
 
 impl IntoPartial for CachedCategoryChannel {
@@ -138,6 +163,12 @@ pub struct CachedThread {
     pub parent_id: Option<ChannelId>,
     /// Amount of seconds a user has to wait between two message.
     pub rate_limit_per_user: Option<u64>,
+}
+
+impl From<CachedThread> for CachedChannel {
+    fn from(thread: CachedThread) -> Self {
+        CachedChannel::Thread(thread)
+    }
 }
 
 impl IntoPartial for CachedThread {
