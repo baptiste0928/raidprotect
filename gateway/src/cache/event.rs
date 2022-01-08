@@ -1,11 +1,12 @@
 //! Update the cache based on incoming event data.
 
-use raidprotect_model::cache::{CachedChannel, CachedGuild, CurrentMember};
+use raidprotect_model::cache::{CachedChannel, CachedGuild, CachedRole, CurrentMember};
 use twilight_model::{
     channel::Channel,
     gateway::payload::incoming::{
         ChannelCreate, ChannelDelete, ChannelUpdate, GuildCreate, GuildDelete, GuildUpdate,
-        MemberAdd,
+        MemberAdd, MemberUpdate, RoleCreate, RoleDelete, RoleUpdate, ThreadCreate, ThreadDelete,
+        ThreadUpdate,
     },
 };
 
@@ -131,7 +132,113 @@ impl UpdateCache for ChannelUpdate {
     }
 }
 
+impl UpdateCache for ThreadCreate {
+    type Output = ();
+
+    fn update(&self, cache: &InMemoryCache) -> Self::Output {
+        let channel = match &self.0 {
+            Channel::Guild(channel) => channel,
+            _ => return,
+        };
+
+        let guild_id = match channel.guild_id() {
+            Some(guild_id) => guild_id,
+            None => return,
+        };
+
+        // Cache the channel.
+        super::resource::cache_guild_channel(cache, channel, guild_id);
+
+        // Add the channel to the guild.
+        if let Some(mut guild) = cache.guilds.get_mut(&guild_id) {
+            guild.channels.insert(channel.id());
+        }
+    }
+}
+
+impl UpdateCache for ThreadDelete {
+    type Output = Option<CachedChannel>;
+
+    fn update(&self, cache: &InMemoryCache) -> Self::Output {
+        // Remove the channel from the guild.
+        if let Some(mut guild) = cache.guilds.get_mut(&self.guild_id) {
+            guild.channels.remove(&self.id);
+        }
+
+        // Remove the channel from the cache.
+        cache.channels.remove(&self.id).map(|(_, channel)| channel)
+    }
+}
+
+impl UpdateCache for ThreadUpdate {
+    type Output = Option<CachedChannel>;
+
+    fn update(&self, cache: &InMemoryCache) -> Self::Output {
+        let channel = match &self.0 {
+            Channel::Guild(channel) => channel,
+            _ => return None,
+        };
+
+        super::resource::cache_guild_channel(cache, channel, channel.guild_id()?)
+    }
+}
+
+impl UpdateCache for RoleCreate {
+    type Output = ();
+
+    fn update(&self, cache: &InMemoryCache) -> Self::Output {
+        super::resource::cache_role(cache, &self.role, self.guild_id);
+
+        if let Some(mut guild) = cache.guilds.get_mut(&self.guild_id) {
+            guild.roles.insert(self.role.id);
+        }
+    }
+}
+
+impl UpdateCache for RoleDelete {
+    type Output = Option<CachedRole>;
+
+    fn update(&self, cache: &InMemoryCache) -> Self::Output {
+        if let Some(mut guild) = cache.guilds.get_mut(&self.guild_id) {
+            guild.roles.remove(&self.role_id);
+        }
+
+        cache.roles.remove(&self.role_id).map(|(_, role)| role)
+    }
+}
+
+impl UpdateCache for RoleUpdate {
+    type Output = Option<CachedRole>;
+
+    fn update(&self, cache: &InMemoryCache) -> Self::Output {
+        super::resource::cache_role(cache, &self.role, self.guild_id)
+    }
+}
+
 impl UpdateCache for MemberAdd {
+    type Output = ();
+
+    fn update(&self, cache: &InMemoryCache) -> Self::Output {
+        if self.user.id != cache.current_user {
+            return;
+        }
+
+        let mut guild = match cache.guilds.get_mut(&self.guild_id) {
+            Some(guild) => guild,
+            None => return,
+        };
+
+        let cached = CurrentMember {
+            id: self.user.id,
+            communication_disabled_until: self.communication_disabled_until,
+            roles: guild.roles.iter().copied().collect(),
+        };
+
+        guild.current_member = Some(cached);
+    }
+}
+
+impl UpdateCache for MemberUpdate {
     type Output = Option<CurrentMember>;
 
     fn update(&self, cache: &InMemoryCache) -> Self::Output {
