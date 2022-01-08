@@ -44,7 +44,7 @@ impl InMemoryCache {
     }
 
     /// Update the cache based on event data.
-    pub fn update<T>(&self, item: &T) -> Option<T::Output>
+    pub fn update<T>(&self, item: &T) -> T::Output
     where
         T: UpdateCache,
     {
