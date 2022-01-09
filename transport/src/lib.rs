@@ -3,5 +3,6 @@
 //! This crate contains types used to communicate between services.
 //! Communication is based on a TCP connection with [`remoc`] channels.
 
+pub mod cache;
 pub mod model;
 pub mod server;
