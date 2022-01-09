@@ -786,13 +786,13 @@ name = "raidprotect_gateway"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "dashmap",
  "figment",
  "futures",
  "raidprotect_model",
  "raidprotect_transport",
  "raidprotect_util",
- "remoc",
  "serde",
  "tokio",
  "tracing",

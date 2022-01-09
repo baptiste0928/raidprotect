@@ -25,10 +25,10 @@ mod resource;
 
 pub use event::UpdateCache;
 
+use async_trait::async_trait;
 use dashmap::DashMap;
 use raidprotect_model::cache::{CachedChannel, CachedGuild, CachedRole};
 use raidprotect_transport::cache::{Cache, CacheResult};
-use remoc::rtc;
 use twilight_model::id::{ChannelId, GuildId, RoleId, UserId};
 
 /// In-memory cache.
@@ -105,7 +105,7 @@ impl InMemoryCache {
     }
 }
 
-#[rtc::async_trait]
+#[async_trait]
 impl Cache for InMemoryCache {
     async fn guild(&self, id: GuildId) -> CacheResult<CachedGuild> {
         Ok(self.guild(id).cloned())
