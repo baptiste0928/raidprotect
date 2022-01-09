@@ -10,6 +10,14 @@
 //! The cache is filled using data from incoming events, using the [`UpdateCache`]
 //! trait.
 //!
+//! ## Processed event types
+//! | Cached data           | Event types                                                       |
+//! |-----------------------|-------------------------------------------------------------------|
+//! | Guilds                | `GuildCreate`, `GuildUpdate`, `GuildDelete`                       |
+//! | Channels (guild-only) | `ChannelCreate`, `ChannelUpdate`, `ChannelUpdate` (+ thread ones) |
+//! | Roles                 | `RoleCreate`, `RoleUpdate`, `RoleDelete`                          |
+//! | Current user member   | `MemberAdd`, `MemberUpdate`                                       |
+//!
 //! [`model::cache`]: raidprotect_model::cache
 
 mod event;
