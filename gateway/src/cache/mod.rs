@@ -60,17 +60,17 @@ impl InMemoryCache {
     }
 
     /// Get a [`CachedGuild`] by id.
-    pub fn guild(&self, id: GuildId) -> Option<&CachedGuild> {
-        self.guilds.get(&id).map(|r| r.value())
+    pub fn guild(&self, id: GuildId) -> Option<CachedGuild> {
+        self.guilds.get(&id).as_deref().cloned()
     }
 
     /// Get all the [`CachedChannel`] of a guild.
-    pub fn guild_channels(&self, id: GuildId) -> Option<Vec<&CachedChannel>> {
+    pub fn guild_channels(&self, id: GuildId) -> Option<Vec<CachedChannel>> {
         if let Some(guild) = self.guild(id) {
             let channels: Vec<_> = guild
                 .channels
-                .iter()
-                .filter_map(|id| self.channel(*id))
+                .into_iter()
+                .filter_map(|id| self.channel(id))
                 .collect();
 
             if !channels.is_empty() {
@@ -82,9 +82,13 @@ impl InMemoryCache {
     }
 
     /// Get all the [`CachedRole`] of a guild.
-    pub fn guild_roles(&self, id: GuildId) -> Option<Vec<&CachedRole>> {
+    pub fn guild_roles(&self, id: GuildId) -> Option<Vec<CachedRole>> {
         if let Some(guild) = self.guild(id) {
-            let roles: Vec<_> = guild.roles.iter().filter_map(|id| self.role(*id)).collect();
+            let roles: Vec<_> = guild
+                .roles
+                .into_iter()
+                .filter_map(|id| self.role(id))
+                .collect();
 
             if !roles.is_empty() {
                 return Some(roles);
@@ -95,41 +99,35 @@ impl InMemoryCache {
     }
 
     /// Get a [`CachedChannel`] by id.
-    pub fn channel(&self, id: ChannelId) -> Option<&CachedChannel> {
-        self.channels.get(&id).map(|r| r.value())
+    pub fn channel(&self, id: ChannelId) -> Option<CachedChannel> {
+        self.channels.get(&id).as_deref().cloned()
     }
 
     /// Get a [`CachedRole`] by id.
-    pub fn role(&self, id: RoleId) -> Option<&CachedRole> {
-        self.roles.get(&id).map(|r| r.value())
+    pub fn role(&self, id: RoleId) -> Option<CachedRole> {
+        self.roles.get(&id).as_deref().cloned()
     }
 }
 
 #[async_trait]
 impl Cache for InMemoryCache {
     async fn guild(&self, id: GuildId) -> CacheResult<CachedGuild> {
-        Ok(self.guild(id).cloned())
+        Ok(self.guild(id))
     }
 
     async fn channel(&self, id: ChannelId) -> CacheResult<CachedChannel> {
-        Ok(self.channel(id).cloned())
+        Ok(self.channel(id))
     }
 
     async fn channels(&self, id: GuildId) -> CacheResult<Vec<CachedChannel>> {
-        match self.guild_channels(id) {
-            Some(channels) => Ok(Some(channels.into_iter().cloned().collect())),
-            None => Ok(None),
-        }
+        Ok(self.guild_channels(id))
     }
 
     async fn role(&self, id: RoleId) -> CacheResult<CachedRole> {
-        Ok(self.role(id).cloned())
+        Ok(self.role(id))
     }
 
     async fn roles(&self, id: GuildId) -> CacheResult<Vec<CachedRole>> {
-        match self.guild_roles(id) {
-            Some(roles) => Ok(Some(roles.into_iter().cloned().collect())),
-            None => Ok(None),
-        }
+        Ok(self.guild_roles(id))
     }
 }

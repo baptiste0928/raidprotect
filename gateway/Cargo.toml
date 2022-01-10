@@ -14,7 +14,7 @@ workspace-hack = { path = "../workspace-hack"}
 
 anyhow = "1"
 async-trait = "0.1"
-dashmap = "5"
+dashmap = "4"
 figment = { version = "0.10", features = ["env", "toml"] }
 futures = "0.3"
 serde = { version = "1", features = ["derive"] }
