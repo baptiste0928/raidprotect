@@ -5,7 +5,7 @@ use std::sync::Arc;
 use futures::StreamExt;
 use raidprotect_util::shutdown::ShutdownSubscriber;
 use tokio::sync::broadcast;
-use tracing::{debug, instrument};
+use tracing::{instrument, trace};
 use twilight_gateway::{
     cluster::{ClusterStartError, Events, ShardScheme},
     Cluster, Event, Intents,
@@ -16,6 +16,8 @@ use twilight_model::gateway::{
     presence::{ActivityType, MinimalActivity, Status},
 };
 
+use crate::cache::InMemoryCache;
+
 /// Wrapper around a twilight [`Cluster`].
 #[derive(Debug)]
 pub struct ShardCluster {
@@ -25,11 +27,17 @@ pub struct ShardCluster {
     cluster: Arc<Cluster>,
     /// Events stream
     events: Events,
+    /// In-memory cache
+    cache: Arc<InMemoryCache>,
 }
 
 impl ShardCluster {
     /// Initialize a new shards cluster without starting it.
-    pub async fn new(token: &str, http: Arc<HttpClient>) -> Result<Self, ClusterStartError> {
+    pub async fn new(
+        token: &str,
+        http: Arc<HttpClient>,
+        cache: Arc<InMemoryCache>,
+    ) -> Result<Self, ClusterStartError> {
         let intents = Intents::GUILDS | Intents::GUILD_MEMBERS | Intents::GUILD_MESSAGES;
 
         let (cluster, events) = Cluster::builder(token, intents)
@@ -45,6 +53,7 @@ impl ShardCluster {
             broadcast: sender,
             cluster: Arc::new(cluster),
             events,
+            cache,
         })
     }
 
@@ -70,7 +79,7 @@ impl ShardCluster {
     /// Handle incoming events
     async fn handle_events(&mut self) {
         while let Some((_shard_id, event)) = self.events.next().await {
-            debug!(event = ?event, "received event")
+            trace!(event = ?event, "received event")
         }
     }
 }
