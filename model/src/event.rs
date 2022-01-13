@@ -2,7 +2,7 @@
 //!
 //! This module contains models representing Discord events received by theg
 //! gateway. They match [`twilight_model::gateway::event`] models with additional
-//! fields for cached ressources.
+//! fields for cached resources.
 
 use serde::{Deserialize, Serialize};
 use twilight_model::{
@@ -44,7 +44,7 @@ pub struct GuildUpdate {
 /// Guild delete event.
 ///
 /// This event is not emitted if the guild was deleted because it becomes
-/// unavaiable.
+/// unavailable.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct GuildLeave {
     pub cached: Option<CachedGuild>,
