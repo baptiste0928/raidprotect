@@ -8,7 +8,7 @@
 //! resources.
 
 use serde::{Deserialize, Serialize};
-use twilight_model::{channel::Channel, guild::Guild, id::GuildId};
+use twilight_model::application::interaction::Interaction;
 
 /// Event received from Discord.
 ///
@@ -16,50 +16,12 @@ use twilight_model::{channel::Channel, guild::Guild, id::GuildId};
 /// by the bot. Only event types that are processed are included.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Event {
-    GuildJoin(GuildJoin),
-    GuildLeave(GuildLeave),
-    ChannelCreate(ChannelCreate),
-    ChannelUpdate(ChannelUpdate),
-    ChannelDelete(ChannelDelete),
+    InteractionCreate(InteractionCreate),
 }
 
-/// Guild join event.
-///
-/// This event is only emitted after the shard is ready.
+/// Interaction create event.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct GuildJoin {
-    /// The joined guild.
-    pub guild: Guild,
-}
-
-/// Guild leave event.
-///
-/// This event is not emitted when the guild became unavailable.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct GuildLeave {
-    /// ID of the leaved guild.
-    pub id: GuildId,
-}
-
-/// Channel create event.
-///
-/// This event is only emitted after the shard is ready.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct ChannelCreate {
-    /// The created channel.
-    pub channel: Channel,
-}
-
-/// Channel update event.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct ChannelUpdate {
-    /// The updated channel.
-    pub channel: Channel,
-}
-
-/// Channel delete event.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct ChannelDelete {
-    /// The deleted channel.
-    pub channel: Channel,
+pub struct InteractionCreate {
+    /// The created interaction.
+    interaction: Interaction,
 }
