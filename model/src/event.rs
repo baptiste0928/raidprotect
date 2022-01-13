@@ -3,14 +3,12 @@
 //! This module contains models representing Discord events received by theg
 //! gateway. They match [`twilight_model::gateway::event`] models with additional
 //! fields for cached resources.
+//!
+//! The gateway only send events required by consumers to avoid using unneeded
+//! resources.
 
 use serde::{Deserialize, Serialize};
-use twilight_model::{
-    guild::{Guild, PartialGuild},
-    id::GuildId,
-};
-
-use crate::cache::CachedGuild;
+use twilight_model::{channel::Channel, guild::Guild, id::GuildId};
 
 /// Event received from Discord.
 ///
@@ -19,34 +17,49 @@ use crate::cache::CachedGuild;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Event {
     GuildJoin(GuildJoin),
-    GuildUpdate(GuildUpdate),
     GuildLeave(GuildLeave),
+    ChannelCreate(ChannelCreate),
+    ChannelUpdate(ChannelUpdate),
+    ChannelDelete(ChannelDelete),
 }
 
-/// Guild create event.
+/// Guild join event.
 ///
-/// This event is only emitted after the shard is ready to avoid sending events
-/// while filling the cache.
+/// This event is only emitted after the shard is ready.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct GuildJoin {
+    /// The joined guild.
     pub guild: Guild,
 }
 
-/// Guild update event.
+/// Guild leave event.
 ///
-/// The event is not emitted if the guild was not previously cached.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct GuildUpdate {
-    pub cached: CachedGuild,
-    pub guild: PartialGuild,
-}
-
-/// Guild delete event.
-///
-/// This event is not emitted if the guild was deleted because it becomes
-/// unavailable.
+/// This event is not emitted when the guild became unavailable.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct GuildLeave {
-    pub cached: Option<CachedGuild>,
+    /// ID of the leaved guild.
     pub id: GuildId,
+}
+
+/// Channel create event.
+///
+/// This event is only emitted after the shard is ready.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ChannelCreate {
+    /// The created channel.
+    pub channel: Channel,
+}
+
+/// Channel update event.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ChannelUpdate {
+    /// The updated channel.
+    pub channel: Channel,
+}
+
+/// Channel delete event.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ChannelDelete {
+    /// The deleted channel.
+    pub channel: Channel,
 }
