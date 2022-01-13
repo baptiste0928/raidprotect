@@ -10,6 +10,7 @@ use twilight_gateway::{
     cluster::{ClusterStartError, Events, ShardScheme},
     Cluster, Event, Intents,
 };
+use twilight_http::Client as HttpClient;
 use twilight_model::gateway::{
     payload::outgoing::update_presence::UpdatePresencePayload,
     presence::{ActivityType, MinimalActivity, Status},
@@ -28,10 +29,11 @@ pub struct ShardCluster {
 
 impl ShardCluster {
     /// Initialize a new shards cluster without starting it.
-    pub async fn new(token: &str) -> Result<Self, ClusterStartError> {
+    pub async fn new(token: &str, http: Arc<HttpClient>) -> Result<Self, ClusterStartError> {
         let intents = Intents::GUILDS | Intents::GUILD_MEMBERS | Intents::GUILD_MESSAGES;
 
         let (cluster, events) = Cluster::builder(token, intents)
+            .http_client(http)
             .shard_scheme(ShardScheme::Auto)
             .presence(presence())
             .build()

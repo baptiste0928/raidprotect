@@ -2,6 +2,7 @@ use std::{net::Ipv4Addr, sync::Arc, time::Duration};
 
 use anyhow::{Context, Result};
 use raidprotect_util::shutdown::{Shutdown, ShutdownSubscriber};
+use remoc::rtc::ServerShared;
 use tokio::{
     net::{TcpListener, TcpStream},
     sync::Semaphore,
@@ -9,7 +10,10 @@ use tokio::{
 };
 use tracing::{debug, error, info, instrument, warn};
 
-use crate::server::handler::Handler;
+use crate::{
+    cache::{Cache, CacheClient, CacheServerShared},
+    server::handler::Handler,
+};
 
 /// Maximum number of connections that can be handled concurrently.
 const MAX_CONNECTIONS: usize = 10;
@@ -30,12 +34,17 @@ pub struct GatewayListener {
     /// from the semaphore. If the semaphore is empty, the server will wait
     /// for one.
     limit_connections: Arc<Semaphore>,
+    /// Cache client exposed by the server.
+    cache: CacheClient,
 }
 
 impl GatewayListener {
     /// Start the server and handle incoming connections.
-    #[instrument(name = "start_listener", skip(shutdown))]
-    pub async fn start(port: u16, mut shutdown: ShutdownSubscriber) -> Result<()> {
+    #[instrument(name = "start_listener", skip(cache, shutdown))]
+    pub async fn start<C>(port: u16, cache: Arc<C>, mut shutdown: ShutdownSubscriber) -> Result<()>
+    where
+        C: Cache + Send + Sync + 'static,
+    {
         let addr = (Ipv4Addr::LOCALHOST, port);
         let listener = TcpListener::bind(addr)
             .await
@@ -43,10 +52,16 @@ impl GatewayListener {
 
         info!("gateway listening on {:?}", addr);
 
+        // Start the cache server
+        let (server, cache) = CacheServerShared::new(cache, 10);
+        tokio::spawn(server.serve(true));
+        debug!("cache server started");
+
         let server = Self {
             listener,
             shutdown: Shutdown::new(),
             limit_connections: Arc::new(Semaphore::new(MAX_CONNECTIONS)),
+            cache,
         };
 
         let result = tokio::select! {
@@ -84,9 +99,10 @@ impl GatewayListener {
             self.limit_connections.acquire().await.unwrap().forget();
             let socket = self.accept().await?;
             let shutdown = self.shutdown.subscriber();
+            let cache = self.cache.clone();
 
             tokio::spawn(async move {
-                if let Err(err) = Handler::handle(socket, shutdown).await {
+                if let Err(err) = Handler::handle(socket, cache, shutdown).await {
                     error!(error = %err, "error handling connection")
                 }
             });
