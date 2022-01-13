@@ -10,6 +10,8 @@
 use serde::{Deserialize, Serialize};
 use twilight_model::application::interaction::Interaction;
 
+use crate::cache::CachedGuild;
+
 /// Event received from Discord.
 ///
 /// This type contain all events that can be received from Discord and handled
@@ -22,6 +24,8 @@ pub enum Event {
 /// Interaction create event.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct InteractionCreate {
+    /// The cached guild if interaction was run in a guild.
+    guild: Option<CachedGuild>,
     /// The created interaction.
     interaction: Interaction,
 }

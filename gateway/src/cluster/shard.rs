@@ -1,4 +1,4 @@
-//! Discord shards cluster.
+//! Shards cluster implementation.
 
 use std::sync::Arc;
 
