@@ -43,6 +43,7 @@ async fn main() -> Result<()> {
     let server = tokio::spawn(GatewayListener::start(
         config.port,
         cache.clone(),
+        cluster.broadcast.clone(),
         shutdown.subscriber(),
     ));
 

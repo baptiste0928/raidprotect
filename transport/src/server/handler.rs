@@ -1,12 +1,14 @@
 use anyhow::{Context, Result};
+use raidprotect_model::event::Event;
 use raidprotect_util::shutdown::{Shutdown, ShutdownSubscriber};
 use remoc::rch;
-use tokio::net::TcpStream;
+use tokio::{net::TcpStream, sync::broadcast};
 use tracing::{debug, error, instrument, warn, Instrument};
 
 use crate::{
     cache::CacheClient,
-    model::{BaseRequest, CacheResponse},
+    model::{BaseRequest, CacheResponse, EventBroadcastResponse},
+    server::events::EventBroadcastHandler,
 };
 
 /// Connection handler.
@@ -20,6 +22,8 @@ pub struct Handler {
     shutdown: Shutdown,
     /// Cache exposed by the server.
     cache: CacheClient,
+    /// Event stream receiver
+    events: broadcast::Sender<Event>,
 }
 
 impl Handler {
@@ -28,6 +32,7 @@ impl Handler {
     pub async fn handle(
         socket: TcpStream,
         cache: CacheClient,
+        events: broadcast::Sender<Event>,
         mut shutdown: ShutdownSubscriber,
     ) -> Result<()> {
         let (socket_rx, socket_tx) = socket.into_split();
@@ -54,6 +59,7 @@ impl Handler {
             _sender,
             shutdown: Shutdown::new(),
             cache,
+            events,
         };
 
         let result = tokio::select! {
@@ -76,8 +82,10 @@ impl Handler {
     async fn handle_requests(&self, receiver: &mut rch::base::Receiver<BaseRequest>) -> Result<()> {
         while let Some(req) = receiver.recv().await? {
             match req {
-                BaseRequest::EventBroadcast { .. } => (),
-                BaseRequest::Cache { callback } => self.handle_cache_request(callback).await,
+                BaseRequest::EventBroadcast { callback } => {
+                    self.handle_event_broadcast_request(callback)
+                }
+                BaseRequest::Cache { callback } => self.handle_cache_request(callback),
             }
         }
 
@@ -85,7 +93,9 @@ impl Handler {
     }
 
     #[instrument(skip_all)]
-    async fn handle_cache_request(&self, callback: rch::oneshot::Sender<CacheResponse>) {
+    fn handle_cache_request(&self, callback: rch::oneshot::Sender<CacheResponse>) {
+        debug!("received cache request");
+
         let res = CacheResponse {
             client: self.cache.clone(),
         };
@@ -93,5 +103,20 @@ impl Handler {
         if let Err(err) = callback.send(res) {
             warn!(error = %err, "failed to send cache response")
         };
+    }
+
+    #[instrument(skip_all)]
+    fn handle_event_broadcast_request(
+        &self,
+        callback: rch::oneshot::Sender<EventBroadcastResponse>,
+    ) {
+        debug!("received event broadcast request");
+
+        let events = self.events.subscribe();
+        let shutdown = self.shutdown.subscriber();
+
+        tokio::spawn(async move {
+            EventBroadcastHandler::start(events, callback, shutdown).await;
+        });
     }
 }

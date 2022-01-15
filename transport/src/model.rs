@@ -3,6 +3,7 @@
 //! This module contains models for requests and responses
 //! used by the client and the server.
 
+use raidprotect_model::event::Event;
 use remoc::rch;
 use serde::{Deserialize, Serialize};
 
@@ -27,7 +28,19 @@ pub enum BaseRequest {
 
 /// Response of a [`BaseRequest::EventBroadcast`].
 #[derive(Debug, Serialize, Deserialize)]
-pub struct EventBroadcastResponse {}
+pub struct EventBroadcastResponse {
+    /// The requested event stream.
+    pub events: rch::mpsc::Receiver<EventBroadcast>,
+}
+
+/// Type send with an event stream.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EventBroadcast {
+    /// Channel used to ack event reception.
+    pub ack: rch::oneshot::Sender<()>,
+    /// The received event.
+    pub event: Event,
+}
 
 /// Response of a [`BaseRequest::Cache`].
 #[derive(Debug, Serialize, Deserialize)]

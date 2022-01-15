@@ -1,11 +1,12 @@
 use std::{net::Ipv4Addr, sync::Arc, time::Duration};
 
 use anyhow::{Context, Result};
+use raidprotect_model::event::Event;
 use raidprotect_util::shutdown::{Shutdown, ShutdownSubscriber};
 use remoc::rtc::ServerShared;
 use tokio::{
     net::{TcpListener, TcpStream},
-    sync::Semaphore,
+    sync::{broadcast, Semaphore},
     time,
 };
 use tracing::{debug, error, info, instrument, warn};
@@ -36,12 +37,19 @@ pub struct GatewayListener {
     limit_connections: Arc<Semaphore>,
     /// Cache client exposed by the server.
     cache: CacheClient,
+    /// Event stream receiver
+    events: broadcast::Sender<Event>,
 }
 
 impl GatewayListener {
     /// Start the server and handle incoming connections.
     #[instrument(name = "start_listener", skip(cache, shutdown))]
-    pub async fn start<C>(port: u16, cache: Arc<C>, mut shutdown: ShutdownSubscriber) -> Result<()>
+    pub async fn start<C>(
+        port: u16,
+        cache: Arc<C>,
+        events: broadcast::Sender<Event>,
+        mut shutdown: ShutdownSubscriber,
+    ) -> Result<()>
     where
         C: Cache + Send + Sync + 'static,
     {
@@ -62,6 +70,7 @@ impl GatewayListener {
             shutdown: Shutdown::new(),
             limit_connections: Arc::new(Semaphore::new(MAX_CONNECTIONS)),
             cache,
+            events,
         };
 
         let result = tokio::select! {
@@ -100,9 +109,10 @@ impl GatewayListener {
             let socket = self.accept().await?;
             let shutdown = self.shutdown.subscriber();
             let cache = self.cache.clone();
+            let events = self.events.clone();
 
             tokio::spawn(async move {
-                if let Err(err) = Handler::handle(socket, cache, shutdown).await {
+                if let Err(err) = Handler::handle(socket, cache, events, shutdown).await {
                     error!(error = %err, "error handling connection")
                 }
             });

@@ -6,7 +6,7 @@ use futures::StreamExt;
 use raidprotect_model::event::Event;
 use raidprotect_util::shutdown::ShutdownSubscriber;
 use tokio::sync::broadcast;
-use tracing::{instrument, trace};
+use tracing::{info_span, instrument, trace};
 use twilight_gateway::{
     cluster::{ClusterStartError, Events, ShardScheme},
     Cluster, Intents,
@@ -80,8 +80,12 @@ impl ShardCluster {
     /// Handle incoming events
     async fn handle_events(&mut self) {
         while let Some((_shard_id, event)) = self.events.next().await {
-            trace!(event = ?event, "received event");
-            event.process(&self.cache, &self.broadcast);
+            let span = info_span!("handle_event");
+
+            span.in_scope(|| {
+                trace!(event = ?event, "received event");
+                event.process(&self.cache, &self.broadcast);
+            });
         }
     }
 }

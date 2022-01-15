@@ -28,6 +28,7 @@
 //!
 //! [`Shutdown`]: raidprotect_util::shutdown::Shutdown
 
+mod events;
 mod handler;
 mod listener;
 

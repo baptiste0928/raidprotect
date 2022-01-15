@@ -1,7 +1,7 @@
 use match_any::match_any;
 use raidprotect_model::event::{Event, InteractionCreate};
 use tokio::sync::broadcast::Sender;
-use tracing::debug;
+use tracing::trace;
 use twilight_model::gateway::{
     event::Event as GatewayEvent,
     payload::incoming::{self},
@@ -33,7 +33,7 @@ impl ProcessEvent for GatewayEvent {
             | RoleDelete(event)
             | MemberAdd(event)
             | MemberUpdate(event) => event.process(cache, broadcast),
-            event => debug!(event = ?event, "received unprocessed event")
+            event => trace!(kind = event.kind().name(), "unprocessed event type")
         )
     }
 }
