@@ -3,12 +3,13 @@
 use std::sync::Arc;
 
 use futures::StreamExt;
+use raidprotect_model::event::Event;
 use raidprotect_util::shutdown::ShutdownSubscriber;
 use tokio::sync::broadcast;
 use tracing::{instrument, trace};
 use twilight_gateway::{
     cluster::{ClusterStartError, Events, ShardScheme},
-    Cluster, Event, Intents,
+    Cluster, Intents,
 };
 use twilight_http::Client as HttpClient;
 use twilight_model::gateway::{
@@ -16,7 +17,7 @@ use twilight_model::gateway::{
     presence::{ActivityType, MinimalActivity, Status},
 };
 
-use crate::cache::InMemoryCache;
+use crate::{cache::InMemoryCache, cluster::event::ProcessEvent};
 
 /// Wrapper around a twilight [`Cluster`].
 #[derive(Debug)]
@@ -79,7 +80,8 @@ impl ShardCluster {
     /// Handle incoming events
     async fn handle_events(&mut self) {
         while let Some((_shard_id, event)) = self.events.next().await {
-            trace!(event = ?event, "received event")
+            trace!(event = ?event, "received event");
+            event.process(&self.cache, &self.broadcast);
         }
     }
 }

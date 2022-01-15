@@ -25,7 +25,7 @@ pub enum Event {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct InteractionCreate {
     /// The cached guild if interaction was run in a guild.
-    guild: Option<CachedGuild>,
+    pub guild: Option<CachedGuild>,
     /// The created interaction.
-    interaction: Interaction,
+    pub interaction: Interaction,
 }
