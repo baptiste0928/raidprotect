@@ -3,10 +3,14 @@ use raidprotect_model::event::Event;
 use raidprotect_util::shutdown::ShutdownSubscriber;
 use remoc::rch;
 use tokio::sync::broadcast;
-use tracing::{debug, error, instrument, warn, trace};
+use tracing::{debug, error, instrument, trace, warn};
 
 use crate::model::EventBroadcastResponse;
 
+/// Event broadcast handler.
+///
+/// This type hold a [`rch::mpsc`] channel used to send events received by
+/// the gateway to client services.
 pub struct EventBroadcastHandler {
     /// Event sender stream.
     sender: rch::mpsc::Sender<Event>,
