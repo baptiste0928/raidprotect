@@ -1,20 +1,23 @@
-//! Discord shards cluster.
+//! Shards cluster implementation.
 
 use std::sync::Arc;
 
 use futures::StreamExt;
+use raidprotect_model::event::Event;
 use raidprotect_util::shutdown::ShutdownSubscriber;
 use tokio::sync::broadcast;
-use tracing::{debug, instrument};
+use tracing::{info_span, instrument, trace};
 use twilight_gateway::{
     cluster::{ClusterStartError, Events, ShardScheme},
-    Cluster, Event, Intents,
+    Cluster, Intents,
 };
 use twilight_http::Client as HttpClient;
 use twilight_model::gateway::{
     payload::outgoing::update_presence::UpdatePresencePayload,
     presence::{ActivityType, MinimalActivity, Status},
 };
+
+use crate::{cache::InMemoryCache, cluster::event::ProcessEvent};
 
 /// Wrapper around a twilight [`Cluster`].
 #[derive(Debug)]
@@ -25,11 +28,17 @@ pub struct ShardCluster {
     cluster: Arc<Cluster>,
     /// Events stream
     events: Events,
+    /// In-memory cache
+    cache: Arc<InMemoryCache>,
 }
 
 impl ShardCluster {
     /// Initialize a new shards cluster without starting it.
-    pub async fn new(token: &str, http: Arc<HttpClient>) -> Result<Self, ClusterStartError> {
+    pub async fn new(
+        token: &str,
+        http: Arc<HttpClient>,
+        cache: Arc<InMemoryCache>,
+    ) -> Result<Self, ClusterStartError> {
         let intents = Intents::GUILDS | Intents::GUILD_MEMBERS | Intents::GUILD_MESSAGES;
 
         let (cluster, events) = Cluster::builder(token, intents)
@@ -45,6 +54,7 @@ impl ShardCluster {
             broadcast: sender,
             cluster: Arc::new(cluster),
             events,
+            cache,
         })
     }
 
@@ -70,7 +80,12 @@ impl ShardCluster {
     /// Handle incoming events
     async fn handle_events(&mut self) {
         while let Some((_shard_id, event)) = self.events.next().await {
-            debug!(event = ?event, "received event")
+            let span = info_span!("handle_event");
+
+            span.in_scope(|| {
+                trace!(event = ?event, "received event");
+                event.process(&self.cache, &self.broadcast);
+            });
         }
     }
 }

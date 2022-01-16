@@ -35,7 +35,7 @@ async fn main() -> Result<()> {
     let cache = Arc::new(InMemoryCache::new(current_user.id));
 
     // Initialize the cluster
-    let cluster = ShardCluster::new(&config.token, http.clone())
+    let cluster = ShardCluster::new(&config.token, http.clone(), cache.clone())
         .await
         .context("Failed to initialize shards cluster")?;
 
@@ -43,6 +43,7 @@ async fn main() -> Result<()> {
     let server = tokio::spawn(GatewayListener::start(
         config.port,
         cache.clone(),
+        cluster.broadcast.clone(),
         shutdown.subscriber(),
     ));
 

@@ -591,6 +591,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "match_any"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95be9b73c284f83dea49e484302dcf0ebe6b72ac59c5a9c422bd0e52676f33a3"
+
+[[package]]
 name = "matches"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -782,6 +788,7 @@ dependencies = [
  "dashmap",
  "figment",
  "futures",
+ "match_any",
  "raidprotect_model",
  "raidprotect_transport",
  "raidprotect_util",

@@ -17,6 +17,7 @@ async-trait = "0.1"
 dashmap = "4"
 figment = { version = "0.10", features = ["env", "toml"] }
 futures = "0.3"
+match_any = "1"
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1.14", features = ["macros", "rt-multi-thread", "sync"] }
 tracing = { version = "0.1" }
