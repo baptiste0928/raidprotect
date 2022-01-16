@@ -1,26 +1,65 @@
+use anyhow::Result;
 use raidprotect_model::event::Event;
 use raidprotect_util::shutdown::ShutdownSubscriber;
 use remoc::rch;
 use tokio::sync::broadcast;
-use tracing::instrument;
+use tracing::{debug, error, instrument, warn, trace};
 
-use crate::model::{EventBroadcast, EventBroadcastResponse};
+use crate::model::EventBroadcastResponse;
 
 pub struct EventBroadcastHandler {
-    /// Event receiver stream.
-    events: broadcast::Receiver<Event>,
     /// Event sender stream.
-    sender: rch::mpsc::Sender<EventBroadcast>,
+    sender: rch::mpsc::Sender<Event>,
 }
 
 impl EventBroadcastHandler {
     /// Start an event broadcast handler.
     #[instrument(skip_all)]
     pub async fn start(
-        events: broadcast::Receiver<Event>,
+        mut events: broadcast::Receiver<Event>,
         callback: rch::oneshot::Sender<EventBroadcastResponse>,
         mut shutdown: ShutdownSubscriber,
     ) {
-        todo!()
+        let (sender, receiver) = rch::mpsc::channel(5);
+
+        // Send the event stream to the client
+        let res = EventBroadcastResponse { events: receiver };
+
+        if let Err(err) = callback.send(res) {
+            error!(error = ?err, "failed to send event stream channel");
+            return;
+        }
+
+        // Start the handler
+        let handler = EventBroadcastHandler { sender };
+
+        tokio::select! {
+            res = handler.handle_events(&mut events) => {
+                if let Err(err) = res {
+                    error!(error = %err, "event stream closed");
+                }
+            }
+            _ = shutdown.wait_shutdown() => {
+                debug!("shutting down");
+            }
+        };
+
+        drop(handler.sender);
+    }
+
+    /// Handle incoming events
+    async fn handle_events(&self, events: &mut broadcast::Receiver<Event>) -> Result<()> {
+        loop {
+            let event = events.recv().await?;
+            let sender = self.sender.clone();
+
+            tokio::spawn(async move {
+                trace!(event = ?event, "sending event to client");
+
+                if let Err(err) = sender.send(event).await {
+                    warn!(error = %err, "error while sending event")
+                }
+            });
+        }
     }
 }

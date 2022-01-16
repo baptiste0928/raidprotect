@@ -30,16 +30,7 @@ pub enum BaseRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EventBroadcastResponse {
     /// The requested event stream.
-    pub events: rch::mpsc::Receiver<EventBroadcast>,
-}
-
-/// Type send with an event stream.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct EventBroadcast {
-    /// Channel used to ack event reception.
-    pub ack: rch::oneshot::Sender<()>,
-    /// The received event.
-    pub event: Event,
+    pub events: rch::mpsc::Receiver<Event>,
 }
 
 /// Response of a [`BaseRequest::Cache`].
