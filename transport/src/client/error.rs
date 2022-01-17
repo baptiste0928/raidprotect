@@ -15,7 +15,7 @@ pub type RemocConnectError = remoc::ConnectError<io::Error, io::Error>;
 pub enum ClientError {
     /// Failed to connect to the server.
     Connect { source: io::Error },
-    /// Failed to intialize [`remoc`] connection.
+    /// Failed to initialize [`remoc`] connection.
     RemocConnect { source: RemocConnectError },
 }
 
@@ -36,7 +36,7 @@ impl Display for ClientError {
                 write!(f, "failed to connect to remote server: {}", source)
             }
             ClientError::RemocConnect { source } => {
-                write!(f, "failed to intialize remoc connection: {}", source)
+                write!(f, "failed to initialize remoc connection: {}", source)
             }
         }
     }
