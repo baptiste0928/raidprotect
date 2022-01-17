@@ -8,9 +8,12 @@
 //! cheaply. Reconnection logic is handled internally.
 //!
 //! [`server`]: crate::server
+#![allow(unused)]
 
 #[allow(clippy::module_inception)]
 mod client;
 mod connect;
+mod error;
 
 pub use client::GatewayClient;
+pub use error::ClientError;
