@@ -1,4 +1,3 @@
-use match_any::match_any;
 use raidprotect_model::event::{Event, InteractionCreate};
 use tokio::sync::broadcast::Sender;
 use tracing::trace;
@@ -15,26 +14,36 @@ pub trait ProcessEvent: Sized {
     fn process(self, cache: &InMemoryCache, broadcast: &Sender<Event>);
 }
 
+macro_rules! process_events {
+    ($self:ident, $cache:ident, $broadcast:ident => $( $event:path ),+ ) => {
+        match $self {
+            $(
+                $event(event) => event.process($cache, $broadcast),
+            )+
+            event => trace!(kind = event.kind().name(), "unprocessed event type"),
+        }
+    };
+}
+
 impl ProcessEvent for GatewayEvent {
     fn process(self, cache: &InMemoryCache, broadcast: &Sender<Event>) {
         use GatewayEvent::*;
 
-        match_any!(self,
-            GuildCreate(event)
-            | GuildDelete(event)
-            | GuildUpdate(event)
-            | ChannelCreate(event)
-            | ChannelDelete(event)
-            | ChannelUpdate(event)
-            | ThreadCreate(event)
-            | ThreadDelete(event)
-            | ThreadUpdate(event)
-            | RoleCreate(event)
-            | RoleDelete(event)
-            | MemberAdd(event)
-            | MemberUpdate(event) => event.process(cache, broadcast),
-            event => trace!(kind = event.kind().name(), "unprocessed event type")
-        )
+        process_events! { self, cache, broadcast =>
+            GuildCreate,
+            GuildDelete,
+            GuildUpdate,
+            ChannelCreate,
+            ChannelDelete,
+            ChannelUpdate,
+            ThreadCreate,
+            ThreadDelete,
+            ThreadUpdate,
+            RoleCreate,
+            RoleDelete,
+            MemberAdd,
+            MemberUpdate
+        }
     }
 }
 
