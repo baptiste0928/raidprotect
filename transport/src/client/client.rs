@@ -2,6 +2,8 @@ use std::sync::Arc;
 
 use tokio::sync::RwLock;
 
+use super::connect::Connection;
+
 /// Gateway client.
 ///
 /// The internal client state is held in an [`Arc`], allowing to cheaply clone
@@ -11,4 +13,6 @@ pub struct GatewayClient {
 }
 
 /// Internal client state.
-pub struct ClientInner {}
+pub struct ClientInner {
+    connection: Connection,
+}

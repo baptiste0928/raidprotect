@@ -3,7 +3,7 @@ use raidprotect_model::event::Event;
 use raidprotect_util::shutdown::{Shutdown, ShutdownSubscriber};
 use remoc::rch;
 use tokio::{net::TcpStream, sync::broadcast};
-use tracing::{debug, error, instrument, warn, Instrument};
+use tracing::{debug, error, info_span, instrument, warn, Instrument};
 
 use crate::{
     cache::CacheClient,
@@ -44,9 +44,9 @@ impl Handler {
             .context("failed to initialize remoc connection")?;
 
         // Start remoc connection
-        let conn = tokio::spawn(async move {
+        let connection = tokio::spawn(async move {
             let res = conn
-                .instrument(tracing::info_span!("remoc connection").or_current())
+                .instrument(info_span!("remoc connection").or_current())
                 .await;
 
             if let Err(err) = res {
@@ -74,7 +74,7 @@ impl Handler {
         // Send shutdown signal and stop connection
         receiver.close().await;
         handler.shutdown.shutdown(2).await;
-        conn.abort();
+        connection.abort();
 
         result
     }
