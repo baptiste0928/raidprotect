@@ -1,5 +1,5 @@
 tasks:
-  - before: rustup component add clippy
+  - before: rustup install stable --profile default && rustup default stable
   - init: cargo build
 
 vscode:
