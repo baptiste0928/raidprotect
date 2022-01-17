@@ -1,15 +1,24 @@
-use std::net::IpAddr;
-
 use remoc::rch;
-use tokio::net::{TcpStream, ToSocketAddrs};
+use tokio::{
+    net::{TcpStream, ToSocketAddrs},
+    task::JoinHandle,
+};
 use tracing::{error, info_span, Instrument};
+
+use crate::model::BaseRequest;
 
 use super::ClientError;
 
-/// Wrapper around a raw remoc connection over TCP
+/// Wrapper around a raw remoc connection over TCP.
 pub struct Connection {
-    tx: rch::base::Sender<()>,
-    rx: rch::base::Receiver<()>,
+    /// Base channel sender
+    sender: rch::base::Sender<BaseRequest>,
+    /// Base channel receiver (unused)
+    _receiver: rch::base::Receiver<()>,
+    /// Connection task handle
+    ///
+    /// The connection is aborted when this type is dropped.
+    connection: JoinHandle<()>,
 }
 
 impl Connection {
@@ -23,7 +32,7 @@ impl Connection {
 
         // Start remoc connection
         let cfg = remoc::Cfg::default();
-        let (conn, tx, rx) = remoc::Connect::io(cfg, socket_rx, socket_tx).await?;
+        let (conn, sender, _receiver) = remoc::Connect::io(cfg, socket_rx, socket_tx).await?;
 
         let connection = tokio::spawn(async move {
             let res = conn
@@ -35,6 +44,23 @@ impl Connection {
             }
         });
 
-        Ok(Self { tx, rx })
+        Ok(Self {
+            sender,
+            _receiver,
+            connection,
+        })
+    }
+
+    /// Send a request through the connection
+    pub async fn send(&mut self, item: BaseRequest) -> Result<(), ClientError> {
+        self.sender.send(item).await?;
+
+        Ok(())
+    }
+}
+
+impl Drop for Connection {
+    fn drop(&mut self) {
+        self.connection.abort()
     }
 }
