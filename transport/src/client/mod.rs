@@ -9,6 +9,8 @@
 //!
 //! [`server`]: crate::server
 
+#[allow(clippy::module_inception)]
 mod client;
+mod connect;
 
 pub use client::GatewayClient;

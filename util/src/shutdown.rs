@@ -102,7 +102,6 @@ impl Shutdown {
     /// When called, a shutdown signal is sent to all subtasks.
     /// The function returns when all subtasks have gracefully
     /// stopped or when the timeout is expired.
-    #[must_use = "shutdown has no effect if no signal is emitted"]
     pub async fn shutdown(self, timeout: u64) -> bool {
         // Extract channels to allow dropping them.
         let Shutdown {
@@ -150,7 +149,6 @@ impl ShutdownSubscriber {
     }
 
     /// Wait until a shutdown signal is received.
-    #[must_use = "subscribers should listen to shutdown signal"]
     pub async fn wait_shutdown(&mut self) {
         if self.shutdown {
             return;
