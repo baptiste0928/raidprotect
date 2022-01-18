@@ -24,6 +24,8 @@ pub enum ClientError {
     BaseSend {
         source: rch::base::SendError<BaseRequest>,
     },
+    /// Reconnection to the server timed out
+    ReconnectTimeout,
 }
 
 impl Error for ClientError {
@@ -32,6 +34,7 @@ impl Error for ClientError {
             ClientError::Connect { source } => Some(source),
             ClientError::RemocConnect { source } => Some(source),
             ClientError::BaseSend { source } => Some(source),
+            _ => None,
         }
     }
 }
@@ -48,6 +51,7 @@ impl Display for ClientError {
             ClientError::BaseSend { source } => {
                 write!(f, "failed to send request through base channel: {}", source)
             }
+            ClientError::ReconnectTimeout => write!(f, "reconnection to the server timed out"),
         }
     }
 }

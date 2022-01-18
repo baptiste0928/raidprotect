@@ -3,7 +3,7 @@ use tokio::{
     net::{TcpStream, ToSocketAddrs},
     task::JoinHandle,
 };
-use tracing::{error, info_span, Instrument};
+use tracing::{error, info_span, warn, Instrument};
 
 use crate::model::BaseRequest;
 
@@ -40,7 +40,7 @@ impl Connection {
                 .await;
 
             if let Err(err) = res {
-                error!(error = %err, "remoc connection error")
+                warn!(error = %err, "remoc connection error")
             }
         });
 
