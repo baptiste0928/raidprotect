@@ -1,9 +1,12 @@
 use std::{ops::Deref, sync::Arc, time::Duration};
 
 use tokio::{
-    sync::{broadcast, Mutex, RwLock, RwLockReadGuard},
+    net::ToSocketAddrs,
+    sync::{broadcast, Mutex, RwLock},
     time::sleep,
 };
+
+use crate::cache::CacheClient;
 
 use super::{connect::Connection, ClientError};
 
@@ -13,6 +16,22 @@ use super::{connect::Connection, ClientError};
 /// this type.
 pub struct GatewayClient {
     inner: Arc<ClientInner>,
+}
+
+impl GatewayClient {
+    /// Start a new [`GatewayClient`]
+    pub async fn start(addr: impl ToSocketAddrs) -> Result<Self, ClientError> {
+        let inner = ClientInner::start(addr).await?;
+
+        Ok(Self {
+            inner: Arc::new(inner),
+        })
+    }
+
+    /// Get the current [`CacheClient`]
+    pub async fn cache(&self) -> Result<CacheClient, ClientError> {
+        todo!()
+    }
 }
 
 /// Internal client state.
@@ -25,13 +44,24 @@ pub struct GatewayClient {
 /// mspc channel. When disconnected, all requests to the client will be marked as
 /// pending, with a timeout of one second.
 pub struct ClientInner {
-    connection: RwLock<Connection>,
+    connection: Reconnect<Connection>,
+}
+
+impl ClientInner {
+    /// Initialize a new [`ClientInner`] with an active connection
+    async fn start(addr: impl ToSocketAddrs) -> Result<Self, ClientError> {
+        let connection = Connection::start(addr).await?;
+
+        Ok(Self {
+            connection: Reconnect::new(connection),
+        })
+    }
 }
 
 /// Reconnection handler.
 ///
-/// This type wraps a client of type `T` with a connection state. It implement
-/// [`Deref`] to access to the inner client.
+/// This type is similar to [`RwLock`] but wraps a client of type `T` with a
+/// connection state. It implement [`Deref`] to access to the inner client.
 struct Reconnect<T> {
     /// Broadcast channel to notify on connection
     broadcast: broadcast::Sender<()>,
@@ -65,7 +95,8 @@ impl<T> Reconnect<T> {
 
     /// Wait until the client is connected.
     ///
-    /// An error is returned if the reconnection time is longer than `timeout`.
+    /// An error is returned if the reconnection time is longer than `timeout`
+    /// seconds.
     async fn wait_connected(&self, timeout: u64) -> Result<(), ClientError> {
         if *self.connected.read().await {
             return Ok(());
