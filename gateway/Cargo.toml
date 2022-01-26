@@ -21,6 +21,6 @@ serde = { version = "1", features = ["derive"] }
 tokio = { version = "1.14", features = ["macros", "rt-multi-thread", "sync"] }
 tracing = { version = "0.1" }
 
-twilight-model = "0.8"
-twilight-gateway = "0.8"
-twilight-http = "0.8"
+twilight-model = "0.9"
+twilight-gateway = "0.9"
+twilight-http = "0.9"

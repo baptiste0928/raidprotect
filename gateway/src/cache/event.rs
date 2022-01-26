@@ -66,7 +66,7 @@ impl UpdateCache for GuildUpdate {
         let before = guild.clone();
 
         guild.name = self.name.clone();
-        guild.icon = self.icon.clone();
+        guild.icon = self.icon;
         guild.owner_id = self.owner_id;
 
         Some(before)

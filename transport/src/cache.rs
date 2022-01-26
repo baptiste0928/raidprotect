@@ -5,7 +5,10 @@
 
 use raidprotect_model::{
     cache::{CachedChannel, CachedGuild, CachedRole},
-    twilight::id::{ChannelId, GuildId, RoleId},
+    twilight::id::{
+        marker::{ChannelMarker, GuildMarker, RoleMarker},
+        Id,
+    },
 };
 use remoc::rtc::{self, CallError};
 
@@ -22,17 +25,17 @@ pub type CacheResult<T> = Result<Option<T>, CallError>;
 #[rtc::remote]
 pub trait Cache {
     /// Get a [`CachedGuild`] by ID.
-    async fn guild(&self, id: GuildId) -> CacheResult<CachedGuild>;
+    async fn guild(&self, id: Id<GuildMarker>) -> CacheResult<CachedGuild>;
 
     /// Get a [`CachedChannel`] by ID.
-    async fn channel(&self, id: ChannelId) -> CacheResult<CachedChannel>;
+    async fn channel(&self, id: Id<ChannelMarker>) -> CacheResult<CachedChannel>;
 
     /// Get all [`CachedChannel`] of a guild.
-    async fn channels(&self, id: GuildId) -> CacheResult<Vec<CachedChannel>>;
+    async fn channels(&self, id: Id<GuildMarker>) -> CacheResult<Vec<CachedChannel>>;
 
     /// Get a [`CachedRole`] by ID.
-    async fn role(&self, id: RoleId) -> CacheResult<CachedRole>;
+    async fn role(&self, id: Id<RoleMarker>) -> CacheResult<CachedRole>;
 
     /// Get all [`CachedRole`] of a guild.
-    async fn roles(&self, id: GuildId) -> CacheResult<Vec<CachedRole>>;
+    async fn roles(&self, id: Id<GuildMarker>) -> CacheResult<Vec<CachedRole>>;
 }
