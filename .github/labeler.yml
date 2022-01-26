@@ -6,6 +6,11 @@ labels:
       files:
         all: ['*', '!Cargo.lock']
 
+  - label: c-anti-spam
+    sync: true
+    matcher:
+      files: 'anti-spam/**/*'
+
   - label: c-gateway
     sync: true
     matcher:

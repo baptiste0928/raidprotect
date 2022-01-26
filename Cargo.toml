@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "anti-spam",
     "gateway",
     "model",
     "transport",

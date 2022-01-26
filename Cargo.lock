@@ -774,6 +774,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "raidprotect_anti_spam"
+version = "0.1.0"
+dependencies = [
+ "workspace-hack",
+]
+
+[[package]]
 name = "raidprotect_gateway"
 version = "0.1.0"
 dependencies = [
