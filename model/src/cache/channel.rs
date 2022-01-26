@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 use twilight_model::{
     channel::{permission_overwrite::PermissionOverwrite, ChannelType},
-    id::{ChannelId, GuildId},
+    id::{
+        marker::{ChannelMarker, GuildMarker},
+        Id,
+    },
 };
 
 use super::partial::{
@@ -25,8 +28,8 @@ pub enum CachedChannel {
 }
 
 impl CachedChannel {
-    /// Get the [`ChannelId`] of the channel.
-    pub fn id(&self) -> ChannelId {
+    /// Get the [`Id`] of the channel.
+    pub fn id(&self) -> Id<ChannelMarker> {
         match self {
             CachedChannel::Text(channel) => channel.id,
             CachedChannel::Category(channel) => channel.id,
@@ -34,8 +37,8 @@ impl CachedChannel {
         }
     }
 
-    /// Get the [`GuildId`] of the channel guild.
-    pub fn guild_id(&self) -> GuildId {
+    /// Get the [`Id`] of the channel guild.
+    pub fn guild_id(&self) -> Id<GuildMarker> {
         match self {
             CachedChannel::Text(channel) => channel.guild_id,
             CachedChannel::Category(channel) => channel.guild_id,
@@ -75,13 +78,13 @@ impl IntoPartial for CachedChannel {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct CachedTextChannel {
     /// Id of the channel.
-    pub id: ChannelId,
+    pub id: Id<ChannelMarker>,
     /// Id of the guild to which the channel belongs.
-    pub guild_id: GuildId,
+    pub guild_id: Id<GuildMarker>,
     /// Name of the channel.
     pub name: String,
     /// If the channel is in a category, the category id.
-    pub parent_id: Option<ChannelId>,
+    pub parent_id: Option<Id<ChannelMarker>>,
     /// Sorting position of the channel.
     pub position: i64,
     /// Permission overwrites of the channel.
@@ -113,9 +116,9 @@ impl IntoPartial for CachedTextChannel {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct CachedCategoryChannel {
     /// Id of the category.
-    pub id: ChannelId,
+    pub id: Id<ChannelMarker>,
     /// Id of the guild to which the category belongs.
-    pub guild_id: GuildId,
+    pub guild_id: Id<GuildMarker>,
     /// Name of the category.
     pub name: String,
     /// Sorting position of the category.
@@ -149,9 +152,9 @@ impl IntoPartial for CachedCategoryChannel {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct CachedThread {
     /// Id of the thread.
-    pub id: ChannelId,
+    pub id: Id<ChannelMarker>,
     /// Id of the guild to which the thread belongs.
-    pub guild_id: GuildId,
+    pub guild_id: Id<GuildMarker>,
     /// Name of the thread.
     pub name: String,
     /// Whether the thread is private.
@@ -160,7 +163,7 @@ pub struct CachedThread {
     ///
     /// This field can be [`None`] if the parent channel has been
     /// deleted.
-    pub parent_id: Option<ChannelId>,
+    pub parent_id: Option<Id<ChannelMarker>>,
     /// Amount of seconds a user has to wait between two message.
     pub rate_limit_per_user: Option<u64>,
 }

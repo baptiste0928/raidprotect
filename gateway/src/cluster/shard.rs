@@ -41,7 +41,7 @@ impl ShardCluster {
     ) -> Result<Self, ClusterStartError> {
         let intents = Intents::GUILDS | Intents::GUILD_MEMBERS | Intents::GUILD_MESSAGES;
 
-        let (cluster, events) = Cluster::builder(token, intents)
+        let (cluster, events) = Cluster::builder(token.to_string(), intents)
             .http_client(http)
             .shard_scheme(ShardScheme::Auto)
             .presence(presence())
