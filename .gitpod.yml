@@ -1,5 +1,7 @@
 tasks:
-  - before: rustup install stable --profile default && rustup default stable
+  - before: |
+      rustup install stable --profile default
+      rustup default stable
   - init: cargo build
 
 vscode:
@@ -7,4 +9,5 @@ vscode:
     - editorconfig.editorconfig
     - matklad.rust-analyzer
     - bungcip.better-toml
+    - serayuzgur.crates
     - eamodio.gitlens
