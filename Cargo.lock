@@ -786,6 +786,7 @@ dependencies = [
 name = "raidprotect-anti-spam"
 version = "0.1.0"
 dependencies = [
+ "raidprotect-model",
  "workspace-hack",
 ]
 
