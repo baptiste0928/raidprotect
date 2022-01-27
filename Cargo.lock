@@ -783,14 +783,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "raidprotect_anti_spam"
+name = "raidprotect-anti-spam"
 version = "0.1.0"
 dependencies = [
  "workspace-hack",
 ]
 
 [[package]]
-name = "raidprotect_gateway"
+name = "raidprotect-gateway"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -798,9 +798,9 @@ dependencies = [
  "dashmap",
  "figment",
  "futures",
- "raidprotect_model",
- "raidprotect_transport",
- "raidprotect_util",
+ "raidprotect-model",
+ "raidprotect-transport",
+ "raidprotect-util",
  "serde",
  "tokio",
  "tracing",
@@ -811,7 +811,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "raidprotect_model"
+name = "raidprotect-model"
 version = "0.1.0"
 dependencies = [
  "serde",
@@ -820,12 +820,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "raidprotect_transport"
+name = "raidprotect-transport"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "raidprotect_model",
- "raidprotect_util",
+ "raidprotect-model",
+ "raidprotect-util",
  "remoc",
  "serde",
  "tokio",
@@ -834,7 +834,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "raidprotect_util"
+name = "raidprotect-util"
 version = "0.1.0"
 dependencies = [
  "serde",
