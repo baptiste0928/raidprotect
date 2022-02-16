@@ -4,58 +4,58 @@ labels:
   - label: c-all
     matcher:
       files:
-        all: ['*', '!Cargo.lock']
+        all: ["*", "!Cargo.lock"]
 
   - label: c-cache
     sync: true
     matcher:
-      files: 'cache/**/*'
+      files: "cache/**/*"
 
   - label: c-gateway
     sync: true
     matcher:
-      files: 'gateway/**/*'
+      files: "gateway/**/*"
 
   - label: c-model
     sync: true
     matcher:
-      files: 'model/**/*'
+      files: "model/**/*"
 
   - label: c-transport
     sync: true
     matcher:
-      files: 'transport/**/*'
+      files: "transport/**/*"
 
   - label: c-util
     sync: true
     matcher:
-      files: 'util/**/*'
+      files: "util/**/*"
 
   - label: t-dependencies
     matcher:
-      files: 'Cargo.lock'
-      title: '^deps(\\(.+\\))?!?: .*'
+      files: "Cargo.lock"
+      title: "^deps(\\(.+\\))?!?: .*"
 
   - label: t-fix
     matcher:
-      title: '^fix(\\(.+\\))?!?: .*'
+      title: "^fix(\\(.+\\))?!?: .*"
 
   - label: t-feature
     matcher:
-      title: '^feat(\\(.+\\))?!?: .*'
+      title: "^feat(\\(.+\\))?!?: .*"
 
   - label: t-enhancement
     matcher:
-      title: '^enhancement(\\(.+\\))?!?: .*'
+      title: "^enhancement(\\(.+\\))?!?: .*"
 
   - label: t-chore
     matcher:
-      title: '^chore(\\(.+\\))?!?: .*'
+      title: "^chore(\\(.+\\))?!?: .*"
 
   - label: t-refactor
     matcher:
-      title: '^refactor(\\(.+\\))?!?: .*'
+      title: "^refactor(\\(.+\\))?!?: .*"
 
   - label: t-actions
     matcher:
-      title: '^ci(\\(.+\\))?!?: .*'
+      title: "^ci(\\(.+\\))?!?: .*"
