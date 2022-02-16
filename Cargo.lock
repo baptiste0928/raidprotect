@@ -810,6 +810,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "raidprotect-cache"
+version = "0.1.0"
+dependencies = [
+ "workspace-hack",
+]
+
+[[package]]
 name = "raidprotect-gateway"
 version = "0.1.0"
 dependencies = [
