@@ -5,8 +5,9 @@ use tokio::{
     sync::{broadcast, Mutex, RwLock},
     time::sleep,
 };
+use tracing::{info, instrument, warn};
 
-use crate::cache::CacheClient;
+use crate::{cache::CacheClient, model::BaseRequest};
 
 use super::{connect::Connection, error::ReconnectTimeoutError, ClientError};
 
@@ -15,13 +16,19 @@ use super::{connect::Connection, error::ReconnectTimeoutError, ClientError};
 /// The internal client state is held in an [`Arc`], allowing to cheaply clone
 /// this type.
 #[derive(Debug)]
-pub struct GatewayClient {
-    inner: Arc<ClientInner>,
+pub struct GatewayClient<A>
+where
+    A: ToSocketAddrs + Send + Sync + Clone,
+{
+    inner: Arc<ClientInner<A>>,
 }
 
-impl GatewayClient {
+impl<A> GatewayClient<A>
+where
+    A: ToSocketAddrs + Send + Sync + Clone,
+{
     /// Start a new [`GatewayClient`]
-    pub async fn start(addr: impl ToSocketAddrs) -> Result<Self, ClientError> {
+    pub async fn start(addr: A) -> Result<Self, ClientError> {
         let inner = ClientInner::start(addr).await?;
 
         Ok(Self {
@@ -32,6 +39,19 @@ impl GatewayClient {
     /// Get the current [`CacheClient`]
     pub async fn cache(&self) -> Result<CacheClient, ClientError> {
         todo!()
+    }
+
+    /// Automatically reconnect the client.
+    ///
+    /// This task must be launched after the client is connected to ensure it
+    /// will properly reconnect in case of failure.
+    ///
+    /// Reconnections are handled with an exponential retry algorithm. If
+    /// reconnecting fails on the 6th retry (64 seconds), the error is
+    /// considered as non-recoverable and is returned.
+    #[must_use = "this method must be called to automatically reconnect client"]
+    pub async fn reconnect(&self) -> Result<(), ClientError> {
+        self.inner.reconnect().await
     }
 }
 
@@ -45,78 +65,119 @@ impl GatewayClient {
 /// mspc channel. When disconnected, all requests to the client will be marked as
 /// pending, with a timeout of one second.
 #[derive(Debug)]
-pub struct ClientInner {
-    connection: Reconnect<Connection>,
+pub struct ClientInner<A>
+where
+    A: ToSocketAddrs + Send + Sync + Clone,
+{
+    /// Inner remoc connection.
+    connection: Mutex<Connection>,
+    /// Current connection state.
+    connected: RwLock<bool>,
+    /// Connection update broadcast channel.
+    broadcast: broadcast::Sender<ConnectionUpdate>,
+    /// Connection socked adress.
+    addr: A,
 }
 
-impl ClientInner {
+impl<A> ClientInner<A>
+where
+    A: ToSocketAddrs + Send + Sync + Clone,
+{
+    const RECONNECT_TIMEOUT: Duration = Duration::from_secs(1);
+    const RECONNECT_MAX_BACKOFF: u64 = 64; // 6 retries with exponential backoff
+
     /// Initialize a new [`ClientInner`] with an active connection
-    async fn start(addr: impl ToSocketAddrs) -> Result<Self, ClientError> {
-        let connection = Connection::start(addr).await?;
+    async fn start(addr: A) -> Result<Self, ClientError> {
+        let (sender, _) = broadcast::channel(1);
+        let connection = Connection::start(addr.clone(), sender.clone()).await?;
 
         Ok(Self {
-            connection: Reconnect::new(connection),
+            connection: Mutex::new(connection),
+            connected: RwLock::new(true),
+            broadcast: sender,
+            addr,
         })
     }
-}
 
-/// Reconnection handler.
-///
-/// This type is similar to [`RwLock`] but wraps a client of type `T` with a
-/// connection state. It implement [`Deref`] to access to the inner client.
-#[derive(Debug)]
-struct Reconnect<T> {
-    /// Broadcast channel to notify on connection
-    broadcast: broadcast::Sender<()>,
-    /// Current connection state
-    connected: RwLock<bool>,
-    /// Inner client
-    inner: RwLock<T>,
-}
+    /// Send a request through the connection.
+    pub async fn send(&mut self, req: BaseRequest) -> Result<(), ClientError> {
+        self.wait_connected().await?;
 
-impl<T> Reconnect<T> {
-    /// Initialize an new [`Reconnect`]
-    fn new(inner: T) -> Self {
-        let (sender, _receiver) = broadcast::channel(1);
-
-        Self {
-            broadcast: sender,
-            connected: RwLock::new(true),
-            inner: RwLock::new(inner),
-        }
+        self.connection.lock().await.send(req).await
     }
 
-    /// Set the connection state of the client.
-    async fn set_connected(&self, connected: bool) {
-        let mut state = self.connected.write().await;
-        *state = connected;
-
-        if connected {
-            let _ = self.broadcast.send(());
-        }
+    /// Return whether the client is currently connected.
+    pub async fn is_connected(&self) -> bool {
+        *self.connected.read().await
     }
 
     /// Wait until the client is connected.
     ///
-    /// An error is returned if the reconnection time is longer than `timeout`
-    /// seconds.
-    async fn wait_connected(&self, timeout: u64) -> Result<(), ReconnectTimeoutError> {
-        if *self.connected.read().await {
+    /// An error is returned if the reconnection time is longer than one second.
+    pub async fn wait_connected(&self) -> Result<(), ReconnectTimeoutError> {
+        if self.is_connected().await {
             return Ok(());
         }
 
         let mut receiver = self.broadcast.subscribe();
         tokio::select! {
-            _ = receiver.recv() => Ok(()),
-            _ = sleep(Duration::from_secs(timeout)) => Err(ReconnectTimeoutError)
+            Ok(ConnectionUpdate::Connected) = receiver.recv() => Ok(()),
+            _ = sleep(Self::RECONNECT_TIMEOUT) => Err(ReconnectTimeoutError),
+        }
+    }
+
+    /// Automatically reconnect the client.
+    ///
+    /// See [`GatewayClient::reconnect`] for more information.
+    #[instrument(skip(self))]
+    pub async fn reconnect(&self) -> Result<(), ClientError> {
+        let mut receiver = self.broadcast.subscribe();
+
+        while let Ok(msg) = receiver.recv().await {
+            match msg {
+                ConnectionUpdate::Connected => *self.connected.write().await = true,
+                ConnectionUpdate::Disconnected => {
+                    *self.connected.write().await = false;
+                    self.try_reconnect().await?;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Try to reconnect using a exponential retry algorithm.
+    ///
+    /// See [`GatewayClient::reconnect`]] for more information.
+    #[instrument(skip(self))]
+    async fn try_reconnect(&self) -> Result<(), ClientError> {
+        let mut backoff = 1;
+
+        loop {
+            match Connection::start(self.addr.clone(), self.broadcast.clone()).await {
+                Ok(conn) => {
+                    info!("reconnected to the client");
+                    *self.connection.lock().await = conn;
+                    *self.connected.write().await = true;
+                }
+                Err(err) => {
+                    warn!(error = %err, "error while reconnecting");
+
+                    if backoff > Self::RECONNECT_MAX_BACKOFF {
+                        return Err(err);
+                    }
+                }
+            }
+
+            sleep(Duration::from_secs(backoff)).await;
+            backoff *= 2;
         }
     }
 }
 
-impl<T> Deref for Reconnect<T> {
-    type Target = RwLock<T>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
+/// Message sent by the inner connection to notify any connection state update.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConnectionUpdate {
+    Connected,
+    Disconnected,
 }

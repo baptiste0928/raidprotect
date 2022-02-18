@@ -76,7 +76,7 @@ impl From<ReconnectTimeoutError> for ClientError {
 
 /// Automatic reconnection to the server timed out.
 #[derive(Debug)]
-pub(super) struct ReconnectTimeoutError;
+pub struct ReconnectTimeoutError;
 
 impl Error for ReconnectTimeoutError {}
 
