@@ -1,11 +1,9 @@
 use anyhow::Result;
 use raidprotect_model::event::Event;
+use raidprotect_transport::{model::EventBroadcastResponse, remoc::rch};
 use raidprotect_util::shutdown::ShutdownSubscriber;
-use remoc::rch;
 use tokio::sync::broadcast;
 use tracing::{debug, error, instrument, trace, warn};
-
-use crate::model::EventBroadcastResponse;
 
 /// Event broadcast handler.
 ///

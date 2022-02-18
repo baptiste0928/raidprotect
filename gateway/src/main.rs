@@ -5,8 +5,9 @@
 use std::sync::Arc;
 
 use anyhow::{Context, Result};
-use raidprotect_gateway::{cache::InMemoryCache, cluster::ShardCluster, config::parse_config};
-use raidprotect_transport::server::GatewayListener;
+use raidprotect_gateway::{
+    cache::InMemoryCache, cluster::ShardCluster, config::parse_config, server::GatewayListener,
+};
 use raidprotect_util::shutdown::{wait_shutdown, Shutdown};
 use tracing::{debug, info};
 use twilight_http::Client as HttpClient;

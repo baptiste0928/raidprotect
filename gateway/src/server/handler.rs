@@ -1,15 +1,15 @@
 use anyhow::{Context, Result};
 use raidprotect_model::event::Event;
+use raidprotect_transport::{
+    cache::CacheClient,
+    model::{BaseRequest, CacheResponse, EventBroadcastResponse},
+    remoc::{self, rch},
+};
 use raidprotect_util::shutdown::{Shutdown, ShutdownSubscriber};
-use remoc::rch;
 use tokio::{net::TcpStream, sync::broadcast};
 use tracing::{debug, error, instrument, warn, Instrument};
 
-use crate::{
-    cache::CacheClient,
-    model::{BaseRequest, CacheResponse, EventBroadcastResponse},
-    server::events::EventBroadcastHandler,
-};
+use crate::server::events::EventBroadcastHandler;
 
 /// Connection handler.
 ///
