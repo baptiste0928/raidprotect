@@ -6,7 +6,7 @@ use std::{
 
 use remoc::rch;
 
-use crate::model::BaseRequest;
+use crate::{cache::CacheError, model::BaseRequest};
 
 /// [`remoc`] connection error.
 pub type RemocConnectError = remoc::ConnectError<io::Error, io::Error>;
@@ -24,8 +24,8 @@ pub enum ClientError {
     BaseSend {
         source: rch::base::SendError<BaseRequest>,
     },
-    /// Reconnection to the server timed out
-    ReconnectTimeout,
+    /// Request timed out
+    Timeout,
 }
 
 impl Error for ClientError {
@@ -51,7 +51,7 @@ impl Display for ClientError {
             ClientError::BaseSend { source } => {
                 write!(f, "failed to send request through base channel: {}", source)
             }
-            ClientError::ReconnectTimeout => write!(f, "reconnection to the server timed out"),
+            ClientError::Timeout => f.write_str("request timed out"),
         }
     }
 }
@@ -65,5 +65,29 @@ impl From<RemocConnectError> for ClientError {
 impl From<rch::base::SendError<BaseRequest>> for ClientError {
     fn from(source: rch::base::SendError<BaseRequest>) -> Self {
         Self::BaseSend { source }
+    }
+}
+
+impl From<ReconnectTimeoutError> for ClientError {
+    fn from(_: ReconnectTimeoutError) -> Self {
+        Self::Timeout
+    }
+}
+
+/// Automatic reconnection to the server timed out.
+#[derive(Debug)]
+pub(super) struct ReconnectTimeoutError;
+
+impl Error for ReconnectTimeoutError {}
+
+impl Display for ReconnectTimeoutError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("automatic reconnection timed out")
+    }
+}
+
+impl From<ReconnectTimeoutError> for CacheError {
+    fn from(_: ReconnectTimeoutError) -> Self {
+        CacheError::ReconnectTimeout
     }
 }

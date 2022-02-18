@@ -1,4 +1,4 @@
-use std::{ops::Deref, sync::Arc, time::Duration};
+use std::{fmt::Debug, ops::Deref, sync::Arc, time::Duration};
 
 use tokio::{
     net::ToSocketAddrs,
@@ -8,12 +8,13 @@ use tokio::{
 
 use crate::cache::CacheClient;
 
-use super::{connect::Connection, ClientError};
+use super::{connect::Connection, error::ReconnectTimeoutError, ClientError};
 
 /// Gateway client.
 ///
 /// The internal client state is held in an [`Arc`], allowing to cheaply clone
 /// this type.
+#[derive(Debug)]
 pub struct GatewayClient {
     inner: Arc<ClientInner>,
 }
@@ -43,6 +44,7 @@ impl GatewayClient {
 /// This type is notified when the underlying [`Connection`] is stopped with a
 /// mspc channel. When disconnected, all requests to the client will be marked as
 /// pending, with a timeout of one second.
+#[derive(Debug)]
 pub struct ClientInner {
     connection: Reconnect<Connection>,
 }
@@ -62,6 +64,7 @@ impl ClientInner {
 ///
 /// This type is similar to [`RwLock`] but wraps a client of type `T` with a
 /// connection state. It implement [`Deref`] to access to the inner client.
+#[derive(Debug)]
 struct Reconnect<T> {
     /// Broadcast channel to notify on connection
     broadcast: broadcast::Sender<()>,
@@ -97,7 +100,7 @@ impl<T> Reconnect<T> {
     ///
     /// An error is returned if the reconnection time is longer than `timeout`
     /// seconds.
-    async fn wait_connected(&self, timeout: u64) -> Result<(), ClientError> {
+    async fn wait_connected(&self, timeout: u64) -> Result<(), ReconnectTimeoutError> {
         if *self.connected.read().await {
             return Ok(());
         }
@@ -105,7 +108,7 @@ impl<T> Reconnect<T> {
         let mut receiver = self.broadcast.subscribe();
         tokio::select! {
             _ = receiver.recv() => Ok(()),
-            _ = sleep(Duration::from_secs(timeout)) => Err(ClientError::ReconnectTimeout)
+            _ = sleep(Duration::from_secs(timeout)) => Err(ReconnectTimeoutError)
         }
     }
 }

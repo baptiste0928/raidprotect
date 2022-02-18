@@ -3,6 +3,11 @@
 //! This module expose the [`Cache`] trait used to access
 //! the cache remotely with [`remoc::rtc`].
 
+use std::{
+    error::Error,
+    fmt::{self, Display},
+};
+
 use raidprotect_model::{
     cache::{CachedChannel, CachedGuild, CachedRole},
     twilight::id::{
@@ -11,9 +16,7 @@ use raidprotect_model::{
     },
 };
 use remoc::rtc::{self, CallError};
-
-/// Type returned by [`Cache`] methods.
-pub type CacheResult<T> = Result<Option<T>, CallError>;
+use serde::{Deserialize, Serialize};
 
 /// Cache server and client trait.
 ///
@@ -25,17 +28,51 @@ pub type CacheResult<T> = Result<Option<T>, CallError>;
 #[rtc::remote]
 pub trait Cache {
     /// Get a [`CachedGuild`] by ID.
-    async fn guild(&self, id: Id<GuildMarker>) -> CacheResult<CachedGuild>;
+    async fn guild(&self, id: Id<GuildMarker>) -> Result<Option<CachedGuild>, CacheError>;
 
     /// Get a [`CachedChannel`] by ID.
-    async fn channel(&self, id: Id<ChannelMarker>) -> CacheResult<CachedChannel>;
+    async fn channel(&self, id: Id<ChannelMarker>) -> Result<Option<CachedChannel>, CacheError>;
 
     /// Get all [`CachedChannel`] of a guild.
-    async fn channels(&self, id: Id<GuildMarker>) -> CacheResult<Vec<CachedChannel>>;
+    async fn channels(&self, id: Id<GuildMarker>)
+        -> Result<Option<Vec<CachedChannel>>, CacheError>;
 
     /// Get a [`CachedRole`] by ID.
-    async fn role(&self, id: Id<RoleMarker>) -> CacheResult<CachedRole>;
+    async fn role(&self, id: Id<RoleMarker>) -> Result<Option<CachedRole>, CacheError>;
 
     /// Get all [`CachedRole`] of a guild.
-    async fn roles(&self, id: Id<GuildMarker>) -> CacheResult<Vec<CachedRole>>;
+    async fn roles(&self, id: Id<GuildMarker>) -> Result<Option<Vec<CachedRole>>, CacheError>;
+}
+
+/// Error type returned by [`Cache`] trait methods.
+#[derive(Debug, Serialize, Deserialize)]
+pub enum CacheError {
+    /// Request failed.
+    Call { source: CallError },
+    /// Automatic reconnection to the client timed out.
+    ReconnectTimeout,
+}
+
+impl Error for CacheError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            CacheError::Call { source } => Some(source),
+            _ => None,
+        }
+    }
+}
+
+impl Display for CacheError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CacheError::Call { source } => write!(f, "request failed: {}", source),
+            CacheError::ReconnectTimeout => f.write_str("reconnection timed out"),
+        }
+    }
+}
+
+impl From<CallError> for CacheError {
+    fn from(source: CallError) -> Self {
+        CacheError::Call { source }
+    }
 }

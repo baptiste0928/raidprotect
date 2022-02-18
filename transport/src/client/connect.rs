@@ -1,3 +1,5 @@
+use std::fmt::{self, Debug};
+
 use remoc::rch;
 use tokio::{
     net::{TcpStream, ToSocketAddrs},
@@ -13,8 +15,6 @@ use super::ClientError;
 pub struct Connection {
     /// Base channel sender
     sender: rch::base::Sender<BaseRequest>,
-    /// Base channel receiver (unused)
-    _receiver: rch::base::Receiver<()>,
     /// Connection task handle
     ///
     /// The connection is aborted when this type is dropped.
@@ -32,7 +32,8 @@ impl Connection {
 
         // Start remoc connection
         let cfg = remoc::Cfg::default();
-        let (conn, sender, _receiver) = remoc::Connect::io(cfg, socket_rx, socket_tx).await?;
+        let (conn, sender, _recv): (_, _, rch::base::Receiver<()>) =
+            remoc::Connect::io(cfg, socket_rx, socket_tx).await?;
 
         let connection = tokio::spawn(async move {
             let res = conn
@@ -44,11 +45,7 @@ impl Connection {
             }
         });
 
-        Ok(Self {
-            sender,
-            _receiver,
-            connection,
-        })
+        Ok(Self { sender, connection })
     }
 
     /// Send a request through the connection
@@ -56,6 +53,12 @@ impl Connection {
         self.sender.send(item).await?;
 
         Ok(())
+    }
+}
+
+impl Debug for Connection {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("Connection { .. }")
     }
 }
 

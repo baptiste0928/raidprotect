@@ -7,6 +7,7 @@
 //! cheaply. Reconnection logic is handled internally.
 #![allow(unused)]
 
+mod cache;
 #[allow(clippy::module_inception)]
 mod client;
 mod connect;
