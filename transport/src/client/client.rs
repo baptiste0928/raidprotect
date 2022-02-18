@@ -75,7 +75,7 @@ where
     connected: RwLock<bool>,
     /// Connection update broadcast channel.
     broadcast: broadcast::Sender<ConnectionUpdate>,
-    /// Connection socked adress.
+    /// Connection socked address.
     addr: A,
 }
 
