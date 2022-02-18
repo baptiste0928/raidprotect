@@ -28,7 +28,7 @@ pub use event::UpdateCache;
 use async_trait::async_trait;
 use dashmap::DashMap;
 use raidprotect_model::cache::{CachedChannel, CachedGuild, CachedRole};
-use raidprotect_transport::cache::{Cache, CacheResult};
+use raidprotect_transport::cache::{Cache, CacheError};
 use twilight_model::id::{
     marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker},
     Id,
@@ -114,23 +114,26 @@ impl InMemoryCache {
 
 #[async_trait]
 impl Cache for InMemoryCache {
-    async fn guild(&self, id: Id<GuildMarker>) -> CacheResult<CachedGuild> {
+    async fn guild(&self, id: Id<GuildMarker>) -> Result<Option<CachedGuild>, CacheError> {
         Ok(self.guild(id))
     }
 
-    async fn channel(&self, id: Id<ChannelMarker>) -> CacheResult<CachedChannel> {
+    async fn channel(&self, id: Id<ChannelMarker>) -> Result<Option<CachedChannel>, CacheError> {
         Ok(self.channel(id))
     }
 
-    async fn channels(&self, id: Id<GuildMarker>) -> CacheResult<Vec<CachedChannel>> {
+    async fn channels(
+        &self,
+        id: Id<GuildMarker>,
+    ) -> Result<Option<Vec<CachedChannel>>, CacheError> {
         Ok(self.guild_channels(id))
     }
 
-    async fn role(&self, id: Id<RoleMarker>) -> CacheResult<CachedRole> {
+    async fn role(&self, id: Id<RoleMarker>) -> Result<Option<CachedRole>, CacheError> {
         Ok(self.role(id))
     }
 
-    async fn roles(&self, id: Id<GuildMarker>) -> CacheResult<Vec<CachedRole>> {
+    async fn roles(&self, id: Id<GuildMarker>) -> Result<Option<Vec<CachedRole>>, CacheError> {
         Ok(self.guild_roles(id))
     }
 }

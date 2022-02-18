@@ -8,7 +8,7 @@
 //!   RPC.
 //! - The HTTP proxy provides global limiting for requests to the REST API.
 //!
-//! The exposed server is located in the [`raidprotect_transport`] crate.
+//! The exposed server is located in the [`server`] module.
 
 pub mod cache;
 pub mod cluster;
