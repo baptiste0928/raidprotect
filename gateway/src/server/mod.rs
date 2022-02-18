@@ -27,6 +27,8 @@
 //! used to track when all producers are dropped and know when tasks are finished.
 //!
 //! [`Shutdown`]: raidprotect_util::shutdown::Shutdown
+//! [`remoc`]: raidprotect_transport::remoc
+//! [`remoc::rch::base`]: raidprotect_transport::remoc::rch::base
 
 mod events;
 mod handler;
