@@ -53,6 +53,7 @@ pub fn cache_guild(cache: &InMemoryCache, guild: &Guild) -> Option<CachedGuild> 
     // Insert the guild into the cache.
     let cached = CachedGuild {
         id: guild.id,
+        unavailable: guild.unavailable,
         name: guild.name.clone(),
         icon: guild.icon,
         owner_id: guild.owner_id,

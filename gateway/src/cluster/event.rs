@@ -1,10 +1,7 @@
 use raidprotect_model::event::{Event, InteractionCreate};
 use tokio::sync::broadcast::Sender;
 use tracing::trace;
-use twilight_model::gateway::{
-    event::Event as GatewayEvent,
-    payload::incoming::{self},
-};
+use twilight_model::gateway::{event::Event as GatewayEvent, payload::incoming};
 
 use crate::cache::{InMemoryCache, UpdateCache};
 
@@ -32,6 +29,7 @@ impl ProcessEvent for GatewayEvent {
         process_events! { self, cache, broadcast =>
             GuildCreate,
             GuildDelete,
+            UnavailableGuild,
             GuildUpdate,
             ChannelCreate,
             ChannelDelete,
