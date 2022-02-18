@@ -2,8 +2,11 @@ use std::{net::Ipv4Addr, sync::Arc, time::Duration};
 
 use anyhow::{Context, Result};
 use raidprotect_model::event::Event;
+use raidprotect_transport::{
+    cache::{Cache, CacheClient, CacheServerShared},
+    remoc::rtc::ServerShared,
+};
 use raidprotect_util::shutdown::{Shutdown, ShutdownSubscriber};
-use remoc::rtc::ServerShared;
 use tokio::{
     net::{TcpListener, TcpStream},
     sync::{broadcast, Semaphore},
@@ -11,10 +14,7 @@ use tokio::{
 };
 use tracing::{debug, error, info, instrument, warn};
 
-use crate::{
-    cache::{Cache, CacheClient, CacheServerShared},
-    server::handler::Handler,
-};
+use crate::server::handler::Handler;
 
 /// Maximum number of connections that can be handled concurrently.
 const MAX_CONNECTIONS: usize = 10;
