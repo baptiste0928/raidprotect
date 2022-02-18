@@ -15,7 +15,7 @@ use twilight_model::{
         CategoryChannel, GuildChannel, TextChannel,
     },
     guild::{Guild, Role},
-    id::GuildId,
+    id::{marker::GuildMarker, Id},
 };
 
 use super::InMemoryCache;
@@ -53,8 +53,9 @@ pub fn cache_guild(cache: &InMemoryCache, guild: &Guild) -> Option<CachedGuild> 
     // Insert the guild into the cache.
     let cached = CachedGuild {
         id: guild.id,
+        unavailable: guild.unavailable,
         name: guild.name.clone(),
-        icon: guild.icon.clone(),
+        icon: guild.icon,
         owner_id: guild.owner_id,
         current_member,
         roles,
@@ -64,13 +65,17 @@ pub fn cache_guild(cache: &InMemoryCache, guild: &Guild) -> Option<CachedGuild> 
     cache.guilds.insert(guild.id, cached)
 }
 
-pub fn cache_role(cache: &InMemoryCache, role: &Role, guild_id: GuildId) -> Option<CachedRole> {
+pub fn cache_role(
+    cache: &InMemoryCache,
+    role: &Role,
+    guild_id: Id<GuildMarker>,
+) -> Option<CachedRole> {
     let cached = CachedRole {
         id: role.id,
         guild_id,
         name: role.name.clone(),
         color: role.color,
-        icon: role.icon.clone(),
+        icon: role.icon,
         unicode_emoji: role.unicode_emoji.clone(),
         position: role.position,
         permissions: role.permissions,
@@ -83,7 +88,7 @@ pub fn cache_role(cache: &InMemoryCache, role: &Role, guild_id: GuildId) -> Opti
 pub fn cache_guild_channel(
     cache: &InMemoryCache,
     channel: &GuildChannel,
-    guild_id: GuildId,
+    guild_id: Id<GuildMarker>,
 ) -> Option<CachedChannel> {
     match channel {
         GuildChannel::Text(channel) => cache_text_channel(cache, channel, guild_id),
@@ -98,7 +103,7 @@ pub fn cache_guild_channel(
 pub fn cache_text_channel(
     cache: &InMemoryCache,
     channel: &TextChannel,
-    guild_id: GuildId,
+    guild_id: Id<GuildMarker>,
 ) -> Option<CachedChannel> {
     let cached = CachedTextChannel {
         id: channel.id,
@@ -116,7 +121,7 @@ pub fn cache_text_channel(
 pub fn cache_category_channel(
     cache: &InMemoryCache,
     channel: &CategoryChannel,
-    guild_id: GuildId,
+    guild_id: Id<GuildMarker>,
 ) -> Option<CachedChannel> {
     let cached = CachedCategoryChannel {
         id: channel.id,
@@ -132,7 +137,7 @@ pub fn cache_category_channel(
 pub fn cache_public_thread(
     cache: &InMemoryCache,
     thread: &PublicThread,
-    guild_id: GuildId,
+    guild_id: Id<GuildMarker>,
 ) -> Option<CachedChannel> {
     let cached = CachedThread {
         id: thread.id,
@@ -149,7 +154,7 @@ pub fn cache_public_thread(
 pub fn cache_private_thread(
     cache: &InMemoryCache,
     thread: &PrivateThread,
-    guild_id: GuildId,
+    guild_id: Id<GuildMarker>,
 ) -> Option<CachedChannel> {
     let cached = CachedThread {
         id: thread.id,
@@ -166,7 +171,7 @@ pub fn cache_private_thread(
 pub fn cache_news_thread(
     cache: &InMemoryCache,
     thread: &NewsThread,
-    guild_id: GuildId,
+    guild_id: Id<GuildMarker>,
 ) -> Option<CachedChannel> {
     let cached = CachedThread {
         id: thread.id,

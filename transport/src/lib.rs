@@ -6,4 +6,5 @@
 pub mod cache;
 pub mod client;
 pub mod model;
-pub mod server;
+
+pub use remoc; // Expose remoc to ensure the same default codec is used

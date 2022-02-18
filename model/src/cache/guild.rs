@@ -4,7 +4,11 @@ use serde::{Deserialize, Serialize};
 use twilight_model::{
     datetime::Timestamp,
     guild::Permissions,
-    id::{ChannelId, GuildId, RoleId, UserId},
+    id::{
+        marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker},
+        Id,
+    },
+    util::ImageHash,
 };
 
 use super::partial::{IntoPartial, PartialRole};
@@ -15,22 +19,27 @@ use super::partial::{IntoPartial, PartialRole};
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct CachedGuild {
     /// Id of the guild.
-    pub id: GuildId,
+    pub id: Id<GuildMarker>,
+    /// Whether the guild is unavailable.
+    ///
+    /// If the guild is unavailable, no events will be received and the guild
+    /// channels and roles are no longer cached.
+    pub unavailable: bool,
     /// Name of the guild
     pub name: String,
     /// Hash of the guild icon.
-    pub icon: Option<String>,
+    pub icon: Option<ImageHash>,
     /// Id of the guild's owner.
-    pub owner_id: UserId,
+    pub owner_id: Id<UserMarker>,
     /// Information about the bot member in the guild.
     ///
     /// If this field is [`None`], the information has not been
     /// properly received and all permission calculations should fail.
     pub current_member: Option<CurrentMember>,
     /// List of roles of the guild.
-    pub roles: HashSet<RoleId>,
+    pub roles: HashSet<Id<RoleMarker>>,
     /// List of channels of the guild.
-    pub channels: HashSet<ChannelId>,
+    pub channels: HashSet<Id<ChannelMarker>>,
 }
 
 /// Information about the bot [`Member`] in a guild.
@@ -39,14 +48,14 @@ pub struct CachedGuild {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct CurrentMember {
     /// Id of the bot current member.
-    pub id: UserId,
+    pub id: Id<UserMarker>,
     /// When the bot can resume communication in a guild again.
     ///
     /// Checking if this value is [`Some`] is not enough, we should
     /// also check that the given timestamp is not in the past.
     pub communication_disabled_until: Option<Timestamp>,
     /// Roles of the bot.
-    pub roles: HashSet<RoleId>,
+    pub roles: HashSet<Id<RoleMarker>>,
 }
 
 /// Cached model of a [`Role`].
@@ -58,15 +67,15 @@ pub struct CurrentMember {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct CachedRole {
     /// Id of the role.
-    pub id: RoleId,
+    pub id: Id<RoleMarker>,
     /// Id of the guild to which the role belongs.
-    pub guild_id: GuildId,
+    pub guild_id: Id<GuildMarker>,
     /// Name of the role.
     pub name: String,
     /// Color of the role.
     pub color: u32,
     /// Icon image hash.
-    pub icon: Option<String>,
+    pub icon: Option<ImageHash>,
     /// Icon unicode emoji.
     ///
     /// This field is set if the role has an icon which is

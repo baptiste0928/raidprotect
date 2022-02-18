@@ -6,7 +6,7 @@ use twilight_model::{
     gateway::payload::incoming::{
         ChannelCreate, ChannelDelete, ChannelUpdate, GuildCreate, GuildDelete, GuildUpdate,
         MemberAdd, MemberUpdate, RoleCreate, RoleDelete, RoleUpdate, ThreadCreate, ThreadDelete,
-        ThreadUpdate,
+        ThreadUpdate, UnavailableGuild,
     },
 };
 
@@ -36,10 +36,7 @@ impl UpdateCache for GuildDelete {
     type Output = Option<CachedGuild>;
 
     fn update(&self, cache: &InMemoryCache) -> Self::Output {
-        let guild = match cache.guilds.remove(&self.id) {
-            Some((_, guild)) => guild,
-            None => return None,
-        };
+        let guild = cache.guilds.remove(&self.id)?.1;
 
         // Remove all channels and roles from the cache.
         for channel in &guild.channels {
@@ -54,19 +51,35 @@ impl UpdateCache for GuildDelete {
     }
 }
 
+impl UpdateCache for UnavailableGuild {
+    type Output = ();
+
+    fn update(&self, cache: &InMemoryCache) -> Self::Output {
+        if let Some(mut guild) = cache.guilds.get_mut(&self.id) {
+            guild.unavailable = true;
+
+            // Remove all channels and roles from the cache.
+            for channel in &guild.channels {
+                cache.channels.remove(channel);
+            }
+
+            for role in &guild.roles {
+                cache.roles.remove(role);
+            }
+        }
+    }
+}
+
 impl UpdateCache for GuildUpdate {
     type Output = Option<CachedGuild>;
 
     fn update(&self, cache: &InMemoryCache) -> Self::Output {
-        let mut guild = match cache.guilds.get_mut(&self.id) {
-            Some(guild) => guild,
-            None => return None,
-        };
+        let mut guild = cache.guilds.get_mut(&self.id)?;
 
         let before = guild.clone();
 
         guild.name = self.name.clone();
-        guild.icon = self.icon.clone();
+        guild.icon = self.icon;
         guild.owner_id = self.owner_id;
 
         Some(before)

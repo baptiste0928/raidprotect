@@ -8,7 +8,9 @@
 
 use serde::{Deserialize, Serialize};
 use twilight_model::{
-    channel::permission_overwrite::PermissionOverwrite, guild::Permissions, id::ChannelId,
+    channel::permission_overwrite::PermissionOverwrite,
+    guild::Permissions,
+    id::{marker::ChannelMarker, Id},
 };
 
 /// Convert into a partial model.
@@ -63,7 +65,7 @@ pub enum PartialChannel {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct PartialTextChannel {
     /// If the channel is in a category, the category id.
-    pub parent_id: Option<ChannelId>,
+    pub parent_id: Option<Id<ChannelMarker>>,
     /// Permission overwrites of the channel.
     pub permission_overwrites: Vec<PermissionOverwrite>,
 }
@@ -84,5 +86,5 @@ pub struct PartialCategoryChannel {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct PartialThread {
     /// Parent channel of the thread.
-    pub parent_id: Option<ChannelId>,
+    pub parent_id: Option<Id<ChannelMarker>>,
 }

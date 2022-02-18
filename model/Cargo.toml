@@ -1,5 +1,5 @@
 [package]
-name = "raidprotect_model"
+name = "raidprotect-model"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,4 +9,4 @@ edition = "2021"
 workspace-hack = { path = "../workspace-hack"}
 
 serde = { version = "1", features = ["derive"] }
-twilight-model = "0.8"
+twilight-model = "0.9"
