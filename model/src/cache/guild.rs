@@ -20,6 +20,11 @@ use super::partial::{IntoPartial, PartialRole};
 pub struct CachedGuild {
     /// Id of the guild.
     pub id: Id<GuildMarker>,
+    /// Whether the guild is unavaiable.
+    ///
+    /// If the guild is unavaiable, no events will be received and the guild
+    /// channels and roles are no longer cached.
+    pub unavailable: bool,
     /// Name of the guild
     pub name: String,
     /// Hash of the guild icon.
