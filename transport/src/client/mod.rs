@@ -5,13 +5,11 @@
 //!
 //! The inner client state is wrapped in an `RwLock<Arc>` and can be cloned
 //! cheaply. Reconnection logic is handled internally.
-#![allow(unused)]
 
 mod cache;
-#[allow(clippy::module_inception)]
-mod client;
 mod connect;
 mod error;
+mod gateway;
 
-pub use client::GatewayClient;
 pub use error::ClientError;
+pub use gateway::{GatewayAddr, GatewayClient};

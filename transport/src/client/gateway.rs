@@ -1,7 +1,6 @@
-use std::{fmt::Debug, ops::Deref, sync::Arc, time::Duration};
+use std::{fmt::Debug, net::Ipv4Addr, sync::Arc, time::Duration};
 
 use tokio::{
-    net::ToSocketAddrs,
     sync::{broadcast, Mutex, RwLock},
     time::sleep,
 };
@@ -11,24 +10,21 @@ use crate::{cache::CacheClient, model::BaseRequest};
 
 use super::{connect::Connection, error::ReconnectTimeoutError, ClientError};
 
+/// Gateway address type.
+pub type GatewayAddr = (Ipv4Addr, u16);
+
 /// Gateway client.
 ///
 /// The internal client state is held in an [`Arc`], allowing to cheaply clone
 /// this type.
 #[derive(Debug)]
-pub struct GatewayClient<A>
-where
-    A: ToSocketAddrs + Send + Sync + Clone,
-{
-    inner: Arc<ClientInner<A>>,
+pub struct GatewayClient {
+    inner: Arc<ClientInner>,
 }
 
-impl<A> GatewayClient<A>
-where
-    A: ToSocketAddrs + Send + Sync + Clone,
-{
+impl GatewayClient {
     /// Start a new [`GatewayClient`]
-    pub async fn start(addr: A) -> Result<Self, ClientError> {
+    pub async fn start(addr: GatewayAddr) -> Result<Self, ClientError> {
         let inner = ClientInner::start(addr).await?;
 
         Ok(Self {
@@ -49,7 +45,6 @@ where
     /// Reconnections are handled with an exponential retry algorithm. If
     /// reconnecting fails on the 6th retry (64 seconds), the error is
     /// considered as non-recoverable and is returned.
-    #[must_use = "this method must be called to automatically reconnect client"]
     pub async fn reconnect(&self) -> Result<(), ClientError> {
         self.inner.reconnect().await
     }
@@ -65,10 +60,7 @@ where
 /// mspc channel. When disconnected, all requests to the client will be marked as
 /// pending, with a timeout of one second.
 #[derive(Debug)]
-pub struct ClientInner<A>
-where
-    A: ToSocketAddrs + Send + Sync + Clone,
-{
+pub struct ClientInner {
     /// Inner remoc connection.
     connection: Mutex<Connection>,
     /// Current connection state.
@@ -76,20 +68,17 @@ where
     /// Connection update broadcast channel.
     broadcast: broadcast::Sender<ConnectionUpdate>,
     /// Connection socked address.
-    addr: A,
+    addr: GatewayAddr,
 }
 
-impl<A> ClientInner<A>
-where
-    A: ToSocketAddrs + Send + Sync + Clone,
-{
+impl ClientInner {
     const RECONNECT_TIMEOUT: Duration = Duration::from_secs(1);
     const RECONNECT_MAX_BACKOFF: u64 = 64; // 6 retries with exponential backoff
 
     /// Initialize a new [`ClientInner`] with an active connection
-    async fn start(addr: A) -> Result<Self, ClientError> {
+    async fn start(addr: GatewayAddr) -> Result<Self, ClientError> {
         let (sender, _) = broadcast::channel(1);
-        let connection = Connection::start(addr.clone(), sender.clone()).await?;
+        let connection = Connection::start(addr, sender.clone()).await?;
 
         Ok(Self {
             connection: Mutex::new(connection),
@@ -154,7 +143,7 @@ where
         let mut backoff = 1;
 
         loop {
-            match Connection::start(self.addr.clone(), self.broadcast.clone()).await {
+            match Connection::start(self.addr, self.broadcast.clone()).await {
                 Ok(conn) => {
                     info!("reconnected to the client");
                     *self.connection.lock().await = conn;

@@ -6,11 +6,11 @@ use tokio::{
     sync::broadcast,
     task::JoinHandle,
 };
-use tracing::{error, info, info_span, warn, Instrument};
+use tracing::{info, info_span, warn, Instrument};
 
 use crate::model::BaseRequest;
 
-use super::{client::ConnectionUpdate, ClientError};
+use super::{gateway::ConnectionUpdate, ClientError};
 
 /// Wrapper around a raw remoc connection over TCP.
 pub struct Connection {
@@ -26,7 +26,7 @@ impl Connection {
     /// Start a new [`Connection`] to a remote server
     pub async fn start(
         addr: impl ToSocketAddrs,
-        mut broadcast: broadcast::Sender<ConnectionUpdate>,
+        broadcast: broadcast::Sender<ConnectionUpdate>,
     ) -> Result<Self, ClientError> {
         // Start TCP connection
         let (socket_rx, socket_tx) = match TcpStream::connect(addr).await {
