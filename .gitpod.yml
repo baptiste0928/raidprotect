@@ -1,9 +1,8 @@
 tasks:
-  - name: Build code
+  - before: rustup component add clippy
     init: cargo build
 
-  - name: Build documentation
-    init: cargo doc
+  - init: cargo doc
     command: npx -qy http-server target/doc/ -p 8080
 
 ports:
