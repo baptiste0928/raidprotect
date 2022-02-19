@@ -11,6 +11,12 @@ ports:
     visibility: private
     onOpen: notify
 
+github:
+  prebuilds:
+    master: true
+    pullRequests: true
+    addCheck: true
+
 vscode:
   extensions:
     - editorconfig.editorconfig
