@@ -1,8 +1,15 @@
 tasks:
-  - before: |
-      rustup install stable --profile default
-      rustup default stable
-  - init: cargo build
+  - name: Build code
+    init: cargo build
+
+  - name: Build documentation
+    init: cargo doc
+    command: npx -qy http-server target/doc/ -p 8080
+
+ports:
+  - port: 8080
+    visibility: private
+    onOpen: notify
 
 vscode:
   extensions:
