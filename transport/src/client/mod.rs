@@ -11,5 +11,6 @@ mod connect;
 mod error;
 mod gateway;
 
+pub use cache::CacheClient;
 pub use error::ClientError;
 pub use gateway::{GatewayAddr, GatewayClient};

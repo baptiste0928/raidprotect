@@ -1,5 +1,6 @@
 use std::{fmt::Debug, net::Ipv4Addr, sync::Arc, time::Duration};
 
+use remoc::rch;
 use tokio::{
     sync::{broadcast, Mutex, RwLock},
     time::sleep,
@@ -17,7 +18,7 @@ pub type GatewayAddr = (Ipv4Addr, u16);
 ///
 /// The internal client state is held in an [`Arc`], allowing to cheaply clone
 /// this type.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GatewayClient {
     inner: Arc<ClientInner>,
 }
@@ -32,9 +33,9 @@ impl GatewayClient {
         })
     }
 
-    /// Get the current [`CacheClient`]
+    /// Request a new [`CacheClient`] to the server.
     pub async fn cache(&self) -> Result<CacheClient, ClientError> {
-        todo!()
+        self.inner.cache().await
     }
 
     /// Automatically reconnect the client.
@@ -72,7 +73,7 @@ pub struct ClientInner {
 }
 
 impl ClientInner {
-    const RECONNECT_TIMEOUT: Duration = Duration::from_secs(1);
+    pub const RECONNECT_TIMEOUT: Duration = Duration::from_secs(1);
     const RECONNECT_MAX_BACKOFF: u64 = 64; // 6 retries with exponential backoff
 
     /// Initialize a new [`ClientInner`] with an active connection
@@ -89,10 +90,19 @@ impl ClientInner {
     }
 
     /// Send a request through the connection.
-    pub async fn send(&mut self, req: BaseRequest) -> Result<(), ClientError> {
+    pub async fn send(&self, req: BaseRequest) -> Result<(), ClientError> {
         self.wait_connected().await?;
 
         self.connection.lock().await.send(req).await
+    }
+
+    /// Request a new [`CacheClient`] to the server.
+    pub async fn cache(&self) -> Result<CacheClient, ClientError> {
+        let (sender, receiver) = rch::oneshot::channel();
+
+        let req = BaseRequest::Cache { callback: sender };
+
+        todo!()
     }
 
     /// Return whether the client is currently connected.
