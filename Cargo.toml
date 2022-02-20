@@ -3,6 +3,7 @@ members = [
     "cache",
     "gateway",
     "model",
+    "raidprotect",
     "transport",
     "util",
     "workspace-hack",

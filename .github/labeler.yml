@@ -21,6 +21,11 @@ labels:
     matcher:
       files: "model/**/*"
 
+  - label: c-raidprotect
+    sync: true
+    matcher:
+      files: "raidprotect/**/*"
+
   - label: c-transport
     sync: true
     matcher:
