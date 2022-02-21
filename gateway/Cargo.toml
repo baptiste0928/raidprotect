@@ -8,8 +8,6 @@ publish = false
 
 [dependencies]
 raidprotect-cache = { path = "../cache" }
-raidprotect-model = { path = "../model" }
-raidprotect-transport = { path = "../transport" }
 raidprotect-util = { path = "../util" }
 workspace-hack = { path = "../workspace-hack"}
 
