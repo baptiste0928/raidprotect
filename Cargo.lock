@@ -780,6 +780,11 @@ dependencies = [
 name = "raidprotect"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "figment",
+ "raidprotect-util",
+ "serde",
+ "tokio",
  "workspace-hack",
 ]
 

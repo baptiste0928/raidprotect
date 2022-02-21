@@ -12,7 +12,6 @@
 
 mod cluster;
 
-pub mod config;
 pub mod event;
 
 pub use cluster::ShardCluster;
