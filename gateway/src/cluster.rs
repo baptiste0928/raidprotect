@@ -3,9 +3,8 @@
 use std::sync::Arc;
 
 use futures::StreamExt;
-use raidprotect_model::event::Event;
+use raidprotect_cache::InMemoryCache;
 use raidprotect_util::shutdown::ShutdownSubscriber;
-use tokio::sync::broadcast;
 use tracing::{info_span, instrument, trace};
 use twilight_gateway::{
     cluster::{ClusterStartError, Events, ShardScheme},
@@ -17,13 +16,14 @@ use twilight_model::gateway::{
     presence::{ActivityType, MinimalActivity, Status},
 };
 
-use crate::{cache::InMemoryCache, cluster::event::ProcessEvent};
+use crate::event::ProcessEvent;
 
-/// Wrapper around a twilight [`Cluster`].
+/// Discord shards cluster.
+///
+/// This type is a wrapper around twilight [`Cluster`] and manages incoming
+/// events from Discord.
 #[derive(Debug)]
 pub struct ShardCluster {
-    /// Broadcast sender channel
-    pub broadcast: broadcast::Sender<Event>,
     /// Inner shard cluster managed by twilight
     cluster: Arc<Cluster>,
     /// Events stream
@@ -33,7 +33,9 @@ pub struct ShardCluster {
 }
 
 impl ShardCluster {
-    /// Initialize a new shards cluster without starting it.
+    /// Initialize a new [`ShardCluster`].
+    ///
+    /// This method takes an inital [`HttpClient`] and [`InMemoryCache`].
     pub async fn new(
         token: &str,
         http: Arc<HttpClient>,
@@ -48,10 +50,7 @@ impl ShardCluster {
             .build()
             .await?;
 
-        let (sender, _) = broadcast::channel(16);
-
         Ok(Self {
-            broadcast: sender,
             cluster: Arc::new(cluster),
             events,
             cache,
@@ -59,6 +58,8 @@ impl ShardCluster {
     }
 
     /// Start the cluster and handle incoming events.
+    ///
+    /// A [`ShutdownSubscriber`] must be provided to gracefully stop the cluster.
     #[instrument(name = "start_cluster", skip_all)]
     pub async fn start(mut self, mut shutdown: ShutdownSubscriber) {
         // Start the cluster
@@ -84,7 +85,7 @@ impl ShardCluster {
 
             span.in_scope(|| {
                 trace!(event = ?event, "received event");
-                event.process(&self.cache, &self.broadcast);
+                event.process(&self.cache);
             });
         }
     }

@@ -7,6 +7,7 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+raidprotect-cache = { path = "../cache" }
 raidprotect-model = { path = "../model" }
 raidprotect-transport = { path = "../transport" }
 raidprotect-util = { path = "../util" }

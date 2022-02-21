@@ -10,7 +10,9 @@
 //!
 //! The exposed server is located in the [`server`] module.
 
-pub mod cache;
-pub mod cluster;
+mod cluster;
+
 pub mod config;
-pub mod server;
+pub mod event;
+
+pub use cluster::ShardCluster;

@@ -834,6 +834,7 @@ dependencies = [
  "dashmap",
  "figment",
  "futures",
+ "raidprotect-cache",
  "raidprotect-model",
  "raidprotect-transport",
  "raidprotect-util",
