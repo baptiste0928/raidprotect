@@ -7,7 +7,5 @@
 mod channel;
 mod guild;
 
-pub mod partial;
-
 pub use channel::{CachedCategoryChannel, CachedChannel, CachedTextChannel, CachedThread};
 pub use guild::{CachedGuild, CachedRole, CurrentMember};

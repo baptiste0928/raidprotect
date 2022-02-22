@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 
-use serde::{Deserialize, Serialize};
 use twilight_model::{
     datetime::Timestamp,
     guild::Permissions,
@@ -11,12 +10,10 @@ use twilight_model::{
     util::ImageHash,
 };
 
-use super::partial::{IntoPartial, PartialRole};
-
 /// Cached model of a [`Guild`].
 ///
 /// [`Guild`]: twilight_model::guild::Guild
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CachedGuild {
     /// Id of the guild.
     pub id: Id<GuildMarker>,
@@ -45,7 +42,7 @@ pub struct CachedGuild {
 /// Information about the bot [`Member`] in a guild.
 ///
 /// [`Member`]: twilight_model::guild::member::Member
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CurrentMember {
     /// Id of the bot current member.
     pub id: Id<UserMarker>,
@@ -64,7 +61,7 @@ pub struct CurrentMember {
 /// data to send when requesting a [`CachedGuild`].
 ///
 /// [`Role`]: twilight_model::guild::Role
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CachedRole {
     /// Id of the role.
     pub id: Id<RoleMarker>,
@@ -89,15 +86,4 @@ pub struct CachedRole {
     ///
     /// Managed roles include bot, integration or boost roles.
     pub managed: bool,
-}
-
-impl IntoPartial for CachedRole {
-    type Partial = PartialRole;
-
-    fn as_partial(&self) -> Self::Partial {
-        PartialRole {
-            position: self.position,
-            permissions: self.permissions,
-        }
-    }
 }

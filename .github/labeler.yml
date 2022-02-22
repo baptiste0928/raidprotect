@@ -6,20 +6,20 @@ labels:
       files:
         all: ["*", "!Cargo.lock"]
 
+  - label: c-cache
+    sync: true
+    matcher:
+      files: "cache/**/*"
+
   - label: c-gateway
     sync: true
     matcher:
       files: "gateway/**/*"
 
-  - label: c-model
+  - label: c-raidprotect
     sync: true
     matcher:
-      files: "model/**/*"
-
-  - label: c-transport
-    sync: true
-    matcher:
-      files: "transport/**/*"
+      files: "raidprotect/**/*"
 
   - label: c-util
     sync: true

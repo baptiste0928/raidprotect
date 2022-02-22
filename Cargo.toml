@@ -1,8 +1,8 @@
 [workspace]
 members = [
+    "cache",
     "gateway",
-    "model",
-    "transport",
+    "raidprotect",
     "util",
     "workspace-hack",
 ]

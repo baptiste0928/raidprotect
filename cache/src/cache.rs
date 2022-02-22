@@ -1,8 +1,7 @@
 //! In-memory cache.
 //!
 //! This module expose the cache used by the gateway to store Discord data. This
-//! cache only store necessary data, using models from the [`model::cache`]
-//! module.
+//! cache only store necessary data, using models from the [`model`] module.
 //!
 //! Internally, data is stored in a [`DashMap`] to allow efficient concurrent
 //! access. Methods are exposed to query the cache.
@@ -18,29 +17,35 @@
 //! | Roles                 | `RoleCreate`, `RoleUpdate`, `RoleDelete`                          |
 //! | Current user member   | `MemberAdd`, `MemberUpdate`                                       |
 //!
-//! [`model::cache`]: raidprotect_model::cache
+//! [`model`]: crate::model
 
-mod event;
-mod resource;
-
-pub use event::UpdateCache;
-
-use async_trait::async_trait;
-use dashmap::DashMap;
-use raidprotect_model::cache::{CachedChannel, CachedGuild, CachedRole};
-use raidprotect_transport::cache::{Cache, CacheError};
+use dashmap::{mapref::one::Ref, DashMap};
 use twilight_model::id::{
     marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker},
     Id,
 };
 
+use crate::{
+    model::{CachedChannel, CachedGuild, CachedRole},
+    UpdateCache,
+};
+
 /// In-memory cache.
+///
+/// This type hold the cache using [`DashMap`]. Wrap it using an [`Arc`] to share
+/// the cache between multiple threads.
+///
+/// The cache returns references ([`Ref`]) of cached values. While holding them,
+/// the cache may be blocked if a resource need to be updated. These references
+/// should not be hold between long-running tasks such as HTTP requests.
+///
+/// [`Arc`]: std::sync::Arc
 #[derive(Debug)]
 pub struct InMemoryCache {
-    current_user: Id<UserMarker>,
-    guilds: DashMap<Id<GuildMarker>, CachedGuild>,
-    channels: DashMap<Id<ChannelMarker>, CachedChannel>,
-    roles: DashMap<Id<RoleMarker>, CachedRole>,
+    pub(crate) current_user: Id<UserMarker>,
+    pub(crate) guilds: DashMap<Id<GuildMarker>, CachedGuild>,
+    pub(crate) channels: DashMap<Id<ChannelMarker>, CachedChannel>,
+    pub(crate) roles: DashMap<Id<RoleMarker>, CachedRole>,
 }
 
 impl InMemoryCache {
@@ -63,17 +68,20 @@ impl InMemoryCache {
     }
 
     /// Get a [`CachedGuild`] by id.
-    pub fn guild(&self, id: Id<GuildMarker>) -> Option<CachedGuild> {
-        self.guilds.get(&id).as_deref().cloned()
+    pub fn guild(&self, id: Id<GuildMarker>) -> Option<Ref<'_, Id<GuildMarker>, CachedGuild>> {
+        self.guilds.get(&id)
     }
 
     /// Get all the [`CachedChannel`] of a guild.
-    pub fn guild_channels(&self, id: Id<GuildMarker>) -> Option<Vec<CachedChannel>> {
+    pub fn guild_channels(
+        &self,
+        id: Id<GuildMarker>,
+    ) -> Option<Vec<Ref<'_, Id<ChannelMarker>, CachedChannel>>> {
         if let Some(guild) = self.guild(id) {
             let channels: Vec<_> = guild
                 .channels
-                .into_iter()
-                .filter_map(|id| self.channel(id))
+                .iter()
+                .filter_map(|id| self.channel(*id))
                 .collect();
 
             if !channels.is_empty() {
@@ -85,13 +93,12 @@ impl InMemoryCache {
     }
 
     /// Get all the [`CachedRole`] of a guild.
-    pub fn guild_roles(&self, id: Id<GuildMarker>) -> Option<Vec<CachedRole>> {
+    pub fn guild_roles(
+        &self,
+        id: Id<GuildMarker>,
+    ) -> Option<Vec<Ref<'_, Id<RoleMarker>, CachedRole>>> {
         if let Some(guild) = self.guild(id) {
-            let roles: Vec<_> = guild
-                .roles
-                .into_iter()
-                .filter_map(|id| self.role(id))
-                .collect();
+            let roles: Vec<_> = guild.roles.iter().filter_map(|id| self.role(*id)).collect();
 
             if !roles.is_empty() {
                 return Some(roles);
@@ -102,38 +109,15 @@ impl InMemoryCache {
     }
 
     /// Get a [`CachedChannel`] by id.
-    pub fn channel(&self, id: Id<ChannelMarker>) -> Option<CachedChannel> {
-        self.channels.get(&id).as_deref().cloned()
+    pub fn channel(
+        &self,
+        id: Id<ChannelMarker>,
+    ) -> Option<Ref<'_, Id<ChannelMarker>, CachedChannel>> {
+        self.channels.get(&id)
     }
 
     /// Get a [`CachedRole`] by id.
-    pub fn role(&self, id: Id<RoleMarker>) -> Option<CachedRole> {
-        self.roles.get(&id).as_deref().cloned()
-    }
-}
-
-#[async_trait]
-impl Cache for InMemoryCache {
-    async fn guild(&self, id: Id<GuildMarker>) -> Result<Option<CachedGuild>, CacheError> {
-        Ok(self.guild(id))
-    }
-
-    async fn channel(&self, id: Id<ChannelMarker>) -> Result<Option<CachedChannel>, CacheError> {
-        Ok(self.channel(id))
-    }
-
-    async fn channels(
-        &self,
-        id: Id<GuildMarker>,
-    ) -> Result<Option<Vec<CachedChannel>>, CacheError> {
-        Ok(self.guild_channels(id))
-    }
-
-    async fn role(&self, id: Id<RoleMarker>) -> Result<Option<CachedRole>, CacheError> {
-        Ok(self.role(id))
-    }
-
-    async fn roles(&self, id: Id<GuildMarker>) -> Result<Option<Vec<CachedRole>>, CacheError> {
-        Ok(self.guild_roles(id))
+    pub fn role(&self, id: Id<RoleMarker>) -> Option<Ref<'_, Id<RoleMarker>, CachedRole>> {
+        self.roles.get(&id)
     }
 }

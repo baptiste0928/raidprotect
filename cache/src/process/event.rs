@@ -1,6 +1,5 @@
 //! Update the cache based on incoming event data.
 
-use raidprotect_model::cache::{CachedChannel, CachedGuild, CachedRole, CurrentMember};
 use twilight_model::{
     channel::Channel,
     gateway::payload::incoming::{
@@ -10,9 +9,15 @@ use twilight_model::{
     },
 };
 
-use super::InMemoryCache;
+use crate::{
+    cache::InMemoryCache,
+    model::{CachedChannel, CachedGuild, CachedRole, CurrentMember},
+};
 
 /// Update the cache based on event data.
+///
+/// This trait is implemented for all Discord event types that are used to keep
+/// the cache up-to-date.
 pub trait UpdateCache {
     /// Type of the cached value.
     type Output;

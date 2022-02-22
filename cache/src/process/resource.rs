@@ -5,10 +5,6 @@
 
 use std::collections::HashSet;
 
-use raidprotect_model::cache::{
-    CachedCategoryChannel, CachedChannel, CachedGuild, CachedRole, CachedTextChannel, CachedThread,
-    CurrentMember,
-};
 use twilight_model::{
     channel::{
         thread::{NewsThread, PrivateThread, PublicThread},
@@ -18,7 +14,13 @@ use twilight_model::{
     id::{marker::GuildMarker, Id},
 };
 
-use super::InMemoryCache;
+use crate::{
+    cache::InMemoryCache,
+    model::{
+        CachedCategoryChannel, CachedChannel, CachedGuild, CachedRole, CachedTextChannel,
+        CachedThread, CurrentMember,
+    },
+};
 
 pub fn cache_guild(cache: &InMemoryCache, guild: &Guild) -> Option<CachedGuild> {
     // Insert channels and roles into the cache.

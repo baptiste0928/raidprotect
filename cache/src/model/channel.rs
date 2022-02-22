@@ -1,4 +1,3 @@
-use serde::{Deserialize, Serialize};
 use twilight_model::{
     channel::{permission_overwrite::PermissionOverwrite, ChannelType},
     id::{
@@ -7,17 +6,13 @@ use twilight_model::{
     },
 };
 
-use super::partial::{
-    IntoPartial, PartialCategoryChannel, PartialChannel, PartialTextChannel, PartialThread,
-};
-
 /// Cached model of a [`GuildChannel`].
 ///
 /// Only text channels and threads are cached as the bot
 /// does not interact with voice channels.
 ///
 /// [`GuildChannel`]: twilight_model::channel::GuildChannel
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CachedChannel {
     /// Text channel.
     Text(CachedTextChannel),
@@ -60,22 +55,10 @@ impl CachedChannel {
     }
 }
 
-impl IntoPartial for CachedChannel {
-    type Partial = PartialChannel;
-
-    fn as_partial(&self) -> Self::Partial {
-        match self {
-            CachedChannel::Text(channel) => PartialChannel::Text(channel.as_partial()),
-            CachedChannel::Category(channel) => PartialChannel::Category(channel.as_partial()),
-            CachedChannel::Thread(channel) => PartialChannel::Thread(channel.as_partial()),
-        }
-    }
-}
-
 /// Cached model of a [`TextChannel`].
 ///
 /// [`TextChannel`]: twilight_model::channel::TextChannel
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CachedTextChannel {
     /// Id of the channel.
     pub id: Id<ChannelMarker>,
@@ -99,21 +82,10 @@ impl From<CachedTextChannel> for CachedChannel {
     }
 }
 
-impl IntoPartial for CachedTextChannel {
-    type Partial = PartialTextChannel;
-
-    fn as_partial(&self) -> Self::Partial {
-        PartialTextChannel {
-            parent_id: self.parent_id,
-            permission_overwrites: self.permission_overwrites.clone(),
-        }
-    }
-}
-
 /// Cached model of a [`CategoryChannel`].
 ///
 /// [`CategoryChannel`]: twilight_model::channel::CategoryChannel
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CachedCategoryChannel {
     /// Id of the category.
     pub id: Id<ChannelMarker>,
@@ -133,23 +105,13 @@ impl From<CachedCategoryChannel> for CachedChannel {
     }
 }
 
-impl IntoPartial for CachedCategoryChannel {
-    type Partial = PartialCategoryChannel;
-
-    fn as_partial(&self) -> Self::Partial {
-        PartialCategoryChannel {
-            permission_overwrites: self.permission_overwrites.clone(),
-        }
-    }
-}
-
 /// Cached model of a [`PublicThread`] or [`PrivateThread`].
 ///
 /// The bot does not distinguish between private and public threads during processing.
 ///
 /// [`PublicThread`]: twilight_model::channel::thread::PublicThread
 /// [`PrivateThread`]: twilight_model::channel::thread::PrivateThread
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CachedThread {
     /// Id of the thread.
     pub id: Id<ChannelMarker>,
@@ -171,15 +133,5 @@ pub struct CachedThread {
 impl From<CachedThread> for CachedChannel {
     fn from(thread: CachedThread) -> Self {
         CachedChannel::Thread(thread)
-    }
-}
-
-impl IntoPartial for CachedThread {
-    type Partial = PartialThread;
-
-    fn as_partial(&self) -> Self::Partial {
-        PartialThread {
-            parent_id: self.parent_id,
-        }
     }
 }
