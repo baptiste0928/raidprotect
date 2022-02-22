@@ -1,3 +1,13 @@
+//! # RaidProtect
+//!
+//! This crate is the binary of the RaidProtect Discord bot that link together
+//! all other `raidprotect`-prefixed crates.
+//!
+//! ## Crates structure
+//! - `gateway`: receive and process incoming events
+//! - `cache`: custom cache that store Discord objects
+//! - `util`: contain utilities such as logging and shutdown
+
 mod config;
 
 use anyhow::{Context, Result};
