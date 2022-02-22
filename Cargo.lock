@@ -782,9 +782,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "figment",
+ "raidprotect-gateway",
  "raidprotect-util",
  "serde",
  "tokio",
+ "tracing",
  "workspace-hack",
 ]
 

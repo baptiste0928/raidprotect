@@ -14,4 +14,4 @@ mod cluster;
 
 pub mod event;
 
-pub use cluster::ShardCluster;
+pub use cluster::{ClusterError, ShardCluster};

@@ -1,16 +1,20 @@
 //! Shards cluster implementation.
 
-use std::sync::Arc;
+use std::{
+    error::Error,
+    fmt::{self, Display},
+    sync::Arc,
+};
 
 use futures::StreamExt;
 use raidprotect_cache::InMemoryCache;
 use raidprotect_util::shutdown::ShutdownSubscriber;
-use tracing::{info_span, instrument, trace};
+use tracing::{info, info_span, instrument, trace};
 use twilight_gateway::{
     cluster::{ClusterStartError, Events, ShardScheme},
     Cluster, Intents,
 };
-use twilight_http::Client as HttpClient;
+use twilight_http::{response::DeserializeBodyError, Client as HttpClient, Error as HttpError};
 use twilight_model::gateway::{
     payload::outgoing::update_presence::UpdatePresencePayload,
     presence::{ActivityType, MinimalActivity, Status},
@@ -30,30 +34,43 @@ pub struct ShardCluster {
     events: Events,
     /// In-memory cache
     cache: Arc<InMemoryCache>,
+    /// Http client
+    http: Arc<HttpClient>,
 }
 
 impl ShardCluster {
     /// Initialize a new [`ShardCluster`].
     ///
-    /// This method takes an inital [`HttpClient`] and [`InMemoryCache`].
-    pub async fn new(
-        token: &str,
-        http: Arc<HttpClient>,
-        cache: Arc<InMemoryCache>,
-    ) -> Result<Self, ClusterStartError> {
+    /// This method also initialize an [`HttpClient`] and an [`InMemoryCache`],
+    /// that can be later retrieved using corresponding methods.
+    pub async fn new(token: String) -> Result<Self, ClusterError> {
+        // Initialize HTTP client and get current user.
+        let http = Arc::new(HttpClient::new(token.clone()));
+        let current_user = http.current_user().exec().await?.model().await?;
+
+        info!(
+            "Logged as {} with ID {}",
+            current_user.name, current_user.id
+        );
+
+        let cache = Arc::new(InMemoryCache::new(current_user.id));
+
         let intents = Intents::GUILDS | Intents::GUILD_MEMBERS | Intents::GUILD_MESSAGES;
 
         let (cluster, events) = Cluster::builder(token.to_string(), intents)
-            .http_client(http)
+            .http_client(http.clone())
             .shard_scheme(ShardScheme::Auto)
             .presence(presence())
             .build()
             .await?;
 
+        info!("Started cluster with {} shards", cluster.shards().len());
+
         Ok(Self {
             cluster: Arc::new(cluster),
             events,
             cache,
+            http,
         })
     }
 
@@ -89,6 +106,16 @@ impl ShardCluster {
             });
         }
     }
+
+    /// Get the cluster [`InMemoryCache`].
+    pub fn cache(&self) -> Arc<InMemoryCache> {
+        self.cache.clone()
+    }
+
+    /// Get the cluster [`HttpClient`].
+    pub fn http(&self) -> Arc<HttpClient> {
+        self.http.clone()
+    }
 }
 
 /// Get the bot presence.
@@ -104,5 +131,53 @@ fn presence() -> UpdatePresencePayload {
         afk: false,
         since: None,
         status: Status::Online,
+    }
+}
+
+/// Error when initializing a [`ShardCluster`].
+#[derive(Debug)]
+pub enum ClusterError {
+    /// HTTP request failed
+    Http(HttpError),
+    /// Response body deserialization error
+    Deserialize(DeserializeBodyError),
+    /// Failed to start cluster
+    Start(ClusterStartError),
+}
+
+impl Error for ClusterError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            ClusterError::Http(e) => Some(e),
+            ClusterError::Deserialize(e) => Some(e),
+            ClusterError::Start(e) => Some(e),
+        }
+    }
+}
+
+impl Display for ClusterError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ClusterError::Http(e) => write!(f, "http error: {e}"),
+            ClusterError::Deserialize(e) => write!(f, "deserialize error: {e}"),
+            ClusterError::Start(e) => write!(f, "failed to start cluster: {e}"),
+        }
+    }
+}
+
+impl From<HttpError> for ClusterError {
+    fn from(error: HttpError) -> Self {
+        ClusterError::Http(error)
+    }
+}
+impl From<DeserializeBodyError> for ClusterError {
+    fn from(error: DeserializeBodyError) -> Self {
+        ClusterError::Deserialize(error)
+    }
+}
+
+impl From<ClusterStartError> for ClusterError {
+    fn from(error: ClusterStartError) -> Self {
+        ClusterError::Start(error)
     }
 }
