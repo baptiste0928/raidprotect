@@ -16,20 +16,10 @@ labels:
     matcher:
       files: "gateway/**/*"
 
-  - label: c-model
-    sync: true
-    matcher:
-      files: "model/**/*"
-
   - label: c-raidprotect
     sync: true
     matcher:
       files: "raidprotect/**/*"
-
-  - label: c-transport
-    sync: true
-    matcher:
-      files: "transport/**/*"
 
   - label: c-util
     sync: true
