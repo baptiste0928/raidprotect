@@ -14,5 +14,5 @@ workspace-hack = { path = "../workspace-hack" }
 anyhow = "1"
 figment = { version = "0.10", features = ["env", "toml"] }
 serde = { version = "1", features = ["derive"] }
-tokio = { version = "1.14", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.17", features = ["macros", "rt-multi-thread"] }
 tracing = { version = "0.1" }
