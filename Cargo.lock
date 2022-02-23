@@ -760,6 +760,10 @@ dependencies = [
 name = "raidprotect-handler"
 version = "0.1.0"
 dependencies = [
+ "raidprotect-gateway",
+ "thiserror",
+ "twilight-interactions",
+ "twilight-model",
  "workspace-hack",
 ]
 
@@ -1316,6 +1320,27 @@ dependencies = [
  "futures-util",
  "http",
  "tokio",
+]
+
+[[package]]
+name = "twilight-interactions"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8a0a6617ac06bdc49837fe3619a92ca0e642d537833bdc32ff15b2c0368cb8ec"
+dependencies = [
+ "twilight-interactions-derive",
+ "twilight-model",
+]
+
+[[package]]
+name = "twilight-interactions-derive"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8a0ce4504a2a9a8935429ae3959e54b93a0439d5aba1bccf9d0c00011d608cf"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

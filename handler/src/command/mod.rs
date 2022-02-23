@@ -1,1 +1,0 @@
-//! Slash commands handler.
