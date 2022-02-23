@@ -1,21 +1,15 @@
 //! Configuration model.
 //!
-//! Configuration is loaded at runtime from a `Settings.toml` file
-//! or environment prefixed with `RAIDPROTECT_`.
+//! Configuration is loaded at runtime from environment variables prefixed with
+//! `RAIDPROTECT_`. Variables defined in a `.env` file are loaded before.
 
-use figment::{
-    providers::{Env, Format, Toml},
-    Figment,
-};
 use raidprotect_util::logging::LogConfig;
 use serde::Deserialize;
 
-/// Parse configuration from `Settings.toml` or environment variables.
-pub fn parse_config() -> Result<Config, figment::Error> {
-    Figment::new()
-        .merge(Toml::file("Settings.toml"))
-        .merge(Env::prefixed("RAIDPROTECT_"))
-        .extract()
+/// Parse configuration from environment variables.
+pub fn parse_config() -> Result<Config, envy::Error> {
+    dotenv::dotenv().ok();
+    envy::prefixed("RAIDPROTECT_").from_env()
 }
 
 /// RaidProtect configuration model.
