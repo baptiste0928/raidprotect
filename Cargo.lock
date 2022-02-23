@@ -806,6 +806,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "raidprotect-handler"
+version = "0.1.0"
+dependencies = [
+ "workspace-hack",
+]
+
+[[package]]
 name = "raidprotect-util"
 version = "0.1.0"
 dependencies = [

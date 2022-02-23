@@ -2,6 +2,7 @@
 members = [
     "cache",
     "gateway",
+    "handler",
     "raidprotect",
     "util",
     "workspace-hack",
