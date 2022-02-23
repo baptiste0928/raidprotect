@@ -12,7 +12,8 @@ raidprotect-util = { path = "../util" }
 workspace-hack = { path = "../workspace-hack" }
 
 anyhow = "1"
-figment = { version = "0.10", features = ["env", "toml"] }
+dotenv = "0.15"
+envy = "0.4"
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1.17", features = ["macros", "rt-multi-thread"] }
 tracing = { version = "0.1" }
