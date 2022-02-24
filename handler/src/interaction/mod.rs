@@ -2,4 +2,6 @@
 
 mod handle;
 
-pub use handle::handle;
+pub mod help;
+
+pub use handle::{handle, IntoCallback};

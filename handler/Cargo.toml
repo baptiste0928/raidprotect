@@ -11,5 +11,8 @@ raidprotect-gateway = { path = "../gateway" }
 workspace-hack = { path = "../workspace-hack" }
 
 thiserror = "1"
-twilight-model = "0.9"
+tracing = "0.1"
+twilight-embed-builder = "0.9"
 twilight-interactions = "0.9"
+twilight-model = "0.9"
+twilight-util = { version = "0.9", features = ["builder"] }
