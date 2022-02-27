@@ -1,7 +1,7 @@
 //! Event context.
 //!
 //! These structs represent the context of an event, with additional information
-//! retrived from cache or other
+//! retrieved from cache or database.
 
 use std::{
     error::Error,
@@ -12,6 +12,22 @@ use std::{
 use raidprotect_cache::{model::CachedGuild, InMemoryCache};
 use twilight_http::Client as HttpClient;
 use twilight_model::id::{marker::GuildMarker, Id};
+
+/// Generic context for bot events.
+#[derive(Debug, Clone)]
+pub struct EventContext {
+    /// Bot in-memory cache.
+    pub cache: Arc<InMemoryCache>,
+    /// Shared Discord HTTP client.
+    pub http: Arc<HttpClient>,
+}
+
+impl EventContext {
+    /// Initialize a new [`EventContext`].
+    pub(crate) fn new(cache: Arc<InMemoryCache>, http: Arc<HttpClient>) -> Self {
+        Self { cache, http }
+    }
+}
 
 /// Context for guild events.
 #[derive(Debug, Clone)]
@@ -40,7 +56,7 @@ impl GuildContext {
     }
 }
 
-/// Error when intializing a [`GuildContext`].
+/// Error when initializing a [`GuildContext`].
 #[derive(Debug)]
 pub enum ContextError {
     /// Guild not found in the cache.

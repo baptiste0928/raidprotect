@@ -5,8 +5,8 @@
 //! bot internal state.
 //!
 //! ## Modules
-//! The crate is splitted into different modules that correspond to the multiple
-//! features avaiable to the users.
+//! The crate is split into different modules that correspond to the multiple
+//! features available to the users.
 //!
 //! - [`embed`]: response embeds models
 //! - [`interaction`]: interaction handling, using `twilight-interactions`

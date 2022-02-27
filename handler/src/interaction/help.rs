@@ -53,7 +53,7 @@ impl IntoCallback for HelpCommandError {
     fn into_callback(self) -> CallbackData {
         match self {
             error => {
-                error!(error = %error, "error occured when handling `help` command");
+                error!(error = %error, "error occurred when handling `help` command");
                 embed::error::internal_error().into_callback()
             }
         }

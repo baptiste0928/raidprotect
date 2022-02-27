@@ -1,7 +1,11 @@
 use raidprotect_gateway::event::context::GuildContext;
 use twilight_model::{
     application::{callback::CallbackData, interaction::Interaction},
-    channel::embed::Embed, id::{marker::{ChannelMarker, InteractionMarker}, Id},
+    channel::embed::Embed,
+    id::{
+        marker::{ChannelMarker, InteractionMarker},
+        Id,
+    },
 };
 use twilight_util::builder::CallbackDataBuilder;
 
@@ -12,7 +16,6 @@ pub async fn handle(interaction: Interaction, ctx: GuildContext) {
 
 /// Handle incoming [`ApplicationCommand`]
 async fn handle_command() {}
-
 
 /// Context of an [`ApplicationCommand`]
 #[derive(Debug)]
