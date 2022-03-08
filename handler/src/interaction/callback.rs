@@ -96,6 +96,21 @@ pub enum InteractionErrorData {
     },
 }
 
+impl InteractionErrorData {
+    /// Initialize a new [`InteractionErrorData::Callback`].
+    pub fn callback(callback: impl IntoCallback) -> Self {
+        Self::Callback(callback.into_callback())
+    }
+
+    /// Initialize a new [`InteractionErrorData::Internal`].
+    pub fn internal(name: Option<&str>, error: impl Error + Send + Sync + 'static) -> Self {
+        Self::Internal {
+            name: name.unwrap_or("unknown").into(),
+            error: Box::new(error),
+        }
+    }
+}
+
 impl IntoCallback for InteractionErrorData {
     fn into_callback(self) -> CallbackData {
         match self {

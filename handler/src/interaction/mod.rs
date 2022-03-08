@@ -3,6 +3,7 @@
 mod handle;
 
 pub mod callback;
-pub mod help;
+// pub mod help;
+pub mod context;
 
-pub use handle::{handle, IntoCallback};
+pub use handle::handle_command;

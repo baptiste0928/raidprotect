@@ -12,8 +12,6 @@ use twilight_model::{
 
 use crate::embed;
 
-use super::IntoCallback;
-
 /// Help command model.
 #[derive(Debug, CommandModel, CreateCommand)]
 #[command(name = "help", desc = "Show the list of available commands")]
