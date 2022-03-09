@@ -764,6 +764,7 @@ dependencies = [
  "thiserror",
  "tracing",
  "twilight-embed-builder",
+ "twilight-http",
  "twilight-interactions",
  "twilight-model",
  "twilight-util",

@@ -10,22 +10,47 @@ use std::{
 };
 
 use raidprotect_cache::{model::CachedGuild, InMemoryCache};
-use twilight_http::Client as HttpClient;
-use twilight_model::id::{marker::GuildMarker, Id};
+use twilight_http::{client::InteractionClient, Client as HttpClient};
+use twilight_model::id::{
+    marker::{ApplicationMarker, GuildMarker},
+    Id,
+};
+
+/// Trait implemented by event context types.
+pub trait EventContext {
+    /// Get the [`InteractionClient`] associated with the current context.
+    fn interaction(&self) -> InteractionClient;
+}
 
 /// Generic context for bot events.
 #[derive(Debug, Clone)]
-pub struct EventContext {
+pub struct BaseContext {
     /// Bot in-memory cache.
     pub cache: Arc<InMemoryCache>,
     /// Shared Discord HTTP client.
     pub http: Arc<HttpClient>,
+    /// Bot application id
+    pub application_id: Id<ApplicationMarker>,
 }
 
-impl EventContext {
-    /// Initialize a new [`EventContext`].
-    pub(crate) fn new(cache: Arc<InMemoryCache>, http: Arc<HttpClient>) -> Self {
-        Self { cache, http }
+impl BaseContext {
+    /// Initialize a new [`BaseContext`].
+    pub(crate) fn new(
+        cache: Arc<InMemoryCache>,
+        http: Arc<HttpClient>,
+        application_id: Id<ApplicationMarker>,
+    ) -> Self {
+        Self {
+            cache,
+            http,
+            application_id,
+        }
+    }
+}
+
+impl EventContext for BaseContext {
+    fn interaction(&self) -> InteractionClient {
+        self.http.interaction(self.application_id)
     }
 }
 
@@ -38,6 +63,8 @@ pub struct GuildContext {
     pub cache: Arc<InMemoryCache>,
     /// Shared Discord HTTP client.
     pub http: Arc<HttpClient>,
+    /// Bot application id
+    pub application_id: Id<ApplicationMarker>,
 }
 
 impl GuildContext {
@@ -46,17 +73,15 @@ impl GuildContext {
         guild_id: Id<GuildMarker>,
         cache: Arc<InMemoryCache>,
         http: Arc<HttpClient>,
+        application_id: Id<ApplicationMarker>,
     ) -> Result<Self, ContextError> {
-        let ctx = EventContext::new(cache, http);
+        let ctx = BaseContext::new(cache, http, application_id);
 
         Self::from_context(ctx, guild_id)
     }
 
-    /// Initialize a new [`GuildContext`] from an existing [`EventContext`].
-    pub fn from_context(
-        ctx: EventContext,
-        guild_id: Id<GuildMarker>,
-    ) -> Result<Self, ContextError> {
+    /// Initialize a new [`GuildContext`] from an existing [`BaseContext`].
+    pub fn from_context(ctx: BaseContext, guild_id: Id<GuildMarker>) -> Result<Self, ContextError> {
         let guild = match ctx.cache.guild(guild_id) {
             Some(guild) => guild.clone(),
             None => return Err(ContextError::CacheNotFound),
@@ -66,7 +91,14 @@ impl GuildContext {
             guild,
             cache: ctx.cache,
             http: ctx.http,
+            application_id: ctx.application_id,
         })
+    }
+}
+
+impl EventContext for GuildContext {
+    fn interaction(&self) -> InteractionClient {
+        self.http.interaction(self.application_id)
     }
 }
 

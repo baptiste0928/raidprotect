@@ -2,10 +2,11 @@
 //!
 //! This module contains types used to parse context from received interaction.
 
-use raidprotect_gateway::event::context::{ContextError, EventContext, GuildContext};
+use raidprotect_gateway::event::context::{BaseContext, ContextError, EventContext, GuildContext};
 use thiserror::Error;
+use twilight_http::Error as HttpError;
 use twilight_model::{
-    application::interaction::ApplicationCommand,
+    application::{callback::InteractionResponse, interaction::ApplicationCommand},
     guild::PartialMember,
     id::{
         marker::{ChannelMarker, InteractionMarker},
@@ -35,6 +36,21 @@ impl CommandCallback {
             token: command.token.clone(),
         }
     }
+
+    /// Respond to an interaction
+    pub async fn exec(
+        &self,
+        context: &impl EventContext,
+        response: &InteractionResponse,
+    ) -> Result<(), HttpError> {
+        context
+            .interaction()
+            .interaction_callback(self.id, &self.token, response)
+            .exec()
+            .await?;
+
+        Ok(())
+    }
 }
 
 /// Context of an [`ApplicationCommand`].
@@ -50,7 +66,7 @@ impl CommandContext {
     /// Initialize a new [`CommandContext`] from an incoming command data.
     pub fn from_command(
         command: ApplicationCommand,
-        ctx: EventContext,
+        ctx: BaseContext,
     ) -> Result<Self, CommandContextError> {
         if command.guild_id.is_some() {
             Ok(Self::Guild(GuildCommandContext::from_command(
@@ -58,6 +74,38 @@ impl CommandContext {
             )?))
         } else {
             Ok(Self::Private(PrivateCommandContext::from_command(command)?))
+        }
+    }
+
+    /// Get the command [`Id`] and token.
+    pub fn callback(&self) -> (Id<InteractionMarker>, &str) {
+        match self {
+            CommandContext::Private(ctx) => (ctx.id, &ctx.token),
+            CommandContext::Guild(ctx) => (ctx.id, &ctx.token),
+        }
+    }
+
+    /// Get the channel the command was triggered from.
+    pub fn channel(&self) -> Id<ChannelMarker> {
+        match self {
+            CommandContext::Private(ctx) => ctx.channel,
+            CommandContext::Guild(ctx) => ctx.channel,
+        }
+    }
+
+    /// Get the user that triggered the command.
+    pub fn user(&self) -> &User {
+        match self {
+            CommandContext::Private(ctx) => &ctx.user,
+            CommandContext::Guild(ctx) => &ctx.user,
+        }
+    }
+
+    /// Get the user locale.
+    pub fn locale(&self) -> &str {
+        match self {
+            CommandContext::Private(ctx) => &ctx.locale,
+            CommandContext::Guild(ctx) => &ctx.locale,
         }
     }
 }
@@ -117,7 +165,7 @@ impl GuildCommandContext {
     /// Initialize a new [`GuildCommandContext`] from an incoming command data.
     pub fn from_command(
         command: ApplicationCommand,
-        ctx: EventContext,
+        ctx: BaseContext,
     ) -> Result<Self, CommandContextError> {
         let guild_id = command.guild_id.ok_or(CommandContextError::GuildOnly)?;
         let member = command.member.ok_or(CommandContextError::MissingMember)?;
