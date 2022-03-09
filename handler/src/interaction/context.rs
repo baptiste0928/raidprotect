@@ -197,7 +197,7 @@ pub enum CommandContextError {
     MissingUser,
     #[error("missing member data")]
     MissingMember,
-    #[error("failed to intialize guild context: {0}")]
+    #[error("failed to initialize guild context: {0}")]
     Context(#[from] ContextError),
 }
 
