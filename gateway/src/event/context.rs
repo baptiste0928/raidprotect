@@ -42,17 +42,31 @@ pub struct GuildContext {
 
 impl GuildContext {
     /// Initialize a new [`GuildContext`].
-    pub(crate) async fn new(
+    pub(crate) fn new(
         guild_id: Id<GuildMarker>,
         cache: Arc<InMemoryCache>,
         http: Arc<HttpClient>,
     ) -> Result<Self, ContextError> {
-        let guild = match cache.guild(guild_id) {
+        let ctx = EventContext::new(cache, http);
+
+        Self::from_context(ctx, guild_id)
+    }
+
+    /// Initialize a new [`GuildContext`] from an existing [`EventContext`].
+    pub fn from_context(
+        ctx: EventContext,
+        guild_id: Id<GuildMarker>,
+    ) -> Result<Self, ContextError> {
+        let guild = match ctx.cache.guild(guild_id) {
             Some(guild) => guild.clone(),
             None => return Err(ContextError::CacheNotFound),
         };
 
-        Ok(Self { guild, cache, http })
+        Ok(Self {
+            guild,
+            cache: ctx.cache,
+            http: ctx.http,
+        })
     }
 }
 

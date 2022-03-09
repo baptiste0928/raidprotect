@@ -2,9 +2,11 @@
 //!
 //! This module contains types used to parse context from received interaction.
 
+use raidprotect_gateway::event::context::{ContextError, EventContext, GuildContext};
 use thiserror::Error;
 use twilight_model::{
     application::interaction::ApplicationCommand,
+    guild::PartialMember,
     id::{
         marker::{ChannelMarker, InteractionMarker},
         Id,
@@ -16,6 +18,25 @@ use crate::embed::error;
 
 use super::callback::{InteractionError, InteractionErrorData};
 
+/// Data used to respond to an incoming command.
+#[derive(Debug)]
+pub struct CommandCallback {
+    /// ID of the command.
+    id: Id<InteractionMarker>,
+    /// Token of the command.
+    token: String,
+}
+
+impl CommandCallback {
+    /// Initialize a new [`CommandCallback`] from an incoming command data.
+    pub fn from_command(command: &ApplicationCommand) -> Self {
+        Self {
+            id: command.id,
+            token: command.token.clone(),
+        }
+    }
+}
+
 /// Context of an [`ApplicationCommand`].
 #[derive(Debug)]
 pub enum CommandContext {
@@ -23,6 +44,22 @@ pub enum CommandContext {
     Private(PrivateCommandContext),
     /// Command received from a guild.
     Guild(GuildCommandContext),
+}
+
+impl CommandContext {
+    /// Initialize a new [`CommandContext`] from an incoming command data.
+    pub fn from_command(
+        command: ApplicationCommand,
+        ctx: EventContext,
+    ) -> Result<Self, CommandContextError> {
+        if command.guild_id.is_some() {
+            Ok(Self::Guild(GuildCommandContext::from_command(
+                command, ctx,
+            )?))
+        } else {
+            Ok(Self::Private(PrivateCommandContext::from_command(command)?))
+        }
+    }
 }
 
 /// Context of an [`ApplicationCommand`] received from private messages.
@@ -40,18 +77,17 @@ pub struct PrivateCommandContext {
     pub locale: String,
 }
 
-impl TryFrom<ApplicationCommand> for PrivateCommandContext {
-    type Error = CommandContextError;
-
-    fn try_from(value: ApplicationCommand) -> Result<Self, Self::Error> {
-        let user = value.user.ok_or(CommandContextError::MissingUser)?;
+impl PrivateCommandContext {
+    /// Initialize a new [`PrivateCommandContext`] from an incoming command data.
+    pub fn from_command(command: ApplicationCommand) -> Result<Self, CommandContextError> {
+        let user = command.user.ok_or(CommandContextError::MissingUser)?;
 
         Ok(PrivateCommandContext {
-            id: value.id,
-            token: value.token,
-            channel: value.channel_id,
+            id: command.id,
+            token: command.token,
+            channel: command.channel_id,
             user,
-            locale: value.locale,
+            locale: command.locale,
         })
     }
 }
@@ -59,12 +95,49 @@ impl TryFrom<ApplicationCommand> for PrivateCommandContext {
 /// Context of an [`ApplicationCommand`] that is executed in a guild
 #[derive(Debug)]
 pub struct GuildCommandContext {
-    /// ID of the interaction.
-    id: Id<InteractionMarker>,
+    /// ID of the command.
+    pub id: Id<InteractionMarker>,
+    /// Token of the command.
+    pub token: String,
     // Context of the guild the command was triggered from.
-    // guild: GuildContext,
+    pub guild: GuildContext,
     /// The channel the command was triggered from.
-    channel_id: Id<ChannelMarker>,
+    pub channel: Id<ChannelMarker>,
+    /// User that triggered the command.
+    ///
+    /// This value is cloned from the user contained in [`PartialMember`].
+    pub user: User,
+    /// Member that triggered the command.
+    pub member: PartialMember,
+    /// The user locale.
+    pub locale: String,
+}
+
+impl GuildCommandContext {
+    /// Initialize a new [`GuildCommandContext`] from an incoming command data.
+    pub fn from_command(
+        command: ApplicationCommand,
+        ctx: EventContext,
+    ) -> Result<Self, CommandContextError> {
+        let guild_id = command.guild_id.ok_or(CommandContextError::GuildOnly)?;
+        let member = command.member.ok_or(CommandContextError::MissingMember)?;
+        let user = member
+            .user
+            .clone()
+            .ok_or(CommandContextError::MissingUser)?;
+
+        let guild = GuildContext::from_context(ctx, guild_id)?;
+
+        Ok(GuildCommandContext {
+            id: command.id,
+            token: command.token,
+            channel: command.channel_id,
+            user,
+            member,
+            guild,
+            locale: command.locale,
+        })
+    }
 }
 
 /// Error occurred when initializing a [`CommandContext`].
@@ -74,6 +147,10 @@ pub enum CommandContextError {
     GuildOnly,
     #[error("missing user data")]
     MissingUser,
+    #[error("missing member data")]
+    MissingMember,
+    #[error("failed to intialize guild context: {0}")]
+    Context(#[from] ContextError),
 }
 
 impl InteractionError for CommandContextError {
