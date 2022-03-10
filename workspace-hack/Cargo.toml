@@ -14,9 +14,9 @@ publish = false
 ### BEGIN HAKARI SECTION
 [dependencies]
 time = { version = "0.3", default-features = false, features = ["alloc", "formatting", "itoa", "parsing", "std"] }
-tokio = { version = "1", features = ["bytes", "io-util", "libc", "macros", "memchr", "mio", "net", "num_cpus", "once_cell", "rt", "rt-multi-thread", "signal", "signal-hook-registry", "socket2", "sync", "time", "tokio-macros", "winapi"] }
+tokio = { version = "1", features = ["bytes", "io-util", "libc", "macros", "memchr", "mio", "net", "num_cpus", "once_cell", "rt", "rt-multi-thread", "signal", "signal-hook-registry", "socket2", "sync", "time", "tokio-macros"] }
 tracing = { version = "0.1", features = ["attributes", "release_max_level_info", "std", "tracing-attributes"] }
-tracing-core = { version = "0.1", features = ["lazy_static", "std", "valuable"] }
+tracing-core = { version = "0.1", features = ["lazy_static", "std"] }
 
 [build-dependencies]
 proc-macro2 = { version = "1", features = ["proc-macro"] }
