@@ -74,7 +74,7 @@ process_cache_events! {
 
 impl ProcessEvent for incoming::InteractionCreate {
     fn process(self, cache: &InMemoryCache) {
-        let _guild = self.guild_id().map(|id| cache.guild(id)).flatten();
+        let _guild = self.guild_id().and_then(|id| cache.guild(id));
 
         todo!("handle interactions")
     }
