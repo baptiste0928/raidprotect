@@ -748,6 +748,7 @@ dependencies = [
  "raidprotect-cache",
  "raidprotect-util",
  "serde",
+ "thiserror",
  "tokio",
  "tracing",
  "twilight-gateway",

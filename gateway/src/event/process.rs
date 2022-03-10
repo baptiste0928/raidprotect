@@ -1,18 +1,26 @@
-use raidprotect_cache::InMemoryCache;
-use tracing::trace;
-use twilight_model::gateway::{event::Event as GatewayEvent, payload::incoming};
+use std::sync::Arc;
+
+use tracing::{error, trace};
+use twilight_model::{
+    application::interaction::Interaction,
+    gateway::{event::Event as GatewayEvent, payload::incoming},
+};
+
+use crate::cluster::ClusterState;
+
+use super::context::EventContext;
 
 /// Process incoming events.
 pub trait ProcessEvent: Sized {
     /// Process incoming event.
-    fn process(self, cache: &InMemoryCache);
+    fn process(self, state: Arc<ClusterState>);
 }
 
 macro_rules! process_events {
-    ($self:ident, $cache:ident => $( $event:path ),+ ) => {
+    ($self:ident, $state:ident => $( $event:path ),+ ) => {
         match $self {
             $(
-                $event(event) => event.process($cache),
+                $event(event) => event.process($state),
             )+
             event => trace!(kind = event.kind().name(), "unprocessed event type"),
         }
@@ -23,8 +31,8 @@ macro_rules! process_cache_events {
     ( $( $event:ident ),+ ) => {
         $(
             impl ProcessEvent for incoming::$event {
-                fn process(self, cache: &InMemoryCache) {
-                    cache.update(&self);
+                fn process(self, state: Arc<ClusterState>) {
+                    state.cache().update(&self);
                 }
             }
         )+
@@ -32,10 +40,10 @@ macro_rules! process_cache_events {
 }
 
 impl ProcessEvent for GatewayEvent {
-    fn process(self, cache: &InMemoryCache) {
+    fn process(self, state: Arc<ClusterState>) {
         use GatewayEvent::*;
 
-        process_events! { self, cache =>
+        process_events! { self, state =>
             GuildCreate,
             GuildDelete,
             UnavailableGuild,
@@ -73,9 +81,20 @@ process_cache_events! {
 }
 
 impl ProcessEvent for incoming::InteractionCreate {
-    fn process(self, cache: &InMemoryCache) {
-        let _guild = self.guild_id().and_then(|id| cache.guild(id));
+    fn process(self, state: Arc<ClusterState>) {
+        match self.0 {
+            Interaction::ApplicationCommand(command) => {
+                let _context = match EventContext::new(state, command.guild_id) {
+                    Ok(context) => context,
+                    Err(error) => {
+                        error!(error = %error, "failed to initialize event context");
+                        return;
+                    }
+                };
 
-        todo!("handle interactions")
+                todo!("spawn handler")
+            }
+            _ => todo!(),
+        }
     }
 }

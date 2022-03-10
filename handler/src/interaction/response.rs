@@ -1,4 +1,4 @@
-//! Interactions callback.
+//! Interactions reponses.
 //!
 //! This type hold types and traits used to respond to an interaction.
 //!
@@ -17,24 +17,24 @@ use crate::embed;
 ///
 /// This type is used for interaction responses. It is implemented for common
 /// types such as [`Embed`].
-pub trait IntoCallback {
+pub trait IntoResponse {
     /// Convert this type into [`CallbackData`].
     fn into_callback(self) -> CallbackData;
 }
 
-impl IntoCallback for CallbackData {
+impl IntoResponse for CallbackData {
     fn into_callback(self) -> CallbackData {
         self
     }
 }
 
-impl IntoCallback for Embed {
+impl IntoResponse for Embed {
     fn into_callback(self) -> CallbackData {
         CallbackDataBuilder::new().embeds([self]).build()
     }
 }
 
-impl<T: IntoCallback, E: InteractionError> IntoCallback for Result<T, E> {
+impl<T: IntoResponse, E: InteractionError> IntoResponse for Result<T, E> {
     fn into_callback(self) -> CallbackData {
         match self {
             Ok(value) => value.into_callback(),
@@ -45,12 +45,12 @@ impl<T: IntoCallback, E: InteractionError> IntoCallback for Result<T, E> {
 
 /// Embed that respond using an ephemeral interaction callback.
 ///
-/// This type wraps an [`Embed`] and implement [`IntoCallback`]. It can be
+/// This type wraps an [`Embed`] and implement [`IntoResponse`]. It can be
 /// easily converted to and from an embed using the [`From`] trait.
 #[derive(Debug, Clone)]
 pub struct EphemeralEmbed(pub Embed);
 
-impl IntoCallback for EphemeralEmbed {
+impl IntoResponse for EphemeralEmbed {
     fn into_callback(self) -> CallbackData {
         CallbackDataBuilder::new()
             .embeds([self.0])
@@ -98,7 +98,7 @@ pub enum InteractionErrorData {
 
 impl InteractionErrorData {
     /// Initialize a new [`InteractionErrorData::Callback`].
-    pub fn callback(callback: impl IntoCallback) -> Self {
+    pub fn callback(callback: impl IntoResponse) -> Self {
         Self::Callback(callback.into_callback())
     }
 
@@ -111,7 +111,7 @@ impl InteractionErrorData {
     }
 }
 
-impl IntoCallback for InteractionErrorData {
+impl IntoResponse for InteractionErrorData {
     fn into_callback(self) -> CallbackData {
         match self {
             InteractionErrorData::Callback(callback) => callback,

@@ -2,7 +2,9 @@
 //!
 //! This module contains types used to parse context from received interaction.
 
+use raidprotect_gateway::ClusterState;
 use thiserror::Error;
+use twilight_http::client::InteractionClient;
 use twilight_model::{
     application::interaction::ApplicationCommand,
     guild::PartialMember,
@@ -13,7 +15,7 @@ use twilight_model::{
     user::User,
 };
 
-use super::callback::{InteractionError, InteractionErrorData};
+use super::response::{InteractionError, InteractionErrorData};
 
 /// Context of an [`ApplicationCommand`].
 #[derive(Debug)]
@@ -62,6 +64,11 @@ impl CommandContext {
             member,
             locale: command.locale,
         })
+    }
+
+    /// Get the [`InteractionClient`] associated with the current context.
+    pub fn interaction<'state>(&self, state: &'state ClusterState) -> InteractionClient<'state> {
+        state.http().interaction(self.application_id)
     }
 }
 
