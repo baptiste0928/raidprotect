@@ -8,4 +8,4 @@ mod cluster;
 
 pub mod event;
 
-pub use cluster::{ClusterError, ClusterState, ShardCluster};
+pub use cluster::{ClusterError, ShardCluster};

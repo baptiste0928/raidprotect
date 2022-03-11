@@ -746,6 +746,8 @@ dependencies = [
  "dashmap",
  "futures",
  "raidprotect-cache",
+ "raidprotect-handler",
+ "raidprotect-model",
  "raidprotect-util",
  "serde",
  "thiserror",
@@ -761,7 +763,7 @@ dependencies = [
 name = "raidprotect-handler"
 version = "0.1.0"
 dependencies = [
- "raidprotect-gateway",
+ "raidprotect-model",
  "thiserror",
  "tracing",
  "twilight-embed-builder",
@@ -769,6 +771,16 @@ dependencies = [
  "twilight-interactions",
  "twilight-model",
  "twilight-util",
+ "workspace-hack",
+]
+
+[[package]]
+name = "raidprotect-model"
+version = "0.1.0"
+dependencies = [
+ "raidprotect-cache",
+ "twilight-http",
+ "twilight-model",
  "workspace-hack",
 ]
 

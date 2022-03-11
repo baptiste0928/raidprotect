@@ -1,14 +1,12 @@
 use std::sync::Arc;
 
-use tracing::{error, trace};
+use raidprotect_handler::interaction;
+use raidprotect_model::ClusterState;
+use tracing::trace;
 use twilight_model::{
     application::interaction::Interaction,
     gateway::{event::Event as GatewayEvent, payload::incoming},
 };
-
-use crate::cluster::ClusterState;
-
-use super::context::EventContext;
 
 /// Process incoming events.
 pub trait ProcessEvent: Sized {
@@ -84,17 +82,9 @@ impl ProcessEvent for incoming::InteractionCreate {
     fn process(self, state: Arc<ClusterState>) {
         match self.0 {
             Interaction::ApplicationCommand(command) => {
-                let _context = match EventContext::new(state, command.guild_id) {
-                    Ok(context) => context,
-                    Err(error) => {
-                        error!(error = %error, "failed to initialize event context");
-                        return;
-                    }
-                };
-
-                todo!("spawn handler")
+                tokio::spawn(interaction::handle_command(*command, state))
             }
             _ => todo!(),
-        }
+        };
     }
 }

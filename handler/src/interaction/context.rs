@@ -2,7 +2,7 @@
 //!
 //! This module contains types used to parse context from received interaction.
 
-use raidprotect_gateway::ClusterState;
+use raidprotect_model::ClusterState;
 use thiserror::Error;
 use twilight_http::client::InteractionClient;
 use twilight_model::{

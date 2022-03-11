@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use futures::StreamExt;
 use raidprotect_cache::InMemoryCache;
+use raidprotect_model::ClusterState;
 use raidprotect_util::shutdown::ShutdownSubscriber;
 use thiserror::Error;
 use tracing::{info, info_span, instrument, trace};
@@ -18,35 +19,6 @@ use twilight_model::gateway::{
 };
 
 use crate::event::ProcessEvent;
-
-/// Current state of the cluster.
-///
-/// This type hold shared types such as the cache or the http client. It does
-/// not implement [`Clone`] and is intended to be wrapped inside a [`Arc`].
-#[derive(Debug)]
-pub struct ClusterState {
-    /// In-memory cache
-    cache: InMemoryCache,
-    /// Http client
-    http: Arc<HttpClient>,
-}
-
-impl ClusterState {
-    /// Initialize a new [`ClusterState`].
-    fn new(cache: InMemoryCache, http: Arc<HttpClient>) -> Self {
-        Self { cache, http }
-    }
-
-    /// Get the cluster [`InMemoryCache`].
-    pub fn cache(&self) -> &InMemoryCache {
-        &self.cache
-    }
-
-    /// Get the cluster [`HttpClient`].
-    pub fn http(&self) -> &HttpClient {
-        &self.http
-    }
-}
 
 /// Discord shards cluster.
 ///
