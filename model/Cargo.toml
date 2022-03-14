@@ -8,7 +8,6 @@ publish = false
 
 [dependencies]
 raidprotect-cache = { path = "../cache" }
-workspace-hack = { path = "../workspace-hack" }
 
 twilight-http = "0.9"
 twilight-model = "0.9"

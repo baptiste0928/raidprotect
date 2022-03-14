@@ -727,7 +727,6 @@ dependencies = [
  "serde",
  "tokio",
  "tracing",
- "workspace-hack",
 ]
 
 [[package]]
@@ -736,7 +735,6 @@ version = "0.1.0"
 dependencies = [
  "dashmap",
  "twilight-model",
- "workspace-hack",
 ]
 
 [[package]]
@@ -756,7 +754,6 @@ dependencies = [
  "twilight-gateway",
  "twilight-http",
  "twilight-model",
- "workspace-hack",
 ]
 
 [[package]]
@@ -771,7 +768,6 @@ dependencies = [
  "twilight-interactions",
  "twilight-model",
  "twilight-util",
- "workspace-hack",
 ]
 
 [[package]]
@@ -781,7 +777,6 @@ dependencies = [
  "raidprotect-cache",
  "twilight-http",
  "twilight-model",
- "workspace-hack",
 ]
 
 [[package]]
@@ -793,7 +788,6 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
- "workspace-hack",
 ]
 
 [[package]]
@@ -1624,16 +1618,3 @@ name = "windows_x86_64_msvc"
 version = "0.32.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "504a2476202769977a040c6364301a3f65d0cc9e3fb08600b2bda150a0488316"
-
-[[package]]
-name = "workspace-hack"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
- "time",
- "tokio",
- "tracing",
- "tracing-core",
-]

@@ -8,7 +8,6 @@ publish = false
 
 [dependencies]
 raidprotect-model = { path = "../model" }
-workspace-hack = { path = "../workspace-hack" }
 
 thiserror = "1"
 tracing = "0.1"
