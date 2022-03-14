@@ -26,6 +26,19 @@ pub fn internal_error() -> Embed {
         .unwrap()
 }
 
+/// Unknown command received
+pub fn unknown_command() -> Embed {
+    EmbedBuilder::new()
+        .title("Cette commande n'est pas encore disponible")
+        .color(COLOR_RED)
+        .description(
+            "La commande que vous essayez d'effectuer n'est pas encore \
+            disponible. Patientez quelques minutes et réessayez.",
+        )
+        .build()
+        .unwrap()
+}
+
 /// Command not available in direct messages
 pub fn guild_only() -> Embed {
     EmbedBuilder::new()
@@ -47,6 +60,11 @@ mod tests {
     #[test]
     fn test_internal_error() {
         internal_error();
+    }
+
+    #[test]
+    fn test_unknown_command() {
+        unknown_command();
     }
 
     #[test]

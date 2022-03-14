@@ -1,16 +1,16 @@
 //! Help command.
 
-use raidprotect_gateway::event::context::GuildContext;
+use raidprotect_model::ClusterState;
 use thiserror::Error;
 use tracing::{error, instrument};
 use twilight_embed_builder::{EmbedBuilder, EmbedError};
-use twilight_interactions::command::{CommandModel, CreateCommand, CreateOption};
-use twilight_model::{
-    application::{callback::CallbackData, interaction::Interaction},
-    channel::embed::Embed,
+use twilight_interactions::{
+    command::{CommandModel, CreateCommand, CreateOption},
+    error::ParseError,
 };
+use twilight_model::{application::interaction::ApplicationCommand, channel::embed::Embed};
 
-use crate::embed;
+use crate::interaction::response::{InteractionError, InteractionErrorData};
 
 /// Help command model.
 #[derive(Debug, CommandModel, CreateCommand)]
@@ -31,9 +31,11 @@ impl HelpCommand {
     /// Handle interaction for this command.
     #[instrument]
     pub async fn handle(
-        _interaction: Interaction,
-        _ctx: GuildContext,
+        command: ApplicationCommand,
+        _state: &ClusterState,
     ) -> Result<Embed, HelpCommandError> {
+        let _parsed = HelpCommand::from_interaction(command.data.into())?;
+
         let embed = EmbedBuilder::new().description("Hello world!").build()?;
 
         Ok(embed)
@@ -43,17 +45,17 @@ impl HelpCommand {
 /// Error when executing [`HelpCommand`]
 #[derive(Debug, Error)]
 pub enum HelpCommandError {
+    #[error("failed to parse command: {0}")]
+    Parse(#[from] ParseError),
     #[error("failed to build embed: {0}")]
     Embed(#[from] EmbedError),
 }
 
-impl IntoCallback for HelpCommandError {
-    fn into_callback(self) -> CallbackData {
+impl InteractionError for HelpCommandError {
+    fn into_error(self) -> InteractionErrorData {
         match self {
-            error => {
-                error!(error = %error, "error occurred when handling `help` command");
-                embed::error::internal_error().into_callback()
-            }
+            HelpCommandError::Parse(error) => InteractionErrorData::internal(Some("help"), error),
+            HelpCommandError::Embed(error) => InteractionErrorData::internal(Some("help"), error),
         }
     }
 }

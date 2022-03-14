@@ -5,13 +5,58 @@
 
 use std::error::Error;
 
+use raidprotect_model::ClusterState;
+use tracing::error;
 use twilight_model::{
-    application::callback::CallbackData,
+    application::{
+        callback::{CallbackData, InteractionResponse},
+        interaction::ApplicationCommand,
+    },
     channel::{embed::Embed, message::MessageFlags},
+    id::{
+        marker::{ApplicationMarker, InteractionMarker},
+        Id,
+    },
 };
 use twilight_util::builder::CallbackDataBuilder;
 
 use crate::embed;
+
+/// Credentials used to respond to an interaction.
+#[derive(Debug)]
+pub struct CommandResponder {
+    /// ID of the command.
+    pub id: Id<InteractionMarker>,
+    /// ID of the associated application.
+    pub application_id: Id<ApplicationMarker>,
+    /// Token of the command.
+    pub token: String,
+}
+
+impl CommandResponder {
+    /// Initialize a new [`CommandResponder`] from an incoming command data.
+    pub fn from_command(command: &ApplicationCommand) -> Self {
+        Self {
+            id: command.id,
+            application_id: command.application_id,
+            token: command.token.clone(),
+        }
+    }
+
+    /// Send a response to an interaction.
+    pub async fn respond(&self, state: &ClusterState, response: CallbackData) {
+        let client = state.http().interaction(self.application_id);
+        let response = InteractionResponse::ChannelMessageWithSource(response);
+
+        if let Err(error) = client
+            .interaction_callback(self.id, &self.token, &response)
+            .exec()
+            .await
+        {
+            error!(error = %error, "failed to respond to interaction");
+        }
+    }
+}
 
 /// Convert a type into [`CallbackData`].
 ///
@@ -19,26 +64,26 @@ use crate::embed;
 /// types such as [`Embed`].
 pub trait IntoResponse {
     /// Convert this type into [`CallbackData`].
-    fn into_callback(self) -> CallbackData;
+    fn into_response(self) -> CallbackData;
 }
 
 impl IntoResponse for CallbackData {
-    fn into_callback(self) -> CallbackData {
+    fn into_response(self) -> CallbackData {
         self
     }
 }
 
 impl IntoResponse for Embed {
-    fn into_callback(self) -> CallbackData {
+    fn into_response(self) -> CallbackData {
         CallbackDataBuilder::new().embeds([self]).build()
     }
 }
 
 impl<T: IntoResponse, E: InteractionError> IntoResponse for Result<T, E> {
-    fn into_callback(self) -> CallbackData {
+    fn into_response(self) -> CallbackData {
         match self {
-            Ok(value) => value.into_callback(),
-            Err(error) => error.into_error().into_callback(),
+            Ok(value) => value.into_response(),
+            Err(error) => error.into_error().into_response(),
         }
     }
 }
@@ -51,7 +96,7 @@ impl<T: IntoResponse, E: InteractionError> IntoResponse for Result<T, E> {
 pub struct EphemeralEmbed(pub Embed);
 
 impl IntoResponse for EphemeralEmbed {
-    fn into_callback(self) -> CallbackData {
+    fn into_response(self) -> CallbackData {
         CallbackDataBuilder::new()
             .embeds([self.0])
             .flags(MessageFlags::EPHEMERAL)
@@ -99,7 +144,7 @@ pub enum InteractionErrorData {
 impl InteractionErrorData {
     /// Initialize a new [`InteractionErrorData::Callback`].
     pub fn callback(callback: impl IntoResponse) -> Self {
-        Self::Callback(callback.into_callback())
+        Self::Callback(callback.into_response())
     }
 
     /// Initialize a new [`InteractionErrorData::Internal`].
@@ -112,13 +157,13 @@ impl InteractionErrorData {
 }
 
 impl IntoResponse for InteractionErrorData {
-    fn into_callback(self) -> CallbackData {
+    fn into_response(self) -> CallbackData {
         match self {
             InteractionErrorData::Callback(callback) => callback,
             InteractionErrorData::Internal { name, error } => {
                 tracing::error!(error = %error, "error occurred when processing interaction {}", name);
 
-                embed::error::internal_error().into_callback()
+                embed::error::internal_error().into_response()
             }
         }
     }

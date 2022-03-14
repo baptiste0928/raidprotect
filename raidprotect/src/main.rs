@@ -4,8 +4,10 @@
 //! all other `raidprotect`-prefixed crates.
 //!
 //! ## Crates structure
-//! - `gateway`: receive and process incoming events
 //! - `cache`: custom cache that store Discord objects
+//! - `gateway`: receive and process incoming events
+//! - `handler`: event handlers (commands, interactions, etc.)
+//! - `model`: models shared between crates
 //! - `util`: contain utilities such as logging and shutdown
 
 mod config;
