@@ -6,7 +6,7 @@ use raidprotect_model::ClusterState;
 use thiserror::Error;
 use twilight_http::client::InteractionClient;
 use twilight_model::{
-    application::interaction::ApplicationCommand,
+    application::interaction::{application_command::CommandData, ApplicationCommand},
     guild::PartialMember,
     id::{
         marker::{ApplicationMarker, ChannelMarker, InteractionMarker},
@@ -27,6 +27,8 @@ pub struct CommandContext {
     pub application_id: Id<ApplicationMarker>,
     /// Token of the command.
     pub token: String,
+    /// Data from the invoked command.
+    pub data: CommandData,
     /// The channel the command was triggered from.
     pub channel: Id<ChannelMarker>,
     /// User that triggered the command.
@@ -59,6 +61,7 @@ impl CommandContext {
             id: command.id,
             application_id: command.application_id,
             token: command.token,
+            data: command.data,
             channel: command.channel_id,
             user,
             member,

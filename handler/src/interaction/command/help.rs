@@ -8,9 +8,12 @@ use twilight_interactions::{
     command::{CommandModel, CreateCommand, CreateOption},
     error::ParseError,
 };
-use twilight_model::{application::interaction::ApplicationCommand, channel::embed::Embed};
+use twilight_model::channel::embed::Embed;
 
-use crate::interaction::response::{InteractionError, InteractionErrorData};
+use crate::interaction::{
+    context::CommandContext,
+    response::{InteractionError, InteractionErrorData},
+};
 
 /// Help command model.
 #[derive(Debug, CommandModel, CreateCommand)]
@@ -31,10 +34,10 @@ impl HelpCommand {
     /// Handle interaction for this command.
     #[instrument]
     pub async fn handle(
-        command: ApplicationCommand,
+        context: CommandContext,
         _state: &ClusterState,
     ) -> Result<Embed, HelpCommandError> {
-        let _parsed = HelpCommand::from_interaction(command.data.into())?;
+        let _parsed = HelpCommand::from_interaction(context.data.into())?;
 
         let embed = EmbedBuilder::new().description("Hello world!").build()?;
 

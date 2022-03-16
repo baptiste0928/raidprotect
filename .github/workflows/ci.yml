@@ -82,6 +82,9 @@ jobs:
         with:
           crate: cargo-audit
 
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
       - name: Check security advisories
         run: cargo-audit audit
 

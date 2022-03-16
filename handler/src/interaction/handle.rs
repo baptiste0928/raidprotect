@@ -8,6 +8,7 @@ use crate::embed;
 
 use super::{
     command,
+    context::CommandContext,
     response::{CommandResponder, IntoResponse},
 };
 
@@ -17,9 +18,20 @@ use super::{
 /// on both dms and guilds, or only on guild.
 pub async fn handle_command(command: ApplicationCommand, state: Arc<ClusterState>) {
     let responder = CommandResponder::from_command(&command);
+    let context = match CommandContext::from_command(command) {
+        Ok(context) => context,
+        Err(error) => {
+            warn!(error = %error, "Failed to create command context");
+            responder
+                .respond(&state, embed::error::internal_error().into_response())
+                .await;
 
-    let response = match &*command.data.name {
-        "help" => command::help::HelpCommand::handle(command, &state)
+            return;
+        }
+    };
+
+    let response = match &*context.data.name {
+        "help" => command::help::HelpCommand::handle(context, &state)
             .await
             .into_response(),
         name => {

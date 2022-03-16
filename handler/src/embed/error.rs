@@ -1,12 +1,13 @@
 //! Error embeds.
 
 use twilight_embed_builder::{EmbedBuilder, EmbedFooterBuilder};
-use twilight_model::channel::embed::Embed;
+
+use crate::interaction::response::EphemeralEmbed;
 
 use super::COLOR_RED;
 
 /// Internal error embed
-pub fn internal_error() -> Embed {
+pub fn internal_error() -> EphemeralEmbed {
     EmbedBuilder::new()
         .title("Oups, une erreur inconnue s'est produite ...")
         .color(COLOR_RED)
@@ -24,10 +25,11 @@ pub fn internal_error() -> Embed {
         ))
         .build()
         .unwrap()
+        .into()
 }
 
 /// Unknown command received
-pub fn unknown_command() -> Embed {
+pub fn unknown_command() -> EphemeralEmbed {
     EmbedBuilder::new()
         .title("Cette commande n'est pas encore disponible")
         .color(COLOR_RED)
@@ -37,10 +39,11 @@ pub fn unknown_command() -> Embed {
         )
         .build()
         .unwrap()
+        .into()
 }
 
 /// Command not available in direct messages
-pub fn guild_only() -> Embed {
+pub fn guild_only() -> EphemeralEmbed {
     EmbedBuilder::new()
         .title("Cette commande ne fonctionne pas en messages privés")
         .color(COLOR_RED)
@@ -51,6 +54,7 @@ pub fn guild_only() -> Embed {
         )
         .build()
         .unwrap()
+        .into()
 }
 
 #[cfg(test)]
