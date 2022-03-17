@@ -1,14 +1,13 @@
 //! Shards cluster implementation.
 
-use std::{
-    error::Error,
-    fmt::{self, Display},
-    sync::Arc,
-};
+use std::sync::Arc;
 
 use futures::StreamExt;
 use raidprotect_cache::InMemoryCache;
+use raidprotect_handler::interaction::register_commands;
+use raidprotect_model::ClusterState;
 use raidprotect_util::shutdown::ShutdownSubscriber;
+use thiserror::Error;
 use tracing::{info, info_span, instrument, trace};
 use twilight_gateway::{
     cluster::{ClusterStartError, Events, ShardScheme},
@@ -32,10 +31,8 @@ pub struct ShardCluster {
     cluster: Arc<Cluster>,
     /// Events stream
     events: Events,
-    /// In-memory cache
-    cache: Arc<InMemoryCache>,
-    /// Http client
-    http: Arc<HttpClient>,
+    /// Shared cluster state
+    state: Arc<ClusterState>,
 }
 
 impl ShardCluster {
@@ -43,17 +40,19 @@ impl ShardCluster {
     ///
     /// This method also initialize an [`HttpClient`] and an [`InMemoryCache`],
     /// that can be later retrieved using corresponding methods.
-    pub async fn new(token: String) -> Result<Self, ClusterError> {
+    pub async fn new(token: String, command_guild: Option<u64>) -> Result<Self, ClusterError> {
         // Initialize HTTP client and get current user.
         let http = Arc::new(HttpClient::new(token.clone()));
-        let current_user = http.current_user().exec().await?.model().await?;
+        let application = http
+            .current_user_application()
+            .exec()
+            .await?
+            .model()
+            .await?;
 
-        info!(
-            "Logged as {} with ID {}",
-            current_user.name, current_user.id
-        );
+        info!("logged as {} with ID {}", application.name, application.id);
 
-        let cache = Arc::new(InMemoryCache::new(current_user.id));
+        let cache = InMemoryCache::new(application.id.cast());
 
         let intents = Intents::GUILDS | Intents::GUILD_MEMBERS | Intents::GUILD_MESSAGES;
 
@@ -64,13 +63,16 @@ impl ShardCluster {
             .build()
             .await?;
 
-        info!("Started cluster with {} shards", cluster.shards().len());
+        info!("started cluster with {} shards", cluster.shards().len());
+
+        let state = ClusterState::new(cache, http);
+
+        register_commands(&state, application.id, command_guild).await;
 
         Ok(Self {
             cluster: Arc::new(cluster),
             events,
-            cache,
-            http,
+            state: Arc::new(state),
         })
     }
 
@@ -102,19 +104,14 @@ impl ShardCluster {
 
             span.in_scope(|| {
                 trace!(event = ?event, "received event");
-                event.process(&self.cache);
+                event.process(self.state.clone());
             });
         }
     }
 
-    /// Get the cluster [`InMemoryCache`].
-    pub fn cache(&self) -> Arc<InMemoryCache> {
-        self.cache.clone()
-    }
-
-    /// Get the cluster [`HttpClient`].
-    pub fn http(&self) -> Arc<HttpClient> {
-        self.http.clone()
+    /// Get the current [`ClusterState`].
+    pub fn state(&self) -> Arc<ClusterState> {
+        self.state.clone()
     }
 }
 
@@ -135,49 +132,15 @@ fn presence() -> UpdatePresencePayload {
 }
 
 /// Error when initializing a [`ShardCluster`].
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum ClusterError {
     /// HTTP request failed
-    Http(HttpError),
+    #[error("http error: {0}")]
+    Http(#[from] HttpError),
     /// Response body deserialization error
-    Deserialize(DeserializeBodyError),
+    #[error("deserialize error: {0}")]
+    Deserialize(#[from] DeserializeBodyError),
     /// Failed to start cluster
-    Start(ClusterStartError),
-}
-
-impl Error for ClusterError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            ClusterError::Http(e) => Some(e),
-            ClusterError::Deserialize(e) => Some(e),
-            ClusterError::Start(e) => Some(e),
-        }
-    }
-}
-
-impl Display for ClusterError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ClusterError::Http(e) => write!(f, "http error: {e}"),
-            ClusterError::Deserialize(e) => write!(f, "deserialize error: {e}"),
-            ClusterError::Start(e) => write!(f, "failed to start cluster: {e}"),
-        }
-    }
-}
-
-impl From<HttpError> for ClusterError {
-    fn from(error: HttpError) -> Self {
-        ClusterError::Http(error)
-    }
-}
-impl From<DeserializeBodyError> for ClusterError {
-    fn from(error: DeserializeBodyError) -> Self {
-        ClusterError::Deserialize(error)
-    }
-}
-
-impl From<ClusterStartError> for ClusterError {
-    fn from(error: ClusterStartError) -> Self {
-        ClusterError::Start(error)
-    }
+    #[error("failed to start cluster: {0}")]
+    Start(#[from] ClusterStartError),
 }

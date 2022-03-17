@@ -16,6 +16,11 @@ labels:
     matcher:
       files: "gateway/**/*"
 
+  - label: c-handler
+    sync: true
+    matcher:
+      files: "handler/**/*"
+
   - label: c-raidprotect
     sync: true
     matcher:

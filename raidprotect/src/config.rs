@@ -17,6 +17,10 @@ pub fn parse_config() -> Result<Config, envy::Error> {
 pub struct Config {
     /// Discord bot token.
     pub token: String,
+    /// ID of the guild in which commands should be created.
+    ///
+    /// If not set, commands will be created globally.
+    pub command_guild: Option<u64>,
     /// Logging configuration.
     #[serde(flatten, default)]
     pub log: LogConfig,

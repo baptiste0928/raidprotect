@@ -1,0 +1,18 @@
+[package]
+name = "raidprotect-handler"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+raidprotect-model = { path = "../model" }
+
+thiserror = "1"
+tracing = "0.1"
+twilight-embed-builder = "0.9"
+twilight-interactions = "0.9"
+twilight-model = "0.9"
+twilight-http = "0.9"
+twilight-util = { version = "0.9", features = ["builder"] }

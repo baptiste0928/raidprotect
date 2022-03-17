@@ -9,7 +9,6 @@ publish = false
 [dependencies]
 raidprotect-gateway = { path = "../gateway" }
 raidprotect-util = { path = "../util" }
-workspace-hack = { path = "../workspace-hack" }
 
 anyhow = "1"
 dotenv = "0.15"

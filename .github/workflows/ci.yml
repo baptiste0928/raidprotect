@@ -66,7 +66,7 @@ jobs:
         run: cargo doc --no-deps --all-features
 
   deps:
-    name: Lint dependencies
+    name: Audit dependencies
     needs: [check]
     runs-on: ubuntu-latest
 
@@ -82,22 +82,11 @@ jobs:
         with:
           crate: cargo-audit
 
-      - name: Install cargo-hakari
-        uses: baptiste0928/cargo-install@v1
-        with:
-          crate: cargo-hakari
-
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v1
 
       - name: Check security advisories
         run: cargo-audit audit
-
-      - name: Check workspace-hack is up to date
-        run: cargo-hakari generate --diff
-
-      - name: Check all crates depend on workspace-hack
-        run: cargo-hakari manage-deps --dry-run
 
   rustfmt:
     name: Format

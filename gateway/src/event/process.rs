@@ -1,18 +1,24 @@
-use raidprotect_cache::InMemoryCache;
+use std::sync::Arc;
+
+use raidprotect_handler::interaction;
+use raidprotect_model::ClusterState;
 use tracing::trace;
-use twilight_model::gateway::{event::Event as GatewayEvent, payload::incoming};
+use twilight_model::{
+    application::interaction::Interaction,
+    gateway::{event::Event as GatewayEvent, payload::incoming},
+};
 
 /// Process incoming events.
 pub trait ProcessEvent: Sized {
     /// Process incoming event.
-    fn process(self, cache: &InMemoryCache);
+    fn process(self, state: Arc<ClusterState>);
 }
 
 macro_rules! process_events {
-    ($self:ident, $cache:ident => $( $event:path ),+ ) => {
+    ($self:ident, $state:ident => $( $event:path ),+ ) => {
         match $self {
             $(
-                $event(event) => event.process($cache),
+                $event(event) => event.process($state),
             )+
             event => trace!(kind = event.kind().name(), "unprocessed event type"),
         }
@@ -23,8 +29,8 @@ macro_rules! process_cache_events {
     ( $( $event:ident ),+ ) => {
         $(
             impl ProcessEvent for incoming::$event {
-                fn process(self, cache: &InMemoryCache) {
-                    cache.update(&self);
+                fn process(self, state: Arc<ClusterState>) {
+                    state.cache().update(&self);
                 }
             }
         )+
@@ -32,10 +38,10 @@ macro_rules! process_cache_events {
 }
 
 impl ProcessEvent for GatewayEvent {
-    fn process(self, cache: &InMemoryCache) {
+    fn process(self, state: Arc<ClusterState>) {
         use GatewayEvent::*;
 
-        process_events! { self, cache =>
+        process_events! { self, state =>
             GuildCreate,
             GuildDelete,
             UnavailableGuild,
@@ -43,6 +49,7 @@ impl ProcessEvent for GatewayEvent {
             ChannelCreate,
             ChannelDelete,
             ChannelUpdate,
+            InteractionCreate,
             ThreadCreate,
             ThreadDelete,
             ThreadUpdate,
@@ -73,9 +80,12 @@ process_cache_events! {
 }
 
 impl ProcessEvent for incoming::InteractionCreate {
-    fn process(self, cache: &InMemoryCache) {
-        let _guild = self.guild_id().map(|id| cache.guild(id)).flatten();
-
-        todo!("handle interactions")
+    fn process(self, state: Arc<ClusterState>) {
+        match self.0 {
+            Interaction::ApplicationCommand(command) => {
+                tokio::spawn(interaction::handle_command(*command, state))
+            }
+            _ => todo!(),
+        };
     }
 }
