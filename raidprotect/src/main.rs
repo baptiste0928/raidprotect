@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
 
     // Initialize shard cluster
     let shutdown = Shutdown::new();
-    let cluster = ShardCluster::new(config.token)
+    let cluster = ShardCluster::new(config.token, config.command_guild)
         .await
         .context("Failed to start shard cluster")?;
 

@@ -1,8 +1,12 @@
 use std::sync::Arc;
 
 use raidprotect_model::ClusterState;
-use tracing::warn;
-use twilight_model::application::interaction::ApplicationCommand;
+use tracing::{error, warn};
+use twilight_interactions::command::CreateCommand;
+use twilight_model::{
+    application::{command::Command, interaction::ApplicationCommand},
+    id::{marker::ApplicationMarker, Id},
+};
 
 use crate::embed;
 
@@ -42,4 +46,31 @@ pub async fn handle_command(command: ApplicationCommand, state: Arc<ClusterState
     };
 
     responder.respond(&state, response).await;
+}
+
+/// Register commands to the Discord API.
+///
+/// The commands will be registered globally unless a `command_guild` is set.
+pub async fn register_commands(
+    state: &ClusterState,
+    application_id: Id<ApplicationMarker>,
+    command_guild: Option<u64>,
+) {
+    let commands: Vec<Command> = vec![command::help::HelpCommand::create_command().into()];
+
+    let client = state.http().interaction(application_id);
+
+    let result = match command_guild {
+        Some(id) => {
+            client
+                .set_guild_commands(Id::new(id), &commands)
+                .exec()
+                .await
+        }
+        None => client.set_global_commands(&commands).exec().await,
+    };
+
+    if let Err(error) = result {
+        error!(error = %error, "failed to register commands");
+    }
 }

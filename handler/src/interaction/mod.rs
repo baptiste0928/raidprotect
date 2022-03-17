@@ -6,4 +6,4 @@ pub mod command;
 pub mod context;
 pub mod response;
 
-pub use handle::handle_command;
+pub use handle::{handle_command, register_commands};

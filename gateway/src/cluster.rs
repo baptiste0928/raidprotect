@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use futures::StreamExt;
 use raidprotect_cache::InMemoryCache;
+use raidprotect_handler::interaction::register_commands;
 use raidprotect_model::ClusterState;
 use raidprotect_util::shutdown::ShutdownSubscriber;
 use thiserror::Error;
@@ -39,17 +40,19 @@ impl ShardCluster {
     ///
     /// This method also initialize an [`HttpClient`] and an [`InMemoryCache`],
     /// that can be later retrieved using corresponding methods.
-    pub async fn new(token: String) -> Result<Self, ClusterError> {
+    pub async fn new(token: String, command_guild: Option<u64>) -> Result<Self, ClusterError> {
         // Initialize HTTP client and get current user.
         let http = Arc::new(HttpClient::new(token.clone()));
-        let current_user = http.current_user().exec().await?.model().await?;
+        let application = http
+            .current_user_application()
+            .exec()
+            .await?
+            .model()
+            .await?;
 
-        info!(
-            "Logged as {} with ID {}",
-            current_user.name, current_user.id
-        );
+        info!("logged as {} with ID {}", application.name, application.id);
 
-        let cache = InMemoryCache::new(current_user.id);
+        let cache = InMemoryCache::new(application.id.cast());
 
         let intents = Intents::GUILDS | Intents::GUILD_MEMBERS | Intents::GUILD_MESSAGES;
 
@@ -60,9 +63,11 @@ impl ShardCluster {
             .build()
             .await?;
 
-        info!("Started cluster with {} shards", cluster.shards().len());
+        info!("started cluster with {} shards", cluster.shards().len());
 
         let state = ClusterState::new(cache, http);
+
+        register_commands(&state, application.id, command_guild).await;
 
         Ok(Self {
             cluster: Arc::new(cluster),

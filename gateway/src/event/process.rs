@@ -49,6 +49,7 @@ impl ProcessEvent for GatewayEvent {
             ChannelCreate,
             ChannelDelete,
             ChannelUpdate,
+            InteractionCreate,
             ThreadCreate,
             ThreadDelete,
             ThreadUpdate,
