@@ -5,11 +5,10 @@
 
 use std::collections::HashSet;
 
+use thiserror::Error;
+use tracing::error;
 use twilight_model::{
-    channel::{
-        thread::{NewsThread, PrivateThread, PublicThread},
-        CategoryChannel, GuildChannel, TextChannel,
-    },
+    channel::{Channel, ChannelType},
     guild::{Guild, Role},
     id::{marker::GuildMarker, Id},
 };
@@ -28,10 +27,15 @@ pub fn cache_guild(cache: &InMemoryCache, guild: &Guild) -> Option<CachedGuild> 
     let mut roles = HashSet::with_capacity(guild.roles.len());
 
     for channel in &guild.channels {
-        if CachedChannel::is_cached(channel.kind()) {
-            cache_guild_channel(cache, channel, guild.id);
-
-            channels.insert(channel.id());
+        if CachedChannel::is_cached(channel.kind) {
+            match cache_guild_channel(cache, channel) {
+                Ok(_) => {
+                    channels.insert(channel.id);
+                }
+                Err(error) => {
+                    error!(error = %error, "failed to cache guild channel");
+                }
+            };
         }
     }
 
@@ -89,100 +93,83 @@ pub fn cache_role(
 
 pub fn cache_guild_channel(
     cache: &InMemoryCache,
-    channel: &GuildChannel,
-    guild_id: Id<GuildMarker>,
-) -> Option<CachedChannel> {
-    match channel {
-        GuildChannel::Text(channel) => cache_text_channel(cache, channel, guild_id),
-        GuildChannel::Category(channel) => cache_category_channel(cache, channel, guild_id),
-        GuildChannel::PublicThread(thread) => cache_public_thread(cache, thread, guild_id),
-        GuildChannel::PrivateThread(thread) => cache_private_thread(cache, thread, guild_id),
-        GuildChannel::NewsThread(thread) => cache_news_thread(cache, thread, guild_id),
-        _ => None,
+    channel: &Channel,
+) -> Result<Option<CachedChannel>, CacheError> {
+    match channel.kind {
+        ChannelType::GuildText | ChannelType::GuildNews => cache_text_channel(cache, channel),
+        ChannelType::GuildCategory => cache_category_channel(cache, channel),
+        ChannelType::GuildNewsThread
+        | ChannelType::GuildPublicThread
+        | ChannelType::GuildPrivateThread => cache_thread(cache, channel),
+        _ => Ok(None),
     }
 }
 
 pub fn cache_text_channel(
     cache: &InMemoryCache,
-    channel: &TextChannel,
-    guild_id: Id<GuildMarker>,
-) -> Option<CachedChannel> {
+    channel: &Channel,
+) -> Result<Option<CachedChannel>, CacheError> {
     let cached = CachedTextChannel {
         id: channel.id,
-        guild_id,
-        name: channel.name.clone(),
+        guild_id: channel.guild_id.ok_or(CacheError::GuildId)?,
+        name: channel.name.as_ref().ok_or(CacheError::Name)?.clone(),
         parent_id: channel.parent_id,
-        position: channel.position,
-        permission_overwrites: channel.permission_overwrites.clone(),
+        position: channel.position.ok_or(CacheError::Position)?,
+        permission_overwrites: channel
+            .permission_overwrites
+            .as_ref()
+            .ok_or(CacheError::PermissionOverwrites)?
+            .clone(),
         rate_limit_per_user: channel.rate_limit_per_user,
     };
 
-    cache.channels.insert(channel.id, cached.into())
+    Ok(cache.channels.insert(channel.id, cached.into()))
 }
 
 pub fn cache_category_channel(
     cache: &InMemoryCache,
-    channel: &CategoryChannel,
-    guild_id: Id<GuildMarker>,
-) -> Option<CachedChannel> {
+    channel: &Channel,
+) -> Result<Option<CachedChannel>, CacheError> {
     let cached = CachedCategoryChannel {
         id: channel.id,
-        guild_id,
-        name: channel.name.clone(),
-        position: channel.position,
-        permission_overwrites: channel.permission_overwrites.clone(),
+        guild_id: channel.guild_id.ok_or(CacheError::GuildId)?,
+        name: channel.name.as_ref().ok_or(CacheError::Name)?.clone(),
+        position: channel.position.ok_or(CacheError::Position)?,
+        permission_overwrites: channel
+            .permission_overwrites
+            .as_ref()
+            .ok_or(CacheError::PermissionOverwrites)?
+            .clone(),
     };
 
-    cache.channels.insert(channel.id, cached.into())
+    Ok(cache.channels.insert(channel.id, cached.into()))
 }
 
-pub fn cache_public_thread(
+pub fn cache_thread(
     cache: &InMemoryCache,
-    thread: &PublicThread,
-    guild_id: Id<GuildMarker>,
-) -> Option<CachedChannel> {
+    thread: &Channel,
+) -> Result<Option<CachedChannel>, CacheError> {
     let cached = CachedThread {
         id: thread.id,
-        guild_id,
-        name: thread.name.clone(),
+        guild_id: thread.guild_id.ok_or(CacheError::GuildId)?,
+        name: thread.name.as_ref().ok_or(CacheError::Name)?.clone(),
         private: false,
         parent_id: thread.parent_id,
         rate_limit_per_user: thread.rate_limit_per_user,
     };
 
-    cache.channels.insert(thread.id, cached.into())
+    Ok(cache.channels.insert(thread.id, cached.into()))
 }
 
-pub fn cache_private_thread(
-    cache: &InMemoryCache,
-    thread: &PrivateThread,
-    guild_id: Id<GuildMarker>,
-) -> Option<CachedChannel> {
-    let cached = CachedThread {
-        id: thread.id,
-        guild_id,
-        name: thread.name.clone(),
-        private: true,
-        parent_id: thread.parent_id,
-        rate_limit_per_user: thread.rate_limit_per_user,
-    };
-
-    cache.channels.insert(thread.id, cached.into())
-}
-
-pub fn cache_news_thread(
-    cache: &InMemoryCache,
-    thread: &NewsThread,
-    guild_id: Id<GuildMarker>,
-) -> Option<CachedChannel> {
-    let cached = CachedThread {
-        id: thread.id,
-        guild_id,
-        name: thread.name.clone(),
-        private: false,
-        parent_id: thread.parent_id,
-        rate_limit_per_user: thread.rate_limit_per_user,
-    };
-
-    cache.channels.insert(thread.id, cached.into())
+/// Error occurred when caching resource.
+#[derive(Debug, Error)]
+pub enum CacheError {
+    #[error("missing guild id")]
+    GuildId,
+    #[error("missing channel name")]
+    Name,
+    #[error("missing channel position")]
+    Position,
+    #[error("missing channel permission overwrites")]
+    PermissionOverwrites,
 }

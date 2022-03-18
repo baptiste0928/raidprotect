@@ -8,4 +8,6 @@ publish = false
 
 [dependencies]
 dashmap = "5.1"
-twilight-model = "0.9"
+thiserror = "1"
+tracing = "0.1"
+twilight-model = "0.10"

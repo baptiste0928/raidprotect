@@ -8,17 +8,15 @@ use std::error::Error;
 use raidprotect_model::ClusterState;
 use tracing::error;
 use twilight_model::{
-    application::{
-        callback::{CallbackData, InteractionResponse},
-        interaction::ApplicationCommand,
-    },
+    application::interaction::ApplicationCommand,
     channel::{embed::Embed, message::MessageFlags},
+    http::interaction::{InteractionResponse, InteractionResponseData, InteractionResponseType},
     id::{
         marker::{ApplicationMarker, InteractionMarker},
         Id,
     },
 };
-use twilight_util::builder::CallbackDataBuilder;
+use twilight_util::builder::InteractionResponseDataBuilder;
 
 use crate::embed;
 
@@ -44,12 +42,15 @@ impl CommandResponder {
     }
 
     /// Send a response to an interaction.
-    pub async fn respond(&self, state: &ClusterState, response: CallbackData) {
+    pub async fn respond(&self, state: &ClusterState, response: InteractionResponseData) {
         let client = state.http().interaction(self.application_id);
-        let response = InteractionResponse::ChannelMessageWithSource(response);
+        let response = InteractionResponse {
+            kind: InteractionResponseType::ChannelMessageWithSource,
+            data: Some(response),
+        };
 
         if let Err(error) = client
-            .interaction_callback(self.id, &self.token, &response)
+            .create_response(self.id, &self.token, &response)
             .exec()
             .await
         {
@@ -58,29 +59,29 @@ impl CommandResponder {
     }
 }
 
-/// Convert a type into [`CallbackData`].
+/// Convert a type into [`InteractionResponseData`].
 ///
 /// This type is used for interaction responses. It is implemented for common
 /// types such as [`Embed`].
 pub trait IntoResponse {
-    /// Convert this type into [`CallbackData`].
-    fn into_response(self) -> CallbackData;
+    /// Convert this type into [`InteractionResponseData`].
+    fn into_response(self) -> InteractionResponseData;
 }
 
-impl IntoResponse for CallbackData {
-    fn into_response(self) -> CallbackData {
+impl IntoResponse for InteractionResponseData {
+    fn into_response(self) -> InteractionResponseData {
         self
     }
 }
 
 impl IntoResponse for Embed {
-    fn into_response(self) -> CallbackData {
-        CallbackDataBuilder::new().embeds([self]).build()
+    fn into_response(self) -> InteractionResponseData {
+        InteractionResponseDataBuilder::new().embeds([self]).build()
     }
 }
 
 impl<T: IntoResponse, E: InteractionError> IntoResponse for Result<T, E> {
-    fn into_response(self) -> CallbackData {
+    fn into_response(self) -> InteractionResponseData {
         match self {
             Ok(value) => value.into_response(),
             Err(error) => error.into_error().into_response(),
@@ -96,8 +97,8 @@ impl<T: IntoResponse, E: InteractionError> IntoResponse for Result<T, E> {
 pub struct EphemeralEmbed(pub Embed);
 
 impl IntoResponse for EphemeralEmbed {
-    fn into_response(self) -> CallbackData {
-        CallbackDataBuilder::new()
+    fn into_response(self) -> InteractionResponseData {
+        InteractionResponseDataBuilder::new()
             .embeds([self.0])
             .flags(MessageFlags::EPHEMERAL)
             .build()
@@ -134,7 +135,7 @@ pub trait InteractionError {
 /// See the [`InteractionError`] trait for more information.
 #[derive(Debug)]
 pub enum InteractionErrorData {
-    Callback(CallbackData),
+    Callback(Box<InteractionResponseData>),
     Internal {
         name: String,
         error: Box<dyn Error + Send + Sync>,
@@ -144,7 +145,7 @@ pub enum InteractionErrorData {
 impl InteractionErrorData {
     /// Initialize a new [`InteractionErrorData::Callback`].
     pub fn callback(callback: impl IntoResponse) -> Self {
-        Self::Callback(callback.into_response())
+        Self::Callback(Box::new(callback.into_response()))
     }
 
     /// Initialize a new [`InteractionErrorData::Internal`].
@@ -157,9 +158,9 @@ impl InteractionErrorData {
 }
 
 impl IntoResponse for InteractionErrorData {
-    fn into_response(self) -> CallbackData {
+    fn into_response(self) -> InteractionResponseData {
         match self {
-            InteractionErrorData::Callback(callback) => callback,
+            InteractionErrorData::Callback(callback) => *callback,
             InteractionErrorData::Internal { name, error } => {
                 tracing::error!(error = %error, "error occurred when processing interaction {}", name);
 
