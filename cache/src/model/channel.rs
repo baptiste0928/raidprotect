@@ -6,12 +6,12 @@ use twilight_model::{
     },
 };
 
-/// Cached model of a [`GuildChannel`].
+/// Cached model of a [`Channel`].
 ///
 /// Only text channels and threads are cached as the bot
 /// does not interact with voice channels.
 ///
-/// [`GuildChannel`]: twilight_model::channel::GuildChannel
+/// [`Channel`]: twilight_model::channel::Channel
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CachedChannel {
     /// Text channel.
@@ -55,9 +55,9 @@ impl CachedChannel {
     }
 }
 
-/// Cached model of a [`TextChannel`].
+/// Cached model of a text [`Channel`].
 ///
-/// [`TextChannel`]: twilight_model::channel::TextChannel
+/// [`Channel`]: twilight_model::channel::Channel
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CachedTextChannel {
     /// Id of the channel.
@@ -82,9 +82,9 @@ impl From<CachedTextChannel> for CachedChannel {
     }
 }
 
-/// Cached model of a [`CategoryChannel`].
+/// Cached model of a category [`Channel`].
 ///
-/// [`CategoryChannel`]: twilight_model::channel::CategoryChannel
+/// [`Channel`]: twilight_model::channel::Channel
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CachedCategoryChannel {
     /// Id of the category.
@@ -105,12 +105,9 @@ impl From<CachedCategoryChannel> for CachedChannel {
     }
 }
 
-/// Cached model of a [`PublicThread`] or [`PrivateThread`].
+/// Cached model of a public or private thread.
 ///
 /// The bot does not distinguish between private and public threads during processing.
-///
-/// [`PublicThread`]: twilight_model::channel::thread::PublicThread
-/// [`PrivateThread`]: twilight_model::channel::thread::PrivateThread
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CachedThread {
     /// Id of the thread.
