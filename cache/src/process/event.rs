@@ -1,12 +1,10 @@
 //! Update the cache based on incoming event data.
 
-use twilight_model::{
-    channel::Channel,
-    gateway::payload::incoming::{
-        ChannelCreate, ChannelDelete, ChannelUpdate, GuildCreate, GuildDelete, GuildUpdate,
-        MemberAdd, MemberUpdate, RoleCreate, RoleDelete, RoleUpdate, ThreadCreate, ThreadDelete,
-        ThreadUpdate, UnavailableGuild,
-    },
+use tracing::error;
+use twilight_model::gateway::payload::incoming::{
+    ChannelCreate, ChannelDelete, ChannelUpdate, GuildCreate, GuildDelete, GuildUpdate, MemberAdd,
+    MemberUpdate, RoleCreate, RoleDelete, RoleUpdate, ThreadCreate, ThreadDelete, ThreadUpdate,
+    UnavailableGuild,
 };
 
 use crate::{
@@ -95,23 +93,23 @@ impl UpdateCache for ChannelCreate {
     type Output = ();
 
     fn update(&self, cache: &InMemoryCache) -> Self::Output {
-        let channel = match &self.0 {
-            Channel::Guild(channel) => channel,
-            _ => return,
-        };
-
-        let guild_id = match channel.guild_id() {
+        let guild_id = match self.guild_id {
             Some(guild_id) => guild_id,
             None => return,
         };
 
         // Cache the channel.
-        super::resource::cache_guild_channel(cache, channel, guild_id);
-
-        // Add the channel to the guild.
-        if let Some(mut guild) = cache.guilds.get_mut(&guild_id) {
-            guild.channels.insert(channel.id());
-        }
+        match super::resource::cache_guild_channel(cache, self) {
+            Ok(_) => {
+                // Add the channel to the guild.
+                if let Some(mut guild) = cache.guilds.get_mut(&guild_id) {
+                    guild.channels.insert(self.id);
+                }
+            }
+            Err(error) => {
+                error!(error = %error, "failed to cache guild channel");
+            }
+        };
     }
 }
 
@@ -119,21 +117,13 @@ impl UpdateCache for ChannelDelete {
     type Output = Option<CachedChannel>;
 
     fn update(&self, cache: &InMemoryCache) -> Self::Output {
-        let channel = match &self.0 {
-            Channel::Guild(channel) => channel,
-            _ => return None,
-        };
-
         // Remove the channel from the guild.
-        if let Some(mut guild) = cache.guilds.get_mut(&channel.guild_id()?) {
-            guild.channels.remove(&channel.id());
+        if let Some(mut guild) = cache.guilds.get_mut(&self.guild_id?) {
+            guild.channels.remove(&self.id);
         }
 
         // Remove the channel from the cache.
-        cache
-            .channels
-            .remove(&channel.id())
-            .map(|(_, channel)| channel)
+        cache.channels.remove(&self.id).map(|(_, channel)| channel)
     }
 }
 
@@ -141,12 +131,16 @@ impl UpdateCache for ChannelUpdate {
     type Output = Option<CachedChannel>;
 
     fn update(&self, cache: &InMemoryCache) -> Self::Output {
-        let channel = match &self.0 {
-            Channel::Guild(channel) => channel,
-            _ => return None,
-        };
+        self.guild_id?; // Ensure the channel is in a guild.
 
-        super::resource::cache_guild_channel(cache, channel, channel.guild_id()?)
+        match super::resource::cache_guild_channel(cache, self) {
+            Ok(channel) => channel,
+            Err(error) => {
+                error!(error = %error, "failed to cache guild channel");
+
+                None
+            }
+        }
     }
 }
 
@@ -154,22 +148,22 @@ impl UpdateCache for ThreadCreate {
     type Output = ();
 
     fn update(&self, cache: &InMemoryCache) -> Self::Output {
-        let channel = match &self.0 {
-            Channel::Guild(channel) => channel,
-            _ => return,
-        };
-
-        let guild_id = match channel.guild_id() {
+        let guild_id = match self.guild_id {
             Some(guild_id) => guild_id,
             None => return,
         };
 
         // Cache the channel.
-        super::resource::cache_guild_channel(cache, channel, guild_id);
-
-        // Add the channel to the guild.
-        if let Some(mut guild) = cache.guilds.get_mut(&guild_id) {
-            guild.channels.insert(channel.id());
+        match super::resource::cache_guild_channel(cache, self) {
+            Ok(_) => {
+                // Add the channel to the guild.
+                if let Some(mut guild) = cache.guilds.get_mut(&guild_id) {
+                    guild.channels.insert(self.id);
+                }
+            }
+            Err(error) => {
+                error!(error = %error, "failed to cache guild channel");
+            }
         }
     }
 }
@@ -192,12 +186,16 @@ impl UpdateCache for ThreadUpdate {
     type Output = Option<CachedChannel>;
 
     fn update(&self, cache: &InMemoryCache) -> Self::Output {
-        let channel = match &self.0 {
-            Channel::Guild(channel) => channel,
-            _ => return None,
-        };
+        self.guild_id?; // Ensure channel is a guild channel.
 
-        super::resource::cache_guild_channel(cache, channel, channel.guild_id()?)
+        match super::resource::cache_guild_channel(cache, self) {
+            Ok(channel) => channel,
+            Err(error) => {
+                error!(error = %error, "failed to cache guild channel");
+
+                None
+            }
+        }
     }
 }
 

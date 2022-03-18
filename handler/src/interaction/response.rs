@@ -135,7 +135,7 @@ pub trait InteractionError {
 /// See the [`InteractionError`] trait for more information.
 #[derive(Debug)]
 pub enum InteractionErrorData {
-    Callback(InteractionResponseData),
+    Callback(Box<InteractionResponseData>),
     Internal {
         name: String,
         error: Box<dyn Error + Send + Sync>,
@@ -145,7 +145,7 @@ pub enum InteractionErrorData {
 impl InteractionErrorData {
     /// Initialize a new [`InteractionErrorData::Callback`].
     pub fn callback(callback: impl IntoResponse) -> Self {
-        Self::Callback(callback.into_response())
+        Self::Callback(Box::new(callback.into_response()))
     }
 
     /// Initialize a new [`InteractionErrorData::Internal`].
@@ -160,7 +160,7 @@ impl InteractionErrorData {
 impl IntoResponse for InteractionErrorData {
     fn into_response(self) -> InteractionResponseData {
         match self {
-            InteractionErrorData::Callback(callback) => callback,
+            InteractionErrorData::Callback(callback) => *callback,
             InteractionErrorData::Internal { name, error } => {
                 tracing::error!(error = %error, "error occurred when processing interaction {}", name);
 
