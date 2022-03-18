@@ -9,5 +9,5 @@ publish = false
 [dependencies]
 raidprotect-cache = { path = "../cache" }
 
-twilight-http = "0.9"
-twilight-model = "0.9"
+twilight-http = "0.10"
+twilight-model = "0.10"
