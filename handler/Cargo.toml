@@ -16,7 +16,7 @@ twilight-embed-builder = "0.10"
 twilight-interactions = "0.10"
 twilight-model = "0.10"
 twilight-http = "0.10"
-twilight-util = { version = "0.10", features = ["builder"] }
+twilight-util = { version = "0.10", features = ["builder", "snowflake"] }
 
 [build-dependencies]
 rosetta-build = "0.1"

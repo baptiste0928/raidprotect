@@ -92,7 +92,7 @@ where
 /// Response to a bot command.
 ///
 /// This enum contains types that can be used to respond to a bot command. The
-/// [`CommandResponse::Other`] variant can be used to respond with a custom
+/// [`CommandResponse::Custom`] variant can be used to respond with a custom
 /// [`InteractionResponseData`].
 #[derive(Debug, Clone)]
 pub enum CommandResponse {
@@ -101,7 +101,7 @@ pub enum CommandResponse {
     /// Respond with an embed sent as ephemeral message.
     EphemeralEmbed(Embed),
     /// Respond with a custom [`InteractionResponseData`].
-    Other(InteractionResponseData),
+    Custom(InteractionResponseData),
 }
 
 impl IntoResponse for CommandResponse {
@@ -114,7 +114,7 @@ impl IntoResponse for CommandResponse {
                 .embeds([embed])
                 .flags(MessageFlags::EPHEMERAL)
                 .build(),
-            CommandResponse::Other(response) => response,
+            CommandResponse::Custom(response) => response,
         }
     }
 }
