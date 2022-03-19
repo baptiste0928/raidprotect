@@ -15,7 +15,7 @@ use twilight_model::{
     user::User,
 };
 
-use super::response::{InteractionError, InteractionErrorData};
+use super::response::{InteractionError, InteractionErrorKind};
 
 /// Context of an [`ApplicationCommand`].
 #[derive(Debug)]
@@ -85,7 +85,9 @@ pub enum CommandContextError {
 }
 
 impl InteractionError for CommandContextError {
-    fn into_error(self) -> InteractionErrorData {
-        InteractionErrorData::internal(None, self)
+    const INTERACTION_NAME: &'static str = "context";
+
+    fn into_error(self) -> InteractionErrorKind {
+        InteractionErrorKind::internal(self)
     }
 }

@@ -11,7 +11,7 @@ use twilight_model::{
 use crate::embed;
 
 use super::{
-    command,
+    command::{self, help::HelpCommand},
     context::CommandContext,
     response::{CommandResponder, IntoResponse},
 };
@@ -35,9 +35,7 @@ pub async fn handle_command(command: ApplicationCommand, state: Arc<ClusterState
     };
 
     let response = match &*context.data.name {
-        "help" => command::help::HelpCommand::handle(context, &state)
-            .await
-            .into_response(),
+        "help" => HelpCommand::handle(context, &state).await.into_response(),
         name => {
             warn!(name = name, "unknown command received");
 
