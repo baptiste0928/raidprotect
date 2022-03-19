@@ -30,7 +30,7 @@ pub fn unknown_command() -> CommandResponse {
         .build()
         .unwrap();
 
-    CommandResponse::Embed(embed)
+    CommandResponse::EphemeralEmbed(embed)
 }
 
 /// Command not available in direct messages
@@ -42,7 +42,7 @@ pub fn guild_only() -> CommandResponse {
         .build()
         .unwrap();
 
-    CommandResponse::Embed(embed)
+    CommandResponse::EphemeralEmbed(embed)
 }
 
 #[cfg(test)]

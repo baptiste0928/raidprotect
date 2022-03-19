@@ -13,6 +13,7 @@
 
 pub mod embed;
 pub mod interaction;
+pub mod util;
 
 pub mod translations {
     //! Translations loaded using [`rosetta_i18n`].
