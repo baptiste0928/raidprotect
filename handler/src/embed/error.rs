@@ -2,26 +2,18 @@
 
 use twilight_embed_builder::{EmbedBuilder, EmbedFooterBuilder};
 
-use crate::interaction::response::CommandResponse;
+use crate::{interaction::response::CommandResponse, translations::Lang};
 
 use super::COLOR_RED;
 
 /// Internal error embed
 pub fn internal_error() -> CommandResponse {
     let embed = EmbedBuilder::new()
-        .title("Oups, une erreur inconnue s'est produite ...")
+        .title(Lang::Fr.internal_error_title())
         .color(COLOR_RED)
-        .description(
-            "La commande que vous avez effectuée a renvoyé un \
-            résultat imprévu. Pas de panique, nous avons été informés du \
-            problème ! En attendant, veuillez réessayer la commande de \
-            nouveau.\n\n\
-            **Si le problème persiste, merci de nous en informer.** Vous \
-            pouvez nous contacter en [rejoignant notre serveur Discord]\
-            (https://discord.gg/raidprotect).",
-        )
+        .description(Lang::Fr.internal_error_description())
         .footer(EmbedFooterBuilder::new(
-            "Okay, Houston, I believe we've had a problem here ...",
+            "Okay, Houston, I believe we've had a problem here ...", // No translation here
         ))
         .build()
         .unwrap();
@@ -32,12 +24,9 @@ pub fn internal_error() -> CommandResponse {
 /// Unknown command received
 pub fn unknown_command() -> CommandResponse {
     let embed = EmbedBuilder::new()
-        .title("Cette commande n'est pas encore disponible")
+        .title(Lang::Fr.unknown_command_title())
         .color(COLOR_RED)
-        .description(
-            "La commande que vous essayez d'effectuer n'est pas encore \
-            disponible. Patientez quelques minutes et réessayez.",
-        )
+        .description(Lang::Fr.unknown_command_description())
         .build()
         .unwrap();
 
@@ -47,13 +36,9 @@ pub fn unknown_command() -> CommandResponse {
 /// Command not available in direct messages
 pub fn guild_only() -> CommandResponse {
     let embed = EmbedBuilder::new()
-        .title("Cette commande ne fonctionne pas en messages privés")
+        .title(Lang::Fr.guild_only_title())
         .color(COLOR_RED)
-        .description(
-            "La commande que vous essayez d'utiliser doit obligatoirement être \
-            appelée depuis un serveur Discord. Invitez RaidProtect sur votre \
-            serveur pour pouvoir l'utiliser.",
-        )
+        .description(Lang::Fr.guild_only_description())
         .build()
         .unwrap();
 
