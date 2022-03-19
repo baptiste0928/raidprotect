@@ -1,3 +1,3 @@
 [codespell]
-skip = ./target,.git,./handler/src/embed
+skip = ./target,.git,./translations
 ignore-words-list = crate, ser
