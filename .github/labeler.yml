@@ -21,6 +21,11 @@ labels:
     matcher:
       files: "handler/**/*"
 
+  - label: c-model
+    sync: true
+    matcher:
+      files: "model/**/*"
+
   - label: c-raidprotect
     sync: true
     matcher:
@@ -35,6 +40,11 @@ labels:
     matcher:
       files: "Cargo.lock"
       title: "^deps(\\(.+\\))?!?: .*"
+
+  - label: t-translations
+    sync: true
+    matcher:
+      files: "translations/**/*"
 
   - label: t-fix
     matcher:
