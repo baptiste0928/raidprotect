@@ -1,0 +1,9 @@
+languageIds:
+  - rust
+
+usageMatchRegex:
+  - "[^\\w\\d]Lang::[A-z]+\\.([a-z_]+)\\(.*\\)"
+  - "[^\\w\\d]lang\\.([a-z_]+)\\(.*\\)"
+
+# If set to true, only enables this custom framework (will disable all built-in frameworks)
+monopoly: true

@@ -1,0 +1,8 @@
+{
+  "guild_only_description": "La commande que vous essayez d'utiliser doit obligatoirement être appelée depuis un serveur Discord. Invitez RaidProtect sur votre serveur pour pouvoir l'utiliser.",
+  "guild_only_title": "Cette commande ne fonctionne pas en messages privés",
+  "internal_error_description": "La commande que vous avez effectuée a renvoyé un résultat imprévu. Pas de panique, nous avons été informés du problème ! En attendant, veuillez réessayer la commande de nouveau.\n\n**Si le problème persiste, merci de nous en informer.** Vous pouvez nous contacter en [rejoignant notre serveur Discord](https://discord.gg/raidprotect).",
+  "internal_error_title": "Oups, une erreur inconnue s'est produite ...",
+  "unknown_command_description": "La commande que vous essayez d'effectuer n'est pas encore disponible. Patientez quelques minutes et réessayez.",
+  "unknown_command_title": "Cette commande n'est pas encore disponible"
+}

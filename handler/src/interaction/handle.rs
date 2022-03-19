@@ -25,7 +25,7 @@ pub async fn handle_command(command: ApplicationCommand, state: Arc<ClusterState
     let context = match CommandContext::from_command(command) {
         Ok(context) => context,
         Err(error) => {
-            warn!(error = %error, "Failed to create command context");
+            warn!(error = %error, "failed to create command context");
             responder
                 .respond(&state, embed::error::internal_error().into_response())
                 .await;
