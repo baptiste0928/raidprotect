@@ -8,11 +8,10 @@ use twilight_interactions::{
     command::{CommandModel, CreateCommand, CreateOption},
     error::ParseError,
 };
-use twilight_model::channel::embed::Embed;
 
 use crate::interaction::{
     context::CommandContext,
-    response::{InteractionError, InteractionErrorData},
+    response::{CommandResponse, InteractionError, InteractionErrorKind},
 };
 
 /// Help command model.
@@ -36,12 +35,12 @@ impl HelpCommand {
     pub async fn handle(
         context: CommandContext,
         _state: &ClusterState,
-    ) -> Result<Embed, HelpCommandError> {
+    ) -> Result<CommandResponse, HelpCommandError> {
         let _parsed = HelpCommand::from_interaction(context.data.into())?;
 
         let embed = EmbedBuilder::new().description("Hello world!").build()?;
 
-        Ok(embed)
+        Ok(CommandResponse::Embed(embed))
     }
 }
 
@@ -55,10 +54,12 @@ pub enum HelpCommandError {
 }
 
 impl InteractionError for HelpCommandError {
-    fn into_error(self) -> InteractionErrorData {
+    const INTERACTION_NAME: &'static str = "help";
+
+    fn into_error(self) -> InteractionErrorKind {
         match self {
-            HelpCommandError::Parse(error) => InteractionErrorData::internal(Some("help"), error),
-            HelpCommandError::Embed(error) => InteractionErrorData::internal(Some("help"), error),
+            HelpCommandError::Parse(error) => InteractionErrorKind::internal(error),
+            HelpCommandError::Embed(error) => InteractionErrorKind::internal(error),
         }
     }
 }

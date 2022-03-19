@@ -2,13 +2,13 @@
 
 use twilight_embed_builder::{EmbedBuilder, EmbedFooterBuilder};
 
-use crate::interaction::response::EphemeralEmbed;
+use crate::interaction::response::CommandResponse;
 
 use super::COLOR_RED;
 
 /// Internal error embed
-pub fn internal_error() -> EphemeralEmbed {
-    EmbedBuilder::new()
+pub fn internal_error() -> CommandResponse {
+    let embed = EmbedBuilder::new()
         .title("Oups, une erreur inconnue s'est produite ...")
         .color(COLOR_RED)
         .description(
@@ -24,13 +24,14 @@ pub fn internal_error() -> EphemeralEmbed {
             "Okay, Houston, I believe we've had a problem here ...",
         ))
         .build()
-        .unwrap()
-        .into()
+        .unwrap();
+
+    CommandResponse::EphemeralEmbed(embed)
 }
 
 /// Unknown command received
-pub fn unknown_command() -> EphemeralEmbed {
-    EmbedBuilder::new()
+pub fn unknown_command() -> CommandResponse {
+    let embed = EmbedBuilder::new()
         .title("Cette commande n'est pas encore disponible")
         .color(COLOR_RED)
         .description(
@@ -38,13 +39,14 @@ pub fn unknown_command() -> EphemeralEmbed {
             disponible. Patientez quelques minutes et réessayez.",
         )
         .build()
-        .unwrap()
-        .into()
+        .unwrap();
+
+    CommandResponse::Embed(embed)
 }
 
 /// Command not available in direct messages
-pub fn guild_only() -> EphemeralEmbed {
-    EmbedBuilder::new()
+pub fn guild_only() -> CommandResponse {
+    let embed = EmbedBuilder::new()
         .title("Cette commande ne fonctionne pas en messages privés")
         .color(COLOR_RED)
         .description(
@@ -53,8 +55,9 @@ pub fn guild_only() -> EphemeralEmbed {
             serveur pour pouvoir l'utiliser.",
         )
         .build()
-        .unwrap()
-        .into()
+        .unwrap();
+
+    CommandResponse::Embed(embed)
 }
 
 #[cfg(test)]

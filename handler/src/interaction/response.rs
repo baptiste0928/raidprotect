@@ -68,52 +68,54 @@ pub trait IntoResponse {
     fn into_response(self) -> InteractionResponseData;
 }
 
-impl IntoResponse for InteractionResponseData {
+impl<E> IntoResponse for Result<CommandResponse, E>
+where
+    E: InteractionError,
+{
     fn into_response(self) -> InteractionResponseData {
-        self
+        let response = match self {
+            Ok(response) => response,
+            Err(error) => match error.into_error() {
+                InteractionErrorKind::Response(response) => *response,
+                InteractionErrorKind::Internal(error) => {
+                    tracing::error!(error = %error, "error occurred when processing interaction `{}`", E::INTERACTION_NAME);
+
+                    embed::error::internal_error()
+                }
+            },
+        };
+
+        response.into_response()
     }
 }
 
-impl IntoResponse for Embed {
-    fn into_response(self) -> InteractionResponseData {
-        InteractionResponseDataBuilder::new().embeds([self]).build()
-    }
+/// Response to a bot command.
+///
+/// This enum contains types that can be used to respond to a bot command. The
+/// [`CommandResponse::Other`] variant can be used to respond with a custom
+/// [`InteractionResponseData`].
+#[derive(Debug, Clone)]
+pub enum CommandResponse {
+    /// Respond with an embed.
+    Embed(Embed),
+    /// Respond with an embed sent as ephemeral message.
+    EphemeralEmbed(Embed),
+    /// Respond with a custom [`InteractionResponseData`].
+    Other(InteractionResponseData),
 }
 
-impl<T: IntoResponse, E: InteractionError> IntoResponse for Result<T, E> {
+impl IntoResponse for CommandResponse {
     fn into_response(self) -> InteractionResponseData {
         match self {
-            Ok(value) => value.into_response(),
-            Err(error) => error.into_error().into_response(),
+            CommandResponse::Embed(embed) => InteractionResponseDataBuilder::new()
+                .embeds([embed])
+                .build(),
+            CommandResponse::EphemeralEmbed(embed) => InteractionResponseDataBuilder::new()
+                .embeds([embed])
+                .flags(MessageFlags::EPHEMERAL)
+                .build(),
+            CommandResponse::Other(response) => response,
         }
-    }
-}
-
-/// Embed that respond using an ephemeral interaction callback.
-///
-/// This type wraps an [`Embed`] and implement [`IntoResponse`]. It can be
-/// easily converted to and from an embed using the [`From`] trait.
-#[derive(Debug, Clone)]
-pub struct EphemeralEmbed(pub Embed);
-
-impl IntoResponse for EphemeralEmbed {
-    fn into_response(self) -> InteractionResponseData {
-        InteractionResponseDataBuilder::new()
-            .embeds([self.0])
-            .flags(MessageFlags::EPHEMERAL)
-            .build()
-    }
-}
-
-impl From<Embed> for EphemeralEmbed {
-    fn from(embed: Embed) -> Self {
-        EphemeralEmbed(embed)
-    }
-}
-
-impl From<EphemeralEmbed> for Embed {
-    fn from(embed: EphemeralEmbed) -> Self {
-        embed.0
     }
 }
 
@@ -121,51 +123,35 @@ impl From<EphemeralEmbed> for Embed {
 ///
 /// This trait represent an error returned by an interaction. Two kind of errors
 /// are possible:
-/// - [`InteractionErrorData::Callback`] represent a recoverable error that
+/// - [`InteractionErrorKind::Response`] represent a recoverable error that
 ///   display a custom user-friendly error message.
-/// - [`InteractionErrorData::Internal`] represent a non-recoverable internal
+/// - [`InteractionErrorKind::Internal`] represent a non-recoverable internal
 ///   error that display a generic error message and is logged.
 pub trait InteractionError {
-    /// Convert this type into [`InteractionErrorData`].
-    fn into_error(self) -> InteractionErrorData;
+    /// Name of the interaction.
+    const INTERACTION_NAME: &'static str;
+
+    /// Convert this type into [`InteractionErrorKind`].
+    fn into_error(self) -> InteractionErrorKind;
 }
 
 /// Interaction error data.
 ///
 /// See the [`InteractionError`] trait for more information.
 #[derive(Debug)]
-pub enum InteractionErrorData {
-    Callback(Box<InteractionResponseData>),
-    Internal {
-        name: String,
-        error: Box<dyn Error + Send + Sync>,
-    },
+pub enum InteractionErrorKind {
+    Response(Box<CommandResponse>),
+    Internal(Box<dyn Error + Send + Sync>),
 }
 
-impl InteractionErrorData {
-    /// Initialize a new [`InteractionErrorData::Callback`].
-    pub fn callback(callback: impl IntoResponse) -> Self {
-        Self::Callback(Box::new(callback.into_response()))
+impl InteractionErrorKind {
+    /// Initialize a new [`InteractionErrorKind::Response`].
+    pub fn response(response: CommandResponse) -> Self {
+        Self::Response(Box::new(response))
     }
 
-    /// Initialize a new [`InteractionErrorData::Internal`].
-    pub fn internal(name: Option<&str>, error: impl Error + Send + Sync + 'static) -> Self {
-        Self::Internal {
-            name: name.unwrap_or("unknown").into(),
-            error: Box::new(error),
-        }
-    }
-}
-
-impl IntoResponse for InteractionErrorData {
-    fn into_response(self) -> InteractionResponseData {
-        match self {
-            InteractionErrorData::Callback(callback) => *callback,
-            InteractionErrorData::Internal { name, error } => {
-                tracing::error!(error = %error, "error occurred when processing interaction {}", name);
-
-                embed::error::internal_error().into_response()
-            }
-        }
+    /// Initialize a new [`InteractionErrorKind::Internal`].
+    pub fn internal(error: impl Error + Send + Sync + 'static) -> Self {
+        Self::Internal(Box::new(error))
     }
 }
