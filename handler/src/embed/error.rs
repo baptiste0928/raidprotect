@@ -1,6 +1,6 @@
 //! Error embeds.
 
-use twilight_embed_builder::{EmbedBuilder, EmbedFooterBuilder};
+use twilight_util::builder::embed::{EmbedBuilder, EmbedFooterBuilder};
 
 use crate::{interaction::response::CommandResponse, translations::Lang};
 
@@ -15,8 +15,7 @@ pub fn internal_error() -> CommandResponse {
         .footer(EmbedFooterBuilder::new(
             "Okay, Houston, I believe we've had a problem here ...", // No translation here
         ))
-        .build()
-        .unwrap();
+        .build();
 
     CommandResponse::EphemeralEmbed(embed)
 }
@@ -27,8 +26,7 @@ pub fn unknown_command() -> CommandResponse {
         .title(Lang::Fr.unknown_command_title())
         .color(COLOR_RED)
         .description(Lang::Fr.unknown_command_description())
-        .build()
-        .unwrap();
+        .build();
 
     CommandResponse::EphemeralEmbed(embed)
 }
@@ -39,8 +37,7 @@ pub fn guild_only() -> CommandResponse {
         .title(Lang::Fr.guild_only_title())
         .color(COLOR_RED)
         .description(Lang::Fr.guild_only_description())
-        .build()
-        .unwrap();
+        .build();
 
     CommandResponse::EphemeralEmbed(embed)
 }
