@@ -4,14 +4,17 @@ use std::time::Duration;
 
 use thiserror::Error;
 use tracing::instrument;
-use twilight_embed_builder::{
-    image_source::ImageSourceUrlError, EmbedBuilder, EmbedError, EmbedFieldBuilder, ImageSource,
-};
 use twilight_interactions::{
     command::{CommandModel, CreateCommand, ResolvedUser},
     error::ParseError,
 };
-use twilight_util::snowflake::Snowflake;
+use twilight_util::{
+    builder::embed::{
+        image_source::ImageSourceUrlError, EmbedBuilder, EmbedFieldBuilder, ImageSource,
+    },
+    snowflake::Snowflake,
+};
+use twilight_validate::embed::EmbedValidationError;
 
 use crate::{
     embed::COLOR_TRANSPARENT,
@@ -69,7 +72,7 @@ impl ProfileCommand {
             ));
         }
 
-        Ok(CommandResponse::Embed(embed.build()?))
+        Ok(CommandResponse::Embed(embed.validate()?.build()))
     }
 }
 
@@ -79,7 +82,7 @@ pub enum ProfileCommandError {
     #[error("failed to parse command: {0}")]
     Parse(#[from] ParseError),
     #[error("failed to build embed: {0}")]
-    Embed(#[from] EmbedError),
+    Embed(#[from] EmbedValidationError),
     #[error("failed to build image url: {0}")]
     ImageUrl(#[from] ImageSourceUrlError),
 }

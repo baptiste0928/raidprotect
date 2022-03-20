@@ -2,11 +2,12 @@
 
 use thiserror::Error;
 use tracing::{error, instrument};
-use twilight_embed_builder::{EmbedBuilder, EmbedError};
 use twilight_interactions::{
     command::{CommandModel, CommandOption, CreateCommand, CreateOption},
     error::ParseError,
 };
+use twilight_util::builder::embed::EmbedBuilder;
+use twilight_validate::embed::EmbedValidationError;
 
 use crate::interaction::{
     context::CommandContext,
@@ -34,7 +35,7 @@ impl HelpCommand {
     pub async fn handle(context: CommandContext) -> Result<CommandResponse, HelpCommandError> {
         let _parsed = HelpCommand::from_interaction(context.data.into())?;
 
-        let embed = EmbedBuilder::new().description("Hello world!").build()?;
+        let embed = EmbedBuilder::new().description("Hello world!").build();
 
         Ok(CommandResponse::Embed(embed))
     }
@@ -46,7 +47,7 @@ pub enum HelpCommandError {
     #[error("failed to parse command: {0}")]
     Parse(#[from] ParseError),
     #[error("failed to build embed: {0}")]
-    Embed(#[from] EmbedError),
+    Embed(#[from] EmbedValidationError),
 }
 
 impl InteractionError for HelpCommandError {
