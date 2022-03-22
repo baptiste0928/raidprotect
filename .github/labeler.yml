@@ -6,6 +6,11 @@ labels:
       files:
         all: ["*", "!Cargo.lock"]
 
+  - label: c-analyzer
+    sync: true
+    matcher:
+      files: "analyzer/**/*"
+
   - label: c-cache
     sync: true
     matcher:

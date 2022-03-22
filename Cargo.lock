@@ -751,6 +751,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "raidprotect-analyzer"
+version = "0.1.0"
+
+[[package]]
 name = "raidprotect-cache"
 version = "0.1.0"
 dependencies = [
