@@ -20,6 +20,10 @@ const MEDIA_EXT: [&str; 9] = [
 ];
 
 lazy_static! {
+    // Regex from discord.js, improved to ensure id does not start with '0'?=.
+    //
+    // https://github.com/discordjs/discord.js/blob/988a51b7641f8b33cc9387664605ddc02134859d/src/structures/MessageMentions.js#L215
+
     /// Regex that matches user mentions (like <@80351110224678912>)
     static ref USER_MENTION: Regex = Regex::new(r"<@!?([1-9][0-9]{16,18})>").unwrap();
 
@@ -70,7 +74,7 @@ impl ParsedMessage {
         let words = message.unicode_words().map(any_ascii).collect();
         let mentions = MessageMention::match_mentions(&message);
         let links = LinkFinder::new()
-            .kinds(&[LinkKind::Email])
+            .kinds(&[LinkKind::Url])
             .links(&message)
             .filter_map(|link| MessageLink::parse(link.as_str()))
             .collect();
@@ -142,42 +146,124 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_message_parsing() {
+        assert_eq!(
+            ParsedMessage::parse("Hello, world!".into()),
+            ParsedMessage {
+                original: "Hello, world!".into(),
+                words: vec!["Hello".into(), "world".into()],
+                links: Vec::new(),
+                mentions: Vec::new(),
+            }
+        )
+    }
+
+    #[test]
+    fn test_message_parsing_empty() {
+        assert_eq!(
+            ParsedMessage::parse("".into()),
+            ParsedMessage {
+                original: "".into(),
+                words: Vec::new(),
+                links: Vec::new(),
+                mentions: Vec::new(),
+            }
+        )
+    }
+
+    #[test]
+    fn test_message_parsing_unicode() {
+        assert_eq!(
+            ParsedMessage::parse("𝓗𝓮𝓵𝓵𝓸, 𝔀𝓸𝓻𝓵𝓭!".into()),
+            ParsedMessage {
+                original: "𝓗𝓮𝓵𝓵𝓸, 𝔀𝓸𝓻𝓵𝓭!".into(),
+                words: vec!["Hello".into(), "world".into()],
+                links: Vec::new(),
+                mentions: Vec::new(),
+            }
+        )
+    }
+
+    #[test]
+    fn test_message_parsing_link() {
+        assert_eq!(
+            ParsedMessage::parse("Join my server: https://discord.gg/raidprotect".into()),
+            ParsedMessage {
+                original: "Join my server: https://discord.gg/raidprotect".into(),
+                words: vec![
+                    "Join".into(),
+                    "my".into(),
+                    "server".into(),
+                    "https".into(),
+                    "discord.gg".into(),
+                    "raidprotect".into()
+                ],
+                links: vec![MessageLink::Invite(
+                    Url::parse("https://discord.gg/raidprotect").unwrap()
+                )],
+                mentions: Vec::new(),
+            }
+        )
+    }
+
+    #[test]
+    fn test_message_parsing_mention() {
+        assert_eq!(
+            ParsedMessage::parse("Hello <@466578580449525760>".into()),
+            ParsedMessage {
+                original: "Hello <@466578580449525760>".into(),
+                words: vec!["Hello".into(), "466578580449525760".into()],
+                links: Vec::new(),
+                mentions: vec![MessageMention::User(Id::new(466578580449525760))],
+            }
+        )
+    }
+
+    #[test]
     fn test_link_invite() {
-        assert!(matches!(
+        assert_eq!(
             MessageLink::parse("https://discord.gg/raidprotect"),
-            Some(MessageLink::Invite(_))
-        ));
+            Some(MessageLink::Invite(
+                Url::parse("https://discord.gg/raidprotect").unwrap()
+            ))
+        );
 
-        assert!(matches!(
+        assert_eq!(
             MessageLink::parse("https://discord.com/invite/raidprotect"),
-            Some(MessageLink::Invite(_))
-        ));
+            Some(MessageLink::Invite(
+                Url::parse("https://discord.com/invite/raidprotect").unwrap()
+            ))
+        );
 
-        assert!(matches!(
+        assert_eq!(
             MessageLink::parse("https://discordapp.com/invite/raidprotect"),
-            Some(MessageLink::Invite(_))
-        ));
+            Some(MessageLink::Invite(
+                Url::parse("https://discordapp.com/invite/raidprotect").unwrap()
+            ))
+        );
     }
 
     #[test]
     fn test_link_media() {
-        assert!(matches!(
+        assert_eq!(
             MessageLink::parse("https://cdn.discordapp.com/attachments/618052865725825044/956984958184984586/Capture_decran_2022-03-25_193605.png"),
-            Some(MessageLink::Media(_))
-        ));
+            Some(MessageLink::Media(Url::parse("https://cdn.discordapp.com/attachments/618052865725825044/956984958184984586/Capture_decran_2022-03-25_193605.png").unwrap()))
+        );
 
-        assert!(matches!(
+        assert_eq!(
             MessageLink::parse("https://cdn.discordapp.com/attachments/796185053351772191/872796992357695548/video0-16-2.mp4"),
-            Some(MessageLink::Media(_))
-        ));
+            Some(MessageLink::Media(Url::parse("https://cdn.discordapp.com/attachments/796185053351772191/872796992357695548/video0-16-2.mp4").unwrap()))
+        );
     }
 
     #[test]
     fn test_link_other() {
-        assert!(matches!(
+        assert_eq!(
             MessageLink::parse("https://raidprotect.org/"),
-            Some(MessageLink::Other(_))
-        ));
+            Some(MessageLink::Other(
+                Url::parse("https://raidprotect.org/").unwrap()
+            ))
+        );
     }
 
     #[test]
