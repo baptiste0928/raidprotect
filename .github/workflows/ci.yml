@@ -20,13 +20,8 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v1
 
-      - name: Install cargo-nextest
-        uses: baptiste0928/cargo-install@v1
-        with:
-          crate: cargo-nextest
-
       - name: Run cargo nextest
-        run: cargo nextest run --all-features
+        run: cargo test --all-features
 
   clippy:
     name: Clippy
@@ -87,17 +82,8 @@ jobs:
         with:
           crate: cargo-audit
 
-      - name: Install cargo-upgrades
-        uses: baptiste0928/cargo-install@v1
-        with:
-          crate: cargo-upgrades
-
       - name: Check security advisories
         run: cargo audit
-
-      - name: Check available upgrades
-        continue-on-error: true
-        run: cargo upgrades
 
   rustfmt:
     name: Format
