@@ -7,7 +7,7 @@ on:
 
 jobs:
   check:
-    name: Tests
+    name: Test
     runs-on: ubuntu-latest
 
     steps:
@@ -20,7 +20,7 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v1
 
-      - name: Run cargo nextest
+      - name: Run cargo test
         run: cargo test --all-features
 
   clippy:
@@ -82,6 +82,9 @@ jobs:
         with:
           crate: cargo-audit
 
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
       - name: Check security advisories
         run: cargo audit
 
@@ -99,5 +102,5 @@ jobs:
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
 
-      - name: Run Codespell
+      - name: Run codespell
         uses: codespell-project/actions-codespell@master
