@@ -61,15 +61,16 @@ pub enum MessageLink {
 /// Kind of message mention.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MessageMention {
-    /// User mention like <@80351110224678912>
+    /// User mention like `<@80351110224678912>`
     User(Id<UserMarker>),
-    /// Role mention like <@&165511591545143296>
+    /// Role mention like `<@&165511591545143296>`
     Role(Id<RoleMarker>),
-    /// @everyone or @here mention
+    /// `@everyone` or `@here` mention
     Everyone,
 }
 
 impl ParsedMessage {
+    /// Parse message into [`ParsedMessage`]
     pub fn parse(message: String) -> Self {
         let words = message.unicode_words().map(any_ascii).collect();
         let mentions = MessageMention::match_mentions(&message);
