@@ -7,7 +7,7 @@ on:
 
 jobs:
   check:
-    name: Check
+    name: Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -20,8 +20,13 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v1
 
-      - name: Run cargo check
-        run: cargo check --all-features --tests
+      - name: Install cargo-nextest
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-nextest
+
+      - name: Run cargo nextest
+        run: cargo nextest run --all-features
 
   clippy:
     name: Clippy
@@ -82,11 +87,17 @@ jobs:
         with:
           crate: cargo-audit
 
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v1
+      - name: Install cargo-upgrades
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-upgrades
 
       - name: Check security advisories
-        run: cargo-audit audit
+        run: cargo audit
+
+      - name: Check available upgrades
+        continue-on-error: true
+        run: cargo upgrades
 
   rustfmt:
     name: Format
@@ -101,14 +112,6 @@ jobs:
 
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
-
-  codespell:
-    name: Spelling
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
 
       - name: Run Codespell
         uses: codespell-project/actions-codespell@master
