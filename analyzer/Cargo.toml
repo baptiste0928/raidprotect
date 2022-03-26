@@ -9,7 +9,7 @@ publish = false
 [dependencies]
 any_ascii = "0.3"
 lazy_static = "1.4"
-linkify = "0.8"
+linkify = "0.7"
 regex = "1.5"
 twilight-model = "0.10"
 unicode-segmentation = "1.9"
