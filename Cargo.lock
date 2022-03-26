@@ -770,7 +770,9 @@ name = "raidprotect-analyzer"
 version = "0.1.0"
 dependencies = [
  "any_ascii",
+ "lazy_static",
  "linkify",
+ "regex",
  "twilight-model",
  "unicode-segmentation",
  "url",

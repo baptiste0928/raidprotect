@@ -1,7 +1,9 @@
 //! Message parser.
 
 use any_ascii::any_ascii;
+use lazy_static::lazy_static;
 use linkify::{LinkFinder, LinkKind};
+use regex::Regex;
 use twilight_model::id::{
     marker::{RoleMarker, UserMarker},
     Id,
@@ -17,6 +19,17 @@ const MEDIA_EXT: [&str; 9] = [
     ".png", ".jpg", ".jpeg", ".gif", ".webp", ".webm", ".mp4", ".avi", ".mov",
 ];
 
+lazy_static! {
+    /// Regex that matches user mentions (like <@80351110224678912>)
+    static ref USER_MENTION: Regex = Regex::new(r"<@!?([1-9][0-9]{16,18})>").unwrap();
+
+    /// Regex that matches role mentions (like <@&165511591545143296>)
+    static ref ROLE_MENTION: Regex = Regex::new(r"<@&([1-9][0-9]{16,18})>").unwrap();
+
+    /// Regex that matches @everyone and @here mentions
+    static ref EVERYONE_MENTION: Regex = Regex::new(r"@(everyone|here)").unwrap();
+}
+
 /// Parsed message content.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParsedMessage {
@@ -24,7 +37,7 @@ pub struct ParsedMessage {
     pub original: String,
     /// List of message words.
     ///
-    /// The words are splitted according to the Unicode specification and each
+    /// The words are split according to the Unicode specification and each
     /// character is converted into ASCII.
     pub words: Vec<String>,
     /// List of message links.
@@ -44,20 +57,18 @@ pub enum MessageLink {
 /// Kind of message mention.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MessageMention {
+    /// User mention like <@80351110224678912>
     User(Id<UserMarker>),
+    /// Role mention like <@&165511591545143296>
     Role(Id<RoleMarker>),
-}
-
-/// Kind of message mention. This type is used when parsing [`MessageMention`].
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum MentionKind {
-    User,
-    Role,
+    /// @everyone or @here mention
+    Everyone,
 }
 
 impl ParsedMessage {
     pub fn parse(message: String) -> Self {
         let words = message.unicode_words().map(any_ascii).collect();
+        let mentions = MessageMention::match_mentions(&message);
         let links = LinkFinder::new()
             .kinds(&[LinkKind::Email])
             .links(&message)
@@ -68,7 +79,7 @@ impl ParsedMessage {
             original: message,
             words,
             links,
-            mentions: todo!(),
+            mentions,
         }
     }
 }
@@ -94,48 +105,35 @@ impl MessageLink {
 }
 
 impl MessageMention {
-    /// Parse a single mention into [`MessageMention`].
-    fn parse(mention: &str) -> Option<Self> {
-        let mut chars = mention.chars();
-        let mut id = String::new();
+    /// Match all mentions from a message.
+    fn match_mentions(message: &str) -> Vec<Self> {
+        let mut mentions = Vec::new();
 
-        // Id must start with '<'
-        match chars.next()? {
-            '<' => {}
-            _ => return None,
+        // Early-return if the character '@' is not in the message
+        if !message.contains('@') {
+            return mentions;
         }
 
-        // Parse second character, either '&' for role or '!' (or nothing) for
-        // user identifier.
-        let char = chars.next()?;
-        let kind = match char {
-            '&' => MentionKind::Role,
-            '!' => MentionKind::User,
-            '0'..='9' => {
-                id.push(char);
-
-                MentionKind::User
-            }
-            _ => return None,
-        };
-
-        // Parse id characters
-        loop {
-            let char = chars.next()?;
-            match char {
-                '0'..='9' => id.push(char),
-                '>' => break,
-                _ => return None,
+        // Capture user mentions
+        for capture in USER_MENTION.captures_iter(message) {
+            if let Ok(user_id) = capture[1].parse() {
+                mentions.push(Self::User(Id::new(user_id)));
             }
         }
 
-        // Parse id as number
-        let id: u64 = id.parse().ok()?;
-
-        match kind {
-            MentionKind::User => Some(MessageMention::User(Id::new_checked(id)?)),
-            MentionKind::Role => Some(MessageMention::Role(Id::new_checked(id)?)),
+        // Capture role mentions
+        for capture in ROLE_MENTION.captures_iter(message) {
+            if let Ok(role_id) = capture[1].parse() {
+                mentions.push(Self::Role(Id::new(role_id)));
+            }
         }
+
+        // Capture everyone mentions
+        for _ in EVERYONE_MENTION.find_iter(message) {
+            mentions.push(Self::Everyone);
+        }
+
+        mentions
     }
 }
 
@@ -180,5 +178,40 @@ mod tests {
             MessageLink::parse("https://raidprotect.org/"),
             Some(MessageLink::Other(_))
         ));
+    }
+
+    #[test]
+    fn test_mention() {
+        assert_eq!(
+            MessageMention::match_mentions(
+                "<@207852811596201985> <@!466578580449525760> <@&490525831806976011> @everyone"
+            ),
+            vec![
+                MessageMention::User(Id::new(207852811596201985)),
+                MessageMention::User(Id::new(466578580449525760)),
+                MessageMention::Role(Id::new(490525831806976011)),
+                MessageMention::Everyone,
+            ]
+        );
+    }
+
+    #[test]
+    fn test_mention_fails() {
+        assert_eq!(
+            MessageMention::match_mentions("<@00000000000000000>"),
+            Vec::new()
+        );
+
+        assert_eq!(
+            MessageMention::match_mentions("<@&00000000000000000>"),
+            Vec::new()
+        );
+
+        assert_eq!(MessageMention::match_mentions("<@!123>"), Vec::new());
+
+        assert_eq!(
+            MessageMention::match_mentions("@207852811596201985"),
+            Vec::new()
+        );
     }
 }
