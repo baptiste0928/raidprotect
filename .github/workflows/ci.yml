@@ -7,7 +7,7 @@ on:
 
 jobs:
   check:
-    name: Check
+    name: Test
     runs-on: ubuntu-latest
 
     steps:
@@ -20,8 +20,8 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v1
 
-      - name: Run cargo check
-        run: cargo check --all-features --tests
+      - name: Run cargo test
+        run: cargo test --all-features
 
   clippy:
     name: Clippy
@@ -86,7 +86,7 @@ jobs:
         uses: Swatinem/rust-cache@v1
 
       - name: Check security advisories
-        run: cargo-audit audit
+        run: cargo audit
 
   rustfmt:
     name: Format
@@ -102,13 +102,5 @@ jobs:
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
 
-  codespell:
-    name: Spelling
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Run Codespell
+      - name: Run codespell
         uses: codespell-project/actions-codespell@master
