@@ -8,6 +8,7 @@ publish = false
 
 [dependencies]
 raidprotect-model = { path = "../model" }
+raidprotect-analyzer = { path = "../analyzer" }
 
 rosetta-i18n = "0.1"
 thiserror = "1"

@@ -812,6 +812,7 @@ dependencies = [
 name = "raidprotect-handler"
 version = "0.1.0"
 dependencies = [
+ "raidprotect-analyzer",
  "raidprotect-model",
  "rosetta-build",
  "rosetta-i18n",

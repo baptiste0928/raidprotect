@@ -5,4 +5,4 @@
 
 mod parser;
 
-pub use parser::parse_message;
+pub use parser::{parse_message, ALLOWED_MESSAGES_TYPES};

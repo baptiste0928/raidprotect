@@ -6,9 +6,16 @@
 use any_ascii::any_ascii;
 use linkify::{LinkFinder, LinkKind};
 use raidprotect_cache::model::{CachedMessage, MessageLink};
-use twilight_model::channel::Message;
+use twilight_model::channel::{message::MessageType, Message};
 use unicode_segmentation::UnicodeSegmentation;
 use url::Url;
+
+/// Messages types processed by the bot.
+pub const ALLOWED_MESSAGES_TYPES: [MessageType; 3] = [
+    MessageType::Regular,
+    MessageType::Reply,
+    MessageType::ThreadStarterMessage,
+];
 
 /// Domains used for Discord invitations link.
 const INVITE_DOMAINS: [&str; 3] = ["discord.gg", "discord.com", "discordapp.com"];
@@ -20,6 +27,17 @@ const MEDIA_EXT: [&str; 9] = [
 
 /// Parse incoming [`Message`] into a [`CachedMessage`].
 pub fn parse_message(message: &Message) -> CachedMessage {
+    // Only these message types are processed.
+    // This must be enforced in the gateway crate.
+    debug_assert!(
+        message.guild_id.is_some(),
+        "message wasn't sent from a guild"
+    );
+    debug_assert!(
+        ALLOWED_MESSAGES_TYPES.contains(&message.kind),
+        "unsupported message type"
+    );
+
     let words = message.content.unicode_words().map(any_ascii).collect();
     let mention_users = message.mentions.iter().map(|mention| mention.id).collect();
     let links = LinkFinder::new()
