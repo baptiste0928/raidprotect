@@ -7,6 +7,8 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+raidprotect-cache = { path = "../cache" }
+
 any_ascii = "0.3"
 lazy_static = "1.4"
 linkify = "0.8"

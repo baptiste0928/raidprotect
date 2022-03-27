@@ -772,6 +772,7 @@ dependencies = [
  "any_ascii",
  "lazy_static",
  "linkify",
+ "raidprotect-cache",
  "regex",
  "twilight-model",
  "unicode-segmentation",
