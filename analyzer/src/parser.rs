@@ -1,5 +1,7 @@
 //! Message parser.
 
+use std::num::NonZeroU64;
+
 use any_ascii::any_ascii;
 use lazy_static::lazy_static;
 use linkify::{LinkFinder, LinkKind};
@@ -20,15 +22,15 @@ const MEDIA_EXT: [&str; 9] = [
 ];
 
 lazy_static! {
-    // Regex from discord.js, improved to ensure id does not start with '0'?=.
+    // Regex from discord.js.
     //
     // https://github.com/discordjs/discord.js/blob/988a51b7641f8b33cc9387664605ddc02134859d/src/structures/MessageMentions.js#L215
 
     /// Regex that matches user mentions (like <@80351110224678912>)
-    static ref USER_MENTION: Regex = Regex::new(r"<@!?([1-9][0-9]{16,18})>").unwrap();
+    static ref USER_MENTION: Regex = Regex::new(r"<@!?([0-9]{17,19})>").unwrap();
 
     /// Regex that matches role mentions (like <@&165511591545143296>)
-    static ref ROLE_MENTION: Regex = Regex::new(r"<@&([1-9][0-9]{16,18})>").unwrap();
+    static ref ROLE_MENTION: Regex = Regex::new(r"<@&([0-9]{17,19})>").unwrap();
 
     /// Regex that matches @everyone and @here mentions
     static ref EVERYONE_MENTION: Regex = Regex::new(r"@(everyone|here)").unwrap();
@@ -121,15 +123,15 @@ impl MessageMention {
 
         // Capture user mentions
         for capture in USER_MENTION.captures_iter(message) {
-            if let Ok(user_id) = capture[1].parse() {
-                mentions.push(Self::User(Id::new(user_id)));
+            if let Ok(user_id) = capture[1].parse::<NonZeroU64>() {
+                mentions.push(Self::User(Id::from(user_id)));
             }
         }
 
         // Capture role mentions
         for capture in ROLE_MENTION.captures_iter(message) {
-            if let Ok(role_id) = capture[1].parse() {
-                mentions.push(Self::Role(Id::new(role_id)));
+            if let Ok(role_id) = capture[1].parse::<NonZeroU64>() {
+                mentions.push(Self::Role(Id::from(role_id)));
             }
         }
 
