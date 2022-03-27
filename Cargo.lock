@@ -770,9 +770,8 @@ name = "raidprotect-analyzer"
 version = "0.1.0"
 dependencies = [
  "any_ascii",
- "lazy_static",
  "linkify",
- "regex",
+ "raidprotect-cache",
  "twilight-model",
  "unicode-segmentation",
  "url",
@@ -784,8 +783,10 @@ version = "0.1.0"
 dependencies = [
  "dashmap",
  "thiserror",
+ "tokio",
  "tracing",
  "twilight-model",
+ "url",
 ]
 
 [[package]]
@@ -811,6 +812,7 @@ dependencies = [
 name = "raidprotect-handler"
 version = "0.1.0"
 dependencies = [
+ "raidprotect-analyzer",
  "raidprotect-model",
  "rosetta-build",
  "rosetta-i18n",

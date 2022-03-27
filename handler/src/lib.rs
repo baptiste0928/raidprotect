@@ -11,6 +11,7 @@
 //! - [`embed`]: response embeds models
 //! - [`interaction`]: interaction handling, using `twilight-interactions`
 
+pub mod automod;
 pub mod embed;
 pub mod interaction;
 pub mod util;

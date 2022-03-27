@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use futures::StreamExt;
-use raidprotect_cache::InMemoryCache;
+use raidprotect_cache::{InMemoryCache, MessageCache, MessageExpireTask};
 use raidprotect_handler::interaction::register_commands;
 use raidprotect_model::ClusterState;
 use raidprotect_util::shutdown::ShutdownSubscriber;
@@ -33,6 +33,8 @@ pub struct ShardCluster {
     events: Events,
     /// Shared cluster state
     state: Arc<ClusterState>,
+    /// Message cache expiration task
+    messages_expire: MessageExpireTask,
 }
 
 impl ShardCluster {
@@ -53,8 +55,12 @@ impl ShardCluster {
         info!("logged as {} with ID {}", application.name, application.id);
 
         let cache = InMemoryCache::new(application.id.cast());
+        let (messages, messages_expire) = MessageCache::new();
 
-        let intents = Intents::GUILDS | Intents::GUILD_MEMBERS | Intents::GUILD_MESSAGES;
+        let intents = Intents::GUILDS
+            | Intents::GUILD_MEMBERS
+            | Intents::GUILD_MESSAGES
+            | Intents::MESSAGE_CONTENT;
 
         let (cluster, events) = Cluster::builder(token.to_string(), intents)
             .http_client(http.clone())
@@ -65,7 +71,7 @@ impl ShardCluster {
 
         info!("started cluster with {} shards", cluster.shards().len());
 
-        let state = ClusterState::new(cache, http);
+        let state = ClusterState::new(cache, http, messages);
 
         register_commands(&state, application.id, command_guild).await;
 
@@ -73,6 +79,7 @@ impl ShardCluster {
             cluster: Arc::new(cluster),
             events,
             state: Arc::new(state),
+            messages_expire,
         })
     }
 
@@ -83,9 +90,14 @@ impl ShardCluster {
     pub async fn start(mut self, mut shutdown: ShutdownSubscriber) {
         // Start the cluster
         let cluster = self.cluster.clone();
-
         tokio::spawn(async move {
             cluster.up().await;
+        });
+
+        // Start message cache expiration task
+        let messages_expire = self.messages_expire.clone();
+        tokio::spawn(async move {
+            messages_expire.run().await;
         });
 
         // Handle incoming events

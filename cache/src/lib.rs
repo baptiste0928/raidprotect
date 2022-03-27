@@ -20,9 +20,11 @@
 //! | Current user member   | `MemberAdd`, `MemberUpdate`                                       |
 
 mod cache;
+mod message;
 mod process;
 
 pub mod model;
 
 pub use cache::InMemoryCache;
+pub use message::{MessageCache, MessageExpireTask};
 pub use process::UpdateCache;

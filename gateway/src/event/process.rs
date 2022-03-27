@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use raidprotect_handler::interaction;
+use raidprotect_handler::{
+    automod::{self, ALLOWED_MESSAGES_TYPES},
+    interaction,
+};
 use raidprotect_model::ClusterState;
 use tracing::trace;
 use twilight_model::{
@@ -56,7 +59,8 @@ impl ProcessEvent for GatewayEvent {
             RoleCreate,
             RoleDelete,
             MemberAdd,
-            MemberUpdate
+            MemberUpdate,
+            MessageCreate
         }
     }
 }
@@ -83,9 +87,19 @@ impl ProcessEvent for incoming::InteractionCreate {
     fn process(self, state: Arc<ClusterState>) {
         match self.0 {
             Interaction::ApplicationCommand(command) => {
-                tokio::spawn(interaction::handle_command(*command, state))
+                tokio::spawn(interaction::handle_command(*command, state));
             }
-            _ => todo!(),
+            _ => {
+                trace!("unprocessed interaction type");
+            }
         };
+    }
+}
+
+impl ProcessEvent for incoming::MessageCreate {
+    fn process(self, state: Arc<ClusterState>) {
+        if self.guild_id.is_some() && ALLOWED_MESSAGES_TYPES.contains(&self.kind) {
+            tokio::spawn(automod::handle_message(self.0, state));
+        }
     }
 }

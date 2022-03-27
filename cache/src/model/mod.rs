@@ -6,6 +6,8 @@
 
 mod channel;
 mod guild;
+mod message;
 
 pub use channel::{CachedCategoryChannel, CachedChannel, CachedTextChannel, CachedThread};
 pub use guild::{CachedGuild, CachedRole, CurrentMember};
+pub use message::{CachedMessage, MessageLink};
