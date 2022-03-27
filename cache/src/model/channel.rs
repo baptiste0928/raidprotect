@@ -146,6 +146,8 @@ pub struct CachedMessage {
     pub id: Id<MessageMarker>,
     /// Message author id.
     pub author_id: Id<UserMarker>,
+    /// Message channel id.
+    pub channel_id: Id<ChannelMarker>,
     /// Message content.
     pub content: String,
     /// Timestamp of when the message was created.

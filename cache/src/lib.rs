@@ -26,5 +26,5 @@ mod process;
 pub mod model;
 
 pub use cache::InMemoryCache;
-pub use message::MessageCache;
+pub use message::{MessageCache, MessageExpireTask};
 pub use process::UpdateCache;
