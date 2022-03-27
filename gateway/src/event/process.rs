@@ -56,7 +56,8 @@ impl ProcessEvent for GatewayEvent {
             RoleCreate,
             RoleDelete,
             MemberAdd,
-            MemberUpdate
+            MemberUpdate,
+            MessageCreate
         }
     }
 }
@@ -87,5 +88,11 @@ impl ProcessEvent for incoming::InteractionCreate {
             }
             _ => todo!(),
         };
+    }
+}
+
+impl ProcessEvent for incoming::MessageCreate {
+    fn process(self, _state: Arc<ClusterState>) {
+        dbg!(self.0);
     }
 }

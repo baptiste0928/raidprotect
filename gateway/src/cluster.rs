@@ -54,7 +54,10 @@ impl ShardCluster {
 
         let cache = InMemoryCache::new(application.id.cast());
 
-        let intents = Intents::GUILDS | Intents::GUILD_MEMBERS | Intents::GUILD_MESSAGES;
+        let intents = Intents::GUILDS
+            | Intents::GUILD_MEMBERS
+            | Intents::GUILD_MESSAGES
+            | Intents::MESSAGE_CONTENT;
 
         let (cluster, events) = Cluster::builder(token.to_string(), intents)
             .http_client(http.clone())

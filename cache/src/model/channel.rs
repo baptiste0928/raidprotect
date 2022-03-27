@@ -1,7 +1,8 @@
 use twilight_model::{
-    channel::{permission_overwrite::PermissionOverwrite, ChannelType},
+    channel::{permission_overwrite::PermissionOverwrite, Attachment, ChannelType},
+    datetime::Timestamp,
     id::{
-        marker::{ChannelMarker, GuildMarker},
+        marker::{ChannelMarker, GuildMarker, MessageMarker, RoleMarker, UserMarker},
         Id,
     },
 };
@@ -131,4 +132,37 @@ impl From<CachedThread> for CachedChannel {
     fn from(thread: CachedThread) -> Self {
         CachedChannel::Thread(thread)
     }
+}
+
+/// Cached model of a [`Message`].
+///
+/// This model is used with [`MessageCache`].
+///
+/// [`Message`]: twilight_model::channel::message::Message
+/// [`MessageCache`]: crate::MessageCache
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CachedMessage {
+    /// ID of the message.
+    pub id: Id<MessageMarker>,
+    /// Message author id.
+    pub author_id: Id<UserMarker>,
+    /// Message content.
+    pub content: String,
+    /// Timestamp of when the message was created.
+    pub timestamp: Timestamp,
+    /// List of message words.
+    ///
+    /// The words are split according to the Unicode specification and each
+    /// character is converted into ASCII.
+    pub words: Vec<String>,
+    /// List of message attachments.
+    pub attachments: Vec<Attachment>,
+    /// List of links included in the message.
+    pub links: Vec<()>,
+    /// Whether the message mentions everyone (@everyone or @here mentions)
+    pub mention_everyone: bool,
+    /// List of users mentioned in the message.
+    pub mention_users: Vec<Id<UserMarker>>,
+    /// List of roles mentioned in the message.
+    pub mention_roles: Vec<Id<RoleMarker>>,
 }
