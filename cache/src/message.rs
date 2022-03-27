@@ -23,7 +23,7 @@ use std::{
 
 use dashmap::{mapref::one::Ref, DashMap};
 use tokio::{sync::RwLock, time};
-use tracing::trace;
+use tracing::{debug, trace};
 use twilight_model::id::{marker::ChannelMarker, Id};
 
 use crate::model::CachedMessage;
@@ -93,7 +93,7 @@ impl MessageCache {
 /// new task to start it.
 ///
 /// [`run`]: Self::run
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MessageExpireTask {
     cache: Arc<MessageCache>,
 }
@@ -106,6 +106,8 @@ impl MessageExpireTask {
 
     /// Start the message expiration task.
     pub async fn run(&self) {
+        debug!("started message expiration task");
+
         loop {
             // Get the next expiration time
             let duration = {

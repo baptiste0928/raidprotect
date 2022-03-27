@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use raidprotect_cache::InMemoryCache;
+use raidprotect_cache::{InMemoryCache, MessageCache};
 use twilight_http::Client as HttpClient;
 
 /// Current state of the cluster.
@@ -15,12 +15,18 @@ pub struct ClusterState {
     cache: InMemoryCache,
     /// Http client
     http: Arc<HttpClient>,
+    /// Message cache client
+    messages: Arc<MessageCache>,
 }
 
 impl ClusterState {
     /// Initialize a new [`ClusterState`].
-    pub fn new(cache: InMemoryCache, http: Arc<HttpClient>) -> Self {
-        Self { cache, http }
+    pub fn new(cache: InMemoryCache, http: Arc<HttpClient>, messages: Arc<MessageCache>) -> Self {
+        Self {
+            cache,
+            http,
+            messages,
+        }
     }
 
     /// Get the cluster [`InMemoryCache`].
@@ -31,5 +37,10 @@ impl ClusterState {
     /// Get the cluster [`HttpClient`].
     pub fn http(&self) -> &HttpClient {
         &self.http
+    }
+
+    /// Get the cluster [`MessageCache`].
+    pub fn messages(&self) -> &MessageCache {
+        self.messages.as_ref()
     }
 }

@@ -30,7 +30,7 @@ async fn main() -> Result<()> {
 
     // Start the shard cluster
     let cluster_run = tokio::spawn(cluster.start(shutdown.subscriber()));
-    info!("Started shard cluster");
+    info!("started shard cluster");
 
     // Wait for shutdown
     tokio::select! {
