@@ -1,7 +1,7 @@
 //! Message cache.
 //!
 //! This module expose the cache used to store messages for anti-spam processing.
-//! Unlike [`InMemoryCache`], each cached message has a TTL and expires after 5
+//! Unlike [`InMemoryCache`], each cached message has a TTL and expires after 2
 //! minutes.
 //!
 //! Internally, the cache contains two storages:
@@ -115,8 +115,8 @@ impl MessageExpireTask {
                 let ttl_index = self.cache.ttl_index.read().await;
 
                 match ttl_index.get(0) {
-                    Some(message) => message.expires_in(),
-                    None => Duration::from_secs(1),
+                    Some(message) => message.expires_in() + MessageTtl::DELTA_DELAY,
+                    None => MessageTtl::DEFAULT_DELAY,
                 }
             };
 
@@ -161,8 +161,14 @@ struct MessageTtl {
 }
 
 impl MessageTtl {
-    /// Message expiration duration (5 minutes)
-    const EXPIRES_AFTER: Duration = Duration::from_secs(5 * 60);
+    /// Message expiration duration (2 minutes)
+    const EXPIRES_AFTER: Duration = Duration::from_secs(2 * 60);
+
+    /// Default delay between two checks if the queue is empty.
+    const DEFAULT_DELAY: Duration = Duration::from_millis(100);
+
+    /// Delay added to each check to group together near expires.
+    const DELTA_DELAY: Duration = Duration::from_millis(5);
 
     /// Initialize a new [`MessageTtl`].
     fn new(channel_id: Id<ChannelMarker>, created_at: Instant) -> Self {
