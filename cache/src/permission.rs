@@ -6,7 +6,7 @@
 use twilight_model::{
     guild::Permissions,
     id::{
-        marker::{ChannelMarker, RoleMarker, UserMarker},
+        marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker},
         Id,
     },
 };
@@ -68,6 +68,33 @@ impl<'a> CachePermissions<'a> {
         // Calculate permissions
         let calculator =
             PermissionCalculator::new(guild.id, user_id, everyone_role, member_roles.as_slice());
+
+        todo!()
+    }
+
+    /// Calculate the permissions of a user in a guild.
+    ///
+    /// If the guild is not found in the cache, [`None`] is returned.
+    pub fn guild(
+        &self,
+        user_id: Id<UserMarker>,
+        guild_id: Id<GuildMarker>,
+        roles: &[Id<RoleMarker>],
+    ) -> Option<Permissions> {
+        let guild = self.cache.guild(guild_id)?;
+
+        // Owners have all permissions
+        if user_id == guild.owner_id {
+            return Some(Permissions::all());
+        }
+
+        let everyone_role = self.cache.role(guild.id.cast())?.permissions;
+        let user_roles = roles
+            .iter()
+            .filter(|id| **id != guild.id.cast())  // Remove everyone role
+            .filter_map(|id| self.cache.role(*id))
+            .collect::<Vec<_>>();
+
 
         todo!()
     }
