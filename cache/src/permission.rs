@@ -19,25 +19,22 @@ use crate::{model::CachedRole, InMemoryCache};
 #[derive(Debug, Clone, Copy)]
 pub struct CachePermissions<'cache> {
     cache: &'cache InMemoryCache,
+    guild_id: Id<GuildMarker>,
 }
 
 impl<'cache> CachePermissions<'cache> {
     /// Initialize [`CachePermissions`] from a cache reference.
-    pub fn new(cache: &'cache InMemoryCache) -> Self {
-        Self { cache }
+    pub fn new(cache: &'cache InMemoryCache, guild_id: Id<GuildMarker>) -> Self {
+        Self { cache, guild_id }
     }
 
     /// Checks if a user is the owner of a guild.
     ///
     /// If the guild is not found in the cache, [`None`] is returned.
-    pub fn is_owner(&self, user_id: Id<UserMarker>, guild_id: Id<GuildMarker>) -> Option<bool> {
-        let guild = self.cache.guild(guild_id)?;
+    pub fn is_owner(&self, user_id: Id<UserMarker>) -> Option<bool> {
+        let guild = self.cache.guild(self.guild_id)?;
 
         Some(user_id == guild.owner_id)
-    }
-
-    pub fn highest_role(&self, _user_id: Id<UserMarker>, _roles: &[Id<RoleMarker>]) {
-        todo!()
     }
 
     /// Calculate the permissions of a user in a guild.
@@ -46,17 +43,16 @@ impl<'cache> CachePermissions<'cache> {
     pub fn guild(
         &self,
         user_id: Id<UserMarker>,
-        guild_id: Id<GuildMarker>,
         member_roles: &[Id<RoleMarker>],
     ) -> Option<Permissions> {
-        let guild = self.cache.guild(guild_id)?;
+        let guild = self.cache.guild(self.guild_id)?;
 
         // Owners have all permissions
         if user_id == guild.owner_id {
             return Some(Permissions::all());
         }
 
-        let cached_roles = self.member_roles(member_roles, guild_id)?;
+        let cached_roles = self.member_roles(member_roles)?;
         let everyone_role = cached_roles.everyone.permissions;
         let member_roles = cached_roles
             .roles
@@ -64,19 +60,19 @@ impl<'cache> CachePermissions<'cache> {
             .map(|role| (role.id, role.permissions))
             .collect::<Vec<_>>();
 
-        let calculator =
-            PermissionCalculator::new(guild_id, user_id, everyone_role, member_roles.as_slice());
+        let calculator = PermissionCalculator::new(
+            self.guild_id,
+            user_id,
+            everyone_role,
+            member_roles.as_slice(),
+        );
 
         Some(calculator.root())
     }
 
     /// Fetch roles of a member in the cache.
-    fn member_roles(
-        &self,
-        member_roles: &[Id<RoleMarker>],
-        guild_id: Id<GuildMarker>,
-    ) -> Option<MemberRoles> {
-        let everyone_id = guild_id.cast();
+    fn member_roles(&self, member_roles: &[Id<RoleMarker>]) -> Option<MemberRoles> {
+        let everyone_id = self.guild_id.cast();
 
         let everyone = self.cache.role(everyone_id)?;
         let roles = member_roles

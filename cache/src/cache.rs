@@ -69,8 +69,8 @@ impl InMemoryCache {
     }
 
     /// Get the [`CachePermissions`] for the current cache.
-    pub fn permissions(&self) -> CachePermissions<'_> {
-        CachePermissions::new(self)
+    pub fn permissions(&self, guild_id: Id<GuildMarker>) -> CachePermissions<'_> {
+        CachePermissions::new(self, guild_id)
     }
 
     /// Get a [`CachedGuild`] by id.
