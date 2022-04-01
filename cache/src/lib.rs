@@ -24,6 +24,7 @@ mod message;
 mod process;
 
 pub mod model;
+pub mod permission;
 
 pub use cache::InMemoryCache;
 pub use message::{MessageCache, MessageExpireTask};

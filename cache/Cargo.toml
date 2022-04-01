@@ -12,4 +12,5 @@ thiserror = "1"
 tokio = { version = "1", features = ["sync"] }
 tracing = "0.1"
 twilight-model = "0.10"
+twilight-util = { version = "0.10", features = ["permission-calculator"] }
 url = "2.2"

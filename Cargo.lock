@@ -786,6 +786,7 @@ dependencies = [
  "tokio",
  "tracing",
  "twilight-model",
+ "twilight-util",
  "url",
 ]
 
