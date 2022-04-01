@@ -27,6 +27,7 @@ use twilight_model::id::{
 
 use crate::{
     model::{CachedChannel, CachedGuild, CachedRole},
+    permission::CachePermissions,
     UpdateCache,
 };
 
@@ -65,6 +66,11 @@ impl InMemoryCache {
         T: UpdateCache,
     {
         item.update(self)
+    }
+
+    /// Get the [`CachePermissions`] for the current cache.
+    pub fn permissions(&self) -> CachePermissions<'_> {
+        CachePermissions::new(self)
     }
 
     /// Get a [`CachedGuild`] by id.
