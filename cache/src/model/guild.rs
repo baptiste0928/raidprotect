@@ -60,6 +60,9 @@ pub struct CurrentMember {
 /// This model is not cached within guilds to limit
 /// data to send when requesting a [`CachedGuild`].
 ///
+/// This type implement [`Ord`] and [`PartialOrd`] for comparaisons
+/// between two role based on their position.
+///
 /// [`Role`]: twilight_model::guild::Role
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CachedRole {
@@ -86,4 +89,16 @@ pub struct CachedRole {
     ///
     /// Managed roles include bot, integration or boost roles.
     pub managed: bool,
+}
+
+impl PartialOrd for CachedRole {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.position.partial_cmp(&other.position)
+    }
+}
+
+impl Ord for CachedRole {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.position.cmp(&other.position)
+    }
 }
