@@ -3,6 +3,7 @@
 //! This module allows to compute in-channel or guild permissions for a given
 //! member using [`twilight_util::permission_calculator`].
 
+use dashmap::mapref::one::Ref;
 use twilight_model::{
     guild::Permissions,
     id::{
@@ -12,18 +13,31 @@ use twilight_model::{
 };
 use twilight_util::permission_calculator::PermissionCalculator;
 
-use crate::InMemoryCache;
+use crate::{model::CachedRole, InMemoryCache};
 
 /// Calculate the permissions of a member with information from the cache.
 #[derive(Debug, Clone, Copy)]
-pub struct CachePermissions<'a> {
-    cache: &'a InMemoryCache,
+pub struct CachePermissions<'cache> {
+    cache: &'cache InMemoryCache,
 }
 
-impl<'a> CachePermissions<'a> {
+impl<'cache> CachePermissions<'cache> {
     /// Initialize [`CachePermissions`] from a cache reference.
-    pub fn new(cache: &'a InMemoryCache) -> Self {
+    pub fn new(cache: &'cache InMemoryCache) -> Self {
         Self { cache }
+    }
+
+    /// Checks if a user is the owner of a guild.
+    ///
+    /// If the guild is not found in the cache, [`None`] is returned.
+    pub fn is_owner(&self, user_id: Id<UserMarker>, guild_id: Id<GuildMarker>) -> Option<bool> {
+        let guild = self.cache.guild(guild_id)?;
+
+        Some(user_id == guild.owner_id)
+    }
+
+    pub fn highest_role(&self, _user_id: Id<UserMarker>, _roles: &[Id<RoleMarker>]) {
+        todo!()
     }
 
     /// Calculate the permissions of a user in a guild.
@@ -42,22 +56,47 @@ impl<'a> CachePermissions<'a> {
             return Some(Permissions::all());
         }
 
-        // Get member roles from cache
-        let everyone_role = self.cache.role(guild.id.cast())?.permissions;
-        let member_roles = member_roles
+        let cached_roles = self.member_roles(member_roles, guild_id)?;
+        let everyone_role = cached_roles.everyone.permissions;
+        let member_roles = cached_roles
+            .roles
             .iter()
-            .filter(|id| **id != guild.id.cast()) // Remove everyone role
-            .map(|id| {
-                let role = self.cache.role(*id)?;
+            .map(|role| (role.id, role.permissions))
+            .collect::<Vec<_>>();
 
-                Some((role.id, role.permissions))
-            })
-            .collect::<Option<Vec<_>>>()?;
-
-        // Calculate permissions
         let calculator =
             PermissionCalculator::new(guild_id, user_id, everyone_role, member_roles.as_slice());
 
         Some(calculator.root())
     }
+
+    /// Fetch roles of a member in the cache.
+    fn member_roles(
+        &self,
+        member_roles: &[Id<RoleMarker>],
+        guild_id: Id<GuildMarker>,
+    ) -> Option<MemberRoles> {
+        let everyone_id = guild_id.cast();
+
+        let everyone = self.cache.role(everyone_id)?;
+        let roles = member_roles
+            .iter()
+            .filter(|id| **id != everyone_id) // Remove everyone role
+            .map(|id| self.cache.role(*id))
+            .collect::<Option<Vec<_>>>()?;
+
+        Some(MemberRoles { everyone, roles })
+    }
+}
+
+/// Reference to a [`CachedRole`].
+type CachedRoleRef<'cache> = Ref<'cache, Id<RoleMarker>, CachedRole>;
+
+/// List of resolved roles of a member.
+struct MemberRoles<'cache> {
+    /// Everyone role
+    pub everyone: CachedRoleRef<'cache>,
+
+    /// List of roles of the user
+    pub roles: Vec<CachedRoleRef<'cache>>,
 }
