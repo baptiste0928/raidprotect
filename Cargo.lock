@@ -832,6 +832,7 @@ name = "raidprotect-model"
 version = "0.1.0"
 dependencies = [
  "raidprotect-cache",
+ "serde",
  "twilight-http",
  "twilight-model",
 ]
