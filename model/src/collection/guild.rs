@@ -20,6 +20,19 @@ pub struct Guild {
     #[serde_as(as = "IdAsI64")]
     #[serde(rename = "_id")]
     pub id: Id<GuildMarker>,
+    /// The guild configuration.
+    #[serde(default)]
+    pub config: Config,
+}
+
+impl Guild {
+    /// Initialize a new [`Guild`] with default configuration.
+    pub fn new(id: Id<GuildMarker>) -> Self {
+        Self {
+            id,
+            config: Config::default(),
+        }
+    }
 }
 
 /// A guild configuration.
@@ -40,9 +53,9 @@ pub struct Config {
     /// and to perform some sanction (mute and warn).
     pub moderator_roles: Vec<Id<RoleMarker>>,
     /// Whether sanction commands requires a reason or not.
+    ///
+    /// If set to `true`, moderators must specify a reason with each sanction.
     pub enforce_reason: bool,
-    /// Whether mute command allow infinite mute (without explicit duration set).
-    pub infinite_mute: bool,
     /// Whether the moderator who has performed a sanction is hidden for the sanctioned user.
     pub anonymize_moderator: bool,
 }
@@ -53,7 +66,6 @@ impl Default for Config {
             logs_chan: None,
             moderator_roles: Vec::new(),
             enforce_reason: false,
-            infinite_mute: false,
             anonymize_moderator: true,
         }
     }
