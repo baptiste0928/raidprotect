@@ -13,3 +13,6 @@ serde = { version = "1", features = ["derive"] }
 serde_with = "1"
 twilight-http = "0.10"
 twilight-model = "0.10"
+
+[dev-dependencies]
+serde_test = "1"

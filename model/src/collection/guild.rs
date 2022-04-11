@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
+use serde_with::{serde_as, skip_serializing_none};
 use twilight_model::id::{
     marker::{ChannelMarker, GuildMarker, RoleMarker},
     Id,
@@ -14,7 +14,7 @@ pub const GUILDS_COLLECTION: &str = "guilds";
 ///
 /// This struct correspond to documents stored in the `guilds` collection.
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct Guild {
     /// Discord guild id.
     #[serde_as(as = "IdAsI64")]
@@ -39,7 +39,8 @@ impl Guild {
 ///
 /// Stored in the `guilds` collection within a [`Guild`].
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 #[serde(default)]
 pub struct Config {
     /// The channel where RaidProtect send logs messages.
@@ -51,12 +52,16 @@ pub struct Config {
     pub logs_chan: Option<Id<ChannelMarker>>,
     /// The moderator roles, allowed to access to guild modlogs
     /// and to perform some sanction (mute and warn).
+    #[serde_as(as = "Vec<IdAsI64>")]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub moderator_roles: Vec<Id<RoleMarker>>,
     /// Whether sanction commands requires a reason or not.
     ///
     /// If set to `true`, moderators must specify a reason with each sanction.
     pub enforce_reason: bool,
     /// Whether the moderator who has performed a sanction is hidden for the sanctioned user.
+    ///
+    /// This is enabled by default.
     pub anonymize_moderator: bool,
 }
 

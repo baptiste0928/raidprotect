@@ -14,4 +14,4 @@
 mod guild;
 mod serde_helpers;
 
-pub use guild::{Guild, GUILDS_COLLECTION};
+pub use guild::{Config, Guild, GUILDS_COLLECTION};
