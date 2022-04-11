@@ -77,16 +77,16 @@ jobs:
       - name: Setup Rust toolchain
         uses: hecrj/setup-rust-action@v1
 
-      - name: Install cargo-audit
+      - name: Install cargo-deny
         uses: baptiste0928/cargo-install@v1
         with:
-          crate: cargo-audit
+          crate: cargo-deny
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v1
 
-      - name: Check security advisories
-        run: cargo audit
+      - name: Audit dependencies
+        run: cargo deny check
 
   rustfmt:
     name: Format
