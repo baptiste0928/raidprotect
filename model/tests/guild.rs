@@ -1,3 +1,4 @@
+use mongodb::bson;
 use raidprotect_model::collection::{Config, Guild};
 use serde_test::{assert_tokens, Token};
 use twilight_model::id::Id;
@@ -72,4 +73,30 @@ fn test_guild_full() {
             Token::StructEnd,
         ],
     );
+}
+
+#[test]
+fn test_guild_bson() {
+    let guild = Guild {
+        id: Id::new(1),
+        config: Config {
+            logs_chan: Some(Id::new(2)),
+            moderator_roles: vec![Id::new(3), Id::new(4)],
+            enforce_reason: true,
+            anonymize_moderator: false,
+        },
+    };
+
+    let expected = bson::doc! {
+        "_id": 1_i64,
+        "config": {
+            "logs_chan": 2_i64,
+            "moderator_roles": [3_i64, 4_i64],
+            "enforce_reason": true,
+            "anonymize_moderator": false,
+        }
+    };
+
+    assert_eq!(bson::to_document(&guild).unwrap(), expected);
+    assert_eq!(bson::from_document::<Guild>(expected).unwrap(), guild);
 }
