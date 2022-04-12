@@ -19,7 +19,11 @@ pub struct Config {
     pub token: String,
     /// ID of the guild in which commands should be created.
     ///
+    /// This is useful when developing to reflect changes to commands instantly.
     /// If not set, commands will be created globally.
+    ///
+    /// **Warning:** if set, all previously created global commands will be
+    /// removed to avoid duplicates. Do not enable this in production.
     pub command_guild: Option<u64>,
     /// MongoDB connection uri.
     ///
