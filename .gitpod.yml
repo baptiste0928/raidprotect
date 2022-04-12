@@ -2,6 +2,8 @@ image: gitpod/workspace-mongodb
 
 tasks:
   - before: rustup component add clippy
+    env:
+      RAIDPROTECT_MONGODB_URI: mongodb://localhost:27017
     init: cargo build
 
   - init: cargo doc
