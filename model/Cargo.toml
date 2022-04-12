@@ -9,7 +9,7 @@ publish = false
 [dependencies]
 raidprotect-cache = { path = "../cache" }
 
-mongodb = { version = "2.2.0-beta", features = ["tokio-runtime"]}
+mongodb = { version = "2.2.0-beta", features = ["tokio-runtime", "zstd-compression"]}
 serde = { version = "1", features = ["derive"] }
 serde_with = "1"
 twilight-http = "0.10"
