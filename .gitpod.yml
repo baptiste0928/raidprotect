@@ -1,9 +1,14 @@
+image: gitpod/workspace-mongodb
+
 tasks:
   - before: rustup component add clippy
     init: cargo build
 
   - init: cargo doc
     command: npx -qy http-server target/doc/ -p 8080
+
+  - init: mkdir -p /workspace/data
+    command: mongod --dbpath /workspace/data
 
 ports:
   - port: 8080
