@@ -64,6 +64,11 @@ pub async fn register_commands(
 
     let result = match command_guild {
         Some(id) => {
+            // Remove all previous global commands to avoid duplicates
+            if let Err(error) = client.set_global_commands(&[]).exec().await {
+                warn!(error = %error, "failed to remove global commands");
+            }
+
             client
                 .set_guild_commands(Id::new(id), &commands)
                 .exec()
