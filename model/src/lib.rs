@@ -4,6 +4,7 @@
 //! database connection wrappers.
 
 pub mod collection;
+pub mod mongodb;
 mod state;
 
 pub use state::ClusterState;
