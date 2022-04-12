@@ -24,9 +24,14 @@ async fn main() -> Result<()> {
 
     // Initialize shard cluster
     let shutdown = Shutdown::new();
-    let cluster = ShardCluster::new(config.token, config.command_guild)
-        .await
-        .context("Failed to start shard cluster")?;
+    let cluster = ShardCluster::new(
+        config.token,
+        config.command_guild,
+        &config.mongodb_uri,
+        config.mongodb_database,
+    )
+    .await
+    .context("Failed to start shard cluster")?;
 
     // Start the shard cluster
     let cluster_run = tokio::spawn(cluster.start(shutdown.subscriber()));

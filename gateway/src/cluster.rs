@@ -5,7 +5,10 @@ use std::sync::Arc;
 use futures::StreamExt;
 use raidprotect_cache::{InMemoryCache, MessageCache, MessageExpireTask};
 use raidprotect_handler::interaction::register_commands;
-use raidprotect_model::ClusterState;
+use raidprotect_model::{
+    mongodb::{MongoDbClient, MongoDbError},
+    ClusterState,
+};
 use raidprotect_util::shutdown::ShutdownSubscriber;
 use thiserror::Error;
 use tracing::{info, info_span, instrument, trace};
@@ -42,7 +45,12 @@ impl ShardCluster {
     ///
     /// This method also initialize an [`HttpClient`] and an [`InMemoryCache`],
     /// that can be later retrieved using corresponding methods.
-    pub async fn new(token: String, command_guild: Option<u64>) -> Result<Self, ClusterError> {
+    pub async fn new(
+        token: String,
+        command_guild: Option<u64>,
+        mongodb_uri: &str,
+        mongodb_database: String,
+    ) -> Result<Self, ClusterError> {
         // Initialize HTTP client and get current user.
         let http = Arc::new(HttpClient::new(token.clone()));
         let application = http
@@ -56,6 +64,8 @@ impl ShardCluster {
 
         let cache = InMemoryCache::new(application.id.cast());
         let (messages, messages_expire) = MessageCache::new();
+
+        let mongodb = MongoDbClient::connect(mongodb_uri, mongodb_database).await?;
 
         let intents = Intents::GUILDS
             | Intents::GUILD_MEMBERS
@@ -71,7 +81,7 @@ impl ShardCluster {
 
         info!("started cluster with {} shards", cluster.shards().len());
 
-        let state = ClusterState::new(cache, http, messages);
+        let state = ClusterState::new(cache, mongodb, http, messages);
 
         register_commands(&state, application.id, command_guild).await;
 
@@ -155,4 +165,7 @@ pub enum ClusterError {
     /// Failed to start cluster
     #[error("failed to start cluster: {0}")]
     Start(#[from] ClusterStartError),
+    /// Error while connecting to MongoDB database
+    #[error("failed to connect to MongoDB: {0}")]
+    MongoDb(#[from] MongoDbError),
 }

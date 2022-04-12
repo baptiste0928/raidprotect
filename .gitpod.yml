@@ -1,9 +1,16 @@
+image: gitpod/workspace-mongodb
+
 tasks:
   - before: rustup component add clippy
+    env:
+      RAIDPROTECT_MONGODB_URI: mongodb://localhost:27017
     init: cargo build
 
   - init: cargo doc
     command: npx -qy http-server target/doc/ -p 8080
+
+  - init: mkdir -p /workspace/data
+    command: mongod --dbpath /workspace/data
 
 ports:
   - port: 8080
