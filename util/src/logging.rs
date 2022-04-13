@@ -68,7 +68,7 @@ impl LogConfig {
 impl Default for LogConfig {
     fn default() -> Self {
         Self {
-            log_type: LogKind::None,
+            log_type: LogKind::Terminal,
             log_level: Level::INFO,
             log_folder: "log".into(),
         }

@@ -1,7 +1,8 @@
 //! Configuration model.
 //!
 //! Configuration is loaded at runtime from environment variables prefixed with
-//! `RAIDPROTECT_`. Variables defined in a `.env` file are loaded before.
+//! `RAIDPROTECT_`. If variables are defined in a `.env` file, they will take
+//! precedence over other variables.
 
 use raidprotect_util::logging::LogConfig;
 use serde::Deserialize;
@@ -27,9 +28,11 @@ pub struct Config {
     pub command_guild: Option<u64>,
     /// MongoDB connection uri.
     ///
-    /// The format of the connection string is described [here].
+    /// The format of the connection string is described [here]. Defaults to
+    /// `mongodb://localhost:27017` if missing.
     ///
     /// [here]: https://www.mongodb.com/docs/manual/reference/connection-string/#connection-string-formats
+    #[serde(default = "default_mongodb_uri")]
     pub mongodb_uri: String,
     /// MongoDB database name.
     ///
@@ -39,6 +42,11 @@ pub struct Config {
     /// Logging configuration.
     #[serde(flatten, default)]
     pub log: LogConfig,
+}
+
+/// Default MongoDB connection uri.
+fn default_mongodb_uri() -> String {
+    "mongodb://localhost:27017".to_string()
 }
 
 /// Default database name.
