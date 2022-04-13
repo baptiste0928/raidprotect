@@ -64,9 +64,9 @@ stable version of the compiler. It is designed to run on a Linux system, but
 should also work on Windows and MacOS (let us know if you have problems). It
 uses [MongoDB](https://www.mongodb.com/) as its database.
 
-- **Open in GitPod (recommanded)**: the easiest way to launch RaidProtect is to
+- **Open in GitPod (recommended)**: the easiest way to launch RaidProtect is to
 use [GitPod](https://www.gitpod.io/), a cloud-based IDE. This allow you to have
-a ready-to-use environnement with everything installed to start developing on
+a ready-to-use environment with everything installed to start developing on
 the bot. GitPod offers a generous free plan of 50 hours of usage per month. 
 
   [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/raidprotect/raidprotect)
@@ -89,17 +89,17 @@ use it. RaidProtect requires the `ADMINISTRATOR` permission ad the
 Generator in the Discord Developer Portal.
 
 ### Basic configuration
-RaidProtect load configuration from environement variables prefixed with `RAIDPROTECT_`.
+RaidProtect load configuration from environment variables prefixed with `RAIDPROTECT_`.
 
 - If you are using GitPod, you can set project-specific environment variables
   using command line or in your account settings
   ([instructions](https://www.gitpod.io/docs/environment-variables/#project-specific-environment-variables)). 
   This is the preferred way to persist variables between multiple workspace.
-- If you develop locally, you can write your environement variables in a `.env`
+- If you develop locally, you can write your environment variables in a `.env`
   file in the project root. These variables will be loaded when the bot launches.
 
 **The only required configuration is the bot token** with the `RAIDPROTECT_TOKEN`
-environement variable. This token can be obtained from the Discord Developer
+environment variable. This token can be obtained from the Discord Developer
 Portal. You may also set the `RAIDPROTECT_COMMAND_GUILD` with the id of the
 server you use for testing the bot. This will register slash commands as guild
 rather than global commands, so they will be updated instantly.
