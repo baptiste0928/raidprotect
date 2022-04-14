@@ -1,5 +1,3 @@
-<div id="top"></div>
-
 <div align="center">
   <img src="./.github/logo-heading.png" alt="RaidProtect" width="390" height="50">
   <br /><br />
@@ -36,7 +34,7 @@
 
 ## Overview ✨
 RaidProtect is an open-source Discord bot focused on moderation and security,
-built in [Rust](https://raidprotect.org) using the [twilight](https://twilight.rs)
+built in [Rust](https://raidprotect.org) using [twilight](https://twilight.rs)
 libraries. It offers many features, including:
 
 - **Real-time moderation** such as anti-spam to prevent malicious users from
@@ -49,6 +47,8 @@ libraries. It offers many features, including:
 RaidProtect is trusted by thousands of servers around the world. To add it to
 yours, follow the instructions on [our website](https://raidprotect.org).
 
+**[💡 Feature roadmap](https://github.com/orgs/raidprotect/projects/2)**
+
 ### Community and support
 Our community lives in our Discord server, we only use this repository to plan
 the bot development. For any question about the bot, you can join our server and
@@ -58,7 +58,7 @@ the bot works.
 **[➡️ Read the user documentation](https://docs.raidprotect.org)**  
 **[➡️ Join our Discord server](https://discord.gg/raidprotect)**
 
-For more details, read the [`SUPPORT.md`](.github/support.md) file.
+For more details, read the [`SUPPORT.md`](SUPPORT.md) file.
 
 ## Installation
 RaidProtect is written in [Rust](https://www.rust-lang.org/) and uses the latest
@@ -162,4 +162,4 @@ The use of the RaidProtect name and logo is allowed only for referring to this
 project. This must not imply any official involvement without prior permission.
 If in doubt, ask us before using the RaidProtect name and/or logo.
 
-[Return to the top ⮝](#top)
+[Return to the top ⮝](#readme)
