@@ -1,26 +1,31 @@
 image: gitpod/workspace-mongodb
 
 tasks:
-  - before: rustup component add clippy
-    env:
-      RAIDPROTECT_MONGODB_URI: mongodb://localhost:27017
-    init: cargo build
+  - init: mkdir -p /workspace/data
+    command: mongod --dbpath /workspace/data
 
   - init: cargo doc
     command: npx -qy http-server target/doc/ -p 8080
 
-  - init: mkdir -p /workspace/data
-    command: mongod --dbpath /workspace/data
+  - before: rustup component add clippy
+    init: cargo build
 
 ports:
   - port: 8080
     visibility: private
     onOpen: notify
 
+github:
+  prebuilds:
+    master: true
+    pullRequests: true
+    addCheck: false
+
 vscode:
   extensions:
-    - editorconfig.editorconfig
     - matklad.rust-analyzer
-    - bungcip.better-toml
+    - editorconfig.editorconfig
+    - tamasfe.even-better-toml
     - serayuzgur.crates
     - eamodio.gitlens
+    - Lokalise.i18n-ally
