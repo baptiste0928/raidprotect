@@ -12,6 +12,7 @@
  ![GitHub top language](https://img.shields.io/github/languages/top/raidprotect/raidprotect)
  ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/raidprotect/raidprotect)
  [![Chat on Discord](https://img.shields.io/badge/discord-.gg%2Fraidprotect-5865F2?style=flat&logo=discord&logoColor=white)](https://discord.gg/raidprotect)
+ [![Powered by twilight](https://img.shields.io/badge/powered%20by-twilight-6f42c1?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAMAAAAolt3jAAABBVBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIBAoJNDoIMjgIBAoAAQEAAAALGyIFGSEHFRwXWmQXWWMjUl0TUFkST1gQSVEQRk8NQEcNPUUHHicHGiIEFBsHDxQDEBcDDxUCDhQBBgkBBQgBBQcABAcmc4EmbXsVcH42X28nZnEaaHUzXGpOUVNMUVMZZG8cXGsYXWciU2EXWGMdVWIfVGAWWGIsTloYVl8dUVo8REgsSFMzRFEkSlYpRlMcS1YeR1MkQEwrPUYzOj4bQ0wVRE4xOT0wNzwWNkEON0cULjoNLTkMLDgNKDILKDMLJzIKJzIJJzIJIysIHygJHSYAAADr4357AAAAJ3RSTlMAODlveZ6fwurr+vv7+/v7/P39/v7+/v7+/v7+/v7+/v7+/v7+/v4sDJkSAAAAp0lEQVR42i3P1bqCQAAE4IHdPcAJPXZ3N3Z3o5i47/8oKvLfzTc3M3gTCaVEhIUpPJbgyhdM0rczbNzD0T/J7GyP1c4wqtt/GwMEJXI5D2vX2+niUASQuK4vD3v95ZgkoFlNG2nr+njaW6QpaGbS3LQHxVmnMk9REO7JlQv9fKPU6nICUQ6plqAsAszu/SSfnZkzfgJuVXX5fyWYmMxfZAaL8L4gAMATBiQXrvW4mIUAAAAASUVORK5CYII=)](https://twilight.rs/)
  [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](.github/CODE_OF_CONDUCT.md)  
 </div>
 
@@ -34,8 +35,9 @@
 
 
 ## Overview ✨
-RaidProtect is an open-source Discord bot focused on moderation and security. It
-offers many features, including:
+RaidProtect is an open-source Discord bot focused on moderation and security,
+built in [Rust](https://raidprotect.org) using the [twilight](https://twilight.rs)
+libraries. It offers many features, including:
 
 - **Real-time moderation** such as anti-spam to prevent malicious users from
   harming your community by punishing them immediately without human intervention.
@@ -118,7 +120,7 @@ Congratulations, you now have a working local instance of RaidProtect. 🎉
 ## Contributing
 RaidProtect is an open-source project and we are happy to welcome new contributors.
 You can help in many ways, from improving functionality to fixing bugs. Feel
-free to join [our Discord server](https://discord.com/raidprotect) to chat with
+free to join [our Discord server](https://discord.gg/raidprotect) to chat with
 us, we will be happy to help you get started on the project. 
 
 A good place to start is to look at the issues that are not yet assigned and ask
