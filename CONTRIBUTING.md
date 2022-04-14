@@ -79,5 +79,8 @@ Specifically, check the following:
 - Check the spelling of comments and variable names with
   [`codespell`](https://github.com/codespell-project/codespell).
 
+Pull request titles should follow the
+[conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format.
+
 Once your PR has been opened, please remain available if we need to ask for
 changes. Thank you for your contribution! 🎉
