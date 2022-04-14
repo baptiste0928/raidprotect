@@ -4,7 +4,7 @@ tasks:
   - init: mkdir -p /workspace/data
     command: mongod --dbpath /workspace/data
 
-  - init: cargo doc
+  - init: sleep 10 && cargo doc
     command: npx -qy http-server target/doc/ -p 8080
 
   - before: rustup component add clippy
