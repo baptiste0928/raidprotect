@@ -22,7 +22,7 @@ use super::{
 /// on both dms and guilds, or only on guild.
 pub async fn handle_command(command: ApplicationCommand, state: Arc<ClusterState>) {
     let responder = CommandResponder::from_command(&command);
-    let context = match CommandContext::from_command(command) {
+    let context = match CommandContext::from_command(command, &state).await {
         Ok(context) => context,
         Err(error) => {
             warn!(error = %error, "failed to create command context");
