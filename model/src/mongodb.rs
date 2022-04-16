@@ -4,6 +4,8 @@
 //! MongoDB connection pool and exposes high-level methods to access data
 //! stored in the database.
 
+use std::time::Duration;
+
 pub use mongodb::error::Error as MongoDbError;
 
 use mongodb::{
@@ -35,6 +37,8 @@ impl MongoDbClient {
 
         // Set default configuration options
         config.app_name = Some(config.app_name.unwrap_or_else(|| "raidprotect".to_string()));
+        config.connect_timeout = Some(Duration::from_secs(2));
+        config.server_selection_timeout = Some(Duration::from_secs(2));
         config.compressors = Some(vec![options::Compressor::Zstd { level: None }]);
         config.default_database = Some(database.clone());
 
@@ -50,6 +54,13 @@ impl MongoDbClient {
     /// Returns a new [`Database`] for the connected database.
     pub fn db(&self) -> Database {
         self.client.database(&self.database)
+    }
+
+    /// Run a `ping` command to check if the database is connected.
+    pub async fn ping(&self) -> Result<(), MongoDbError> {
+        self.db().run_command(doc! { "ping": 1_i32 }, None).await?;
+
+        Ok(())
     }
 
     /// Get the [`Guild`] for a given guild_id, if it exists.
