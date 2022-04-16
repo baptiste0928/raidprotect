@@ -1,5 +1,10 @@
 {
+    "search.exclude": {
+        "**/target": true
+    },
+
     "rust-analyzer.cargo.loadOutDirsFromCheck": true,
+
     "i18n-ally.localesPaths": [
         "translations"
     ],

@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "matklad.rust-analyzer",
+        "editorconfig.editorconfig",
+        "tamasfe.even-better-toml",
+        "Lokalise.i18n-ally",
+        "vadimcn.vscode-lldb",
+        "mongodb.mongodb-vscode",
+    ]
+}
