@@ -1,4 +1,6 @@
 //! Profile command.
+//!
+//! This command shows basic information about a given user.
 
 use std::time::Duration;
 

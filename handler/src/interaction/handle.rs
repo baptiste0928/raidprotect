@@ -11,7 +11,7 @@ use twilight_model::{
 use crate::embed;
 
 use super::{
-    command::{help::HelpCommand, profile::ProfileCommand},
+    command::{help::HelpCommand, kick::KickCommand, profile::ProfileCommand},
     context::CommandContext,
     response::{CommandResponder, IntoResponse},
 };
@@ -36,6 +36,7 @@ pub async fn handle_command(command: ApplicationCommand, state: Arc<ClusterState
 
     let response = match &*context.data.name {
         "help" => HelpCommand::handle(context).await.into_response(),
+        "kick" => KickCommand::handle(context).await.into_response(),
         "profile" => ProfileCommand::handle(context).await.into_response(),
         name => {
             warn!(name = name, "unknown command received");
@@ -57,6 +58,7 @@ pub async fn register_commands(
 ) {
     let commands: Vec<Command> = vec![
         HelpCommand::create_command().into(),
+        KickCommand::create_command().into(),
         ProfileCommand::create_command().into(),
     ];
 
