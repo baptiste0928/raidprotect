@@ -66,7 +66,7 @@ impl ShardCluster {
         let (messages, messages_expire) = MessageCache::new();
 
         let mongodb = MongoDbClient::connect(mongodb_uri, mongodb_database).await?;
-        mongodb.ping().await?;  // Ensure database is reachable
+        mongodb.ping().await?; // Ensure database is reachable
 
         let intents = Intents::GUILDS
             | Intents::GUILD_MEMBERS
