@@ -7,3 +7,4 @@
 
 pub mod logging;
 pub mod shutdown;
+pub mod text;
