@@ -65,8 +65,14 @@ mod tests {
 
     #[test]
     fn test_truncate() {
-        assert_eq!("hello world".to_string().truncate(9), "hello ...".to_string());
-        assert_eq!("hello world".to_string().truncate(15), "hello world".to_string());
+        assert_eq!(
+            "hello world".to_string().truncate(9),
+            "hello ...".to_string()
+        );
+        assert_eq!(
+            "hello world".to_string().truncate(15),
+            "hello world".to_string()
+        );
         assert_eq!("hello world".to_string().truncate(3), "...".to_string());
     }
 }
