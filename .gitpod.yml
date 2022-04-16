@@ -29,3 +29,5 @@ vscode:
     - serayuzgur.crates
     - eamodio.gitlens
     - Lokalise.i18n-ally
+    - vadimcn.vscode-lldb
+    - mongodb.mongodb-vscode
