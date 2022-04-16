@@ -66,6 +66,7 @@ impl ShardCluster {
         let (messages, messages_expire) = MessageCache::new();
 
         let mongodb = MongoDbClient::connect(mongodb_uri, mongodb_database).await?;
+        mongodb.ping().await?;  // Ensure database is reachable
 
         let intents = Intents::GUILDS
             | Intents::GUILD_MEMBERS
@@ -166,6 +167,6 @@ pub enum ClusterError {
     #[error("failed to start cluster: {0}")]
     Start(#[from] ClusterStartError),
     /// Error while connecting to MongoDB database
-    #[error("failed to connect to MongoDB: {0}")]
+    #[error("failed to connect to MongoDB")]
     MongoDb(#[from] MongoDbError),
 }
