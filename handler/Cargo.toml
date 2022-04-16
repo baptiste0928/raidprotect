@@ -8,8 +8,9 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-raidprotect-model = { path = "../model" }
 raidprotect-analyzer = { path = "../analyzer" }
+raidprotect-model = { path = "../model" }
+raidprotect-util = { path = "../util" }
 
 rosetta-i18n = "0.1"
 thiserror = "1"
