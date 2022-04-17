@@ -76,6 +76,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-ttl"
+version = "0.1.0"
+source = "git+https://github.com/baptiste0928/async-ttl#312c1553b5f82770f409dd9e1f85701a2d5ba0a4"
+dependencies = [
+ "tokio",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1081,6 +1089,7 @@ dependencies = [
 name = "raidprotect-cache"
 version = "0.1.0"
 dependencies = [
+ "async-ttl",
  "dashmap",
  "thiserror",
  "tokio",
