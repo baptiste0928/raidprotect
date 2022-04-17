@@ -5,6 +5,8 @@
 //! minutes.
 //!
 //! The cache uses the [`async_ttl`] crate.
+//!
+//! [`InMemoryCache`]: super::InMemoryCache
 
 use std::{
     collections::{HashMap, VecDeque},
