@@ -34,7 +34,7 @@
 
 ## Overview ✨
 RaidProtect is an open-source Discord bot focused on moderation and security,
-built in [Rust](https://raidprotect.org) using [twilight](https://twilight.rs)
+built in [Rust](https://rust-lang.org) using [twilight](https://twilight.rs)
 libraries. It offers many features, including:
 
 - **Real-time moderation** such as anti-spam to prevent malicious users from
