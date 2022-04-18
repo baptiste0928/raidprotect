@@ -20,7 +20,7 @@ pub struct ClusterState {
     /// Http client
     http: Arc<HttpClient>,
     /// Message cache client
-    messages: Arc<MessageCache>,
+    messages: MessageCache,
 }
 
 impl ClusterState {
@@ -29,7 +29,7 @@ impl ClusterState {
         cache: InMemoryCache,
         mongodb: MongoDbClient,
         http: Arc<HttpClient>,
-        messages: Arc<MessageCache>,
+        messages: MessageCache,
     ) -> Self {
         Self {
             cache,
@@ -56,6 +56,6 @@ impl ClusterState {
 
     /// Get the cluster [`MessageCache`].
     pub fn messages(&self) -> &MessageCache {
-        self.messages.as_ref()
+        &self.messages
     }
 }
