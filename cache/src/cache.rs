@@ -68,9 +68,16 @@ impl InMemoryCache {
         item.update(self)
     }
 
-    /// Get the [`CachePermissions`] for the current cache.
-    pub fn permissions(&self, guild_id: Id<GuildMarker>) -> CachePermissions<'_> {
-        CachePermissions::new(self, guild_id)
+    /// Get a [`CachePermissions`] for a given guild member.
+    ///
+    /// If the guild is not found in the cache, [`None`] is returned.
+    pub fn permissions(
+        &self,
+        guild_id: Id<GuildMarker>,
+        user_id: Id<UserMarker>,
+        member_roles: &[Id<RoleMarker>],
+    ) -> Option<CachePermissions<'_>> {
+        CachePermissions::new(self, guild_id, user_id, member_roles)
     }
 
     /// Get a [`CachedGuild`] by id.
