@@ -36,7 +36,7 @@ pub async fn handle_command(command: ApplicationCommand, state: Arc<ClusterState
 
     let response = match &*context.data.name {
         "help" => HelpCommand::handle(context).await.into_response(),
-        "kick" => KickCommand::handle(context).await.into_response(),
+        "kick" => KickCommand::handle(context, &state).await.into_response(),
         "profile" => ProfileCommand::handle(context).await.into_response(),
         name => {
             warn!(name = name, "unknown command received");

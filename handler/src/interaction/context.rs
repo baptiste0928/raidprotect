@@ -18,7 +18,7 @@ use twilight_model::{
 use super::response::{InteractionError, InteractionErrorKind};
 
 /// Context of an [`ApplicationCommand`].
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 
 pub struct CommandContext {
     /// ID of the command.
@@ -31,12 +31,10 @@ pub struct CommandContext {
     pub data: CommandData,
     /// The channel the command was triggered from.
     pub channel: Id<ChannelMarker>,
-    /// If command occurred in a guild, the guild configuration from database.
-    pub guild: Option<collection::Guild>,
+    /// If the command was triggered in a guild, the guild context.
+    pub guild_context: Option<GuildContext>,
     /// User that triggered the command.
     pub user: User,
-    /// If command occurred in a guild, the member that triggered the command.
-    pub member: Option<PartialMember>,
     /// The user locale.
     pub locale: String,
 }
@@ -73,9 +71,8 @@ impl CommandContext {
             token: command.token,
             data: command.data,
             channel: command.channel_id,
-            guild: Some(guild),
+            guild_context: Some(GuildContext { guild, member }),
             user,
-            member: Some(member),
             locale: command.locale,
         })
     }
@@ -90,9 +87,8 @@ impl CommandContext {
             token: command.token,
             data: command.data,
             channel: command.channel_id,
-            guild: None,
+            guild_context: None,
             user,
-            member: None,
             locale: command.locale,
         })
     }
@@ -101,6 +97,15 @@ impl CommandContext {
     pub fn interaction<'state>(&self, state: &'state ClusterState) -> InteractionClient<'state> {
         state.http().interaction(self.application_id)
     }
+}
+
+/// Additional context for commands triggered in a guild.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GuildContext {
+    /// The guild configuration from database.
+    pub guild: collection::Guild,
+    /// The member that triggered the command.
+    pub member: PartialMember,
 }
 
 /// Error occurred when initializing a [`CommandContext`].

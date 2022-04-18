@@ -17,6 +17,17 @@ pub fn not_member(user: String) -> CommandResponse {
     CommandResponse::EphemeralEmbed(embed)
 }
 
+/// Author is missing the `KICK_MEMBERS` permission
+pub fn missing_permission() -> CommandResponse {
+    let embed = EmbedBuilder::new()
+        .color(COLOR_RED)
+        .title(Lang::Fr.kick_missing_permission_title())
+        .description(Lang::Fr.kick_missing_permission_description())
+        .build();
+
+    CommandResponse::EphemeralEmbed(embed)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -24,5 +35,10 @@ mod tests {
     #[test]
     fn test_not_member() {
         not_member("test".to_string());
+    }
+
+    #[test]
+    fn test_missing_permission() {
+        missing_permission();
     }
 }

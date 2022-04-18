@@ -8,12 +8,14 @@
 //! sent in the guild's logs channel. The kicked user receives a pm with the
 //! reason of the kick.
 
+use raidprotect_model::ClusterState;
 use thiserror::Error;
 use tracing::instrument;
 use twilight_interactions::{
     command::{CommandModel, CreateCommand, ResolvedUser},
     error::ParseError,
 };
+use twilight_model::guild::Permissions;
 
 use crate::{
     embed,
@@ -38,12 +40,26 @@ pub struct KickCommand {
 
 impl KickCommand {
     #[instrument]
-    pub async fn handle(context: CommandContext) -> Result<CommandResponse, KickCommandError> {
+    pub async fn handle(
+        context: CommandContext,
+        state: &ClusterState,
+    ) -> Result<CommandResponse, KickCommandError> {
         let parsed = KickCommand::from_interaction(context.data.into())?;
+        let guild_context = &context.guild_context.ok_or(KickCommandError::GuildOnly)?;
 
         let _member = parsed.user.member.ok_or(KickCommandError::MissingMember {
             user: parsed.user.resolved.name,
         })?;
+
+        // Check member and bot permissions
+        let permissions = state.cache().permissions(guild_context.guild.id);
+        let author_permissions = permissions
+            .guild(context.user.id, &guild_context.member.roles)
+            .ok_or(KickCommandError::PermissionNotFound)?;
+
+        if !author_permissions.contains(Permissions::KICK_MEMBERS) {
+            return Err(KickCommandError::MissingKickPermission);
+        }
 
         todo!()
     }
@@ -52,10 +68,16 @@ impl KickCommand {
 /// Error when executing [`KickCommand`]
 #[derive(Debug, Error)]
 pub enum KickCommandError {
-    #[error("failed to parse command: {0}")]
-    Parse(#[from] ParseError),
+    #[error("command must be run in a guild")]
+    GuildOnly,
     #[error("user is not a guild member")]
     MissingMember { user: String },
+    #[error("user has not the kick permission")]
+    MissingKickPermission,
+    #[error("failed to parse command: {0}")]
+    Parse(#[from] ParseError),
+    #[error("unable to get permissions from cache")]
+    PermissionNotFound,
 }
 
 impl InteractionError for KickCommandError {
@@ -63,8 +85,11 @@ impl InteractionError for KickCommandError {
 
     fn into_error(self) -> InteractionErrorKind {
         match self {
-            KickCommandError::Parse(error) => InteractionErrorKind::internal(error),
+            KickCommandError::GuildOnly => embed::error::guild_only().into(),
             KickCommandError::MissingMember { user } => embed::kick::not_member(user).into(),
+            KickCommandError::MissingKickPermission => embed::kick::missing_permission().into(),
+            KickCommandError::Parse(error) => InteractionErrorKind::internal(error),
+            KickCommandError::PermissionNotFound => InteractionErrorKind::internal(self),
         }
     }
 }
