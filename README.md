@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./.github/logo-heading.png" alt="RaidProtect" width="390" height="50">
+  <img src="https://user-images.githubusercontent.com/22115890/163787243-92a7bea2-2dee-44a9-aa31-67464f9f2493.png" alt="RaidProtect" width="390" height="50">
   <br /><br />
   
   **Moderate your Discord server easily.**  
@@ -11,7 +11,7 @@
  ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/raidprotect/raidprotect)
  [![Chat on Discord](https://img.shields.io/badge/discord-.gg%2Fraidprotect-5865F2?style=flat&logo=discord&logoColor=white)](https://discord.gg/raidprotect)
  [![Powered by twilight](https://img.shields.io/badge/powered%20by-twilight-6f42c1?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAMAAAAolt3jAAABBVBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIBAoJNDoIMjgIBAoAAQEAAAALGyIFGSEHFRwXWmQXWWMjUl0TUFkST1gQSVEQRk8NQEcNPUUHHicHGiIEFBsHDxQDEBcDDxUCDhQBBgkBBQgBBQcABAcmc4EmbXsVcH42X28nZnEaaHUzXGpOUVNMUVMZZG8cXGsYXWciU2EXWGMdVWIfVGAWWGIsTloYVl8dUVo8REgsSFMzRFEkSlYpRlMcS1YeR1MkQEwrPUYzOj4bQ0wVRE4xOT0wNzwWNkEON0cULjoNLTkMLDgNKDILKDMLJzIKJzIJJzIJIysIHygJHSYAAADr4357AAAAJ3RSTlMAODlveZ6fwurr+vv7+/v7/P39/v7+/v7+/v7+/v7+/v7+/v7+/v4sDJkSAAAAp0lEQVR42i3P1bqCQAAE4IHdPcAJPXZ3N3Z3o5i47/8oKvLfzTc3M3gTCaVEhIUpPJbgyhdM0rczbNzD0T/J7GyP1c4wqtt/GwMEJXI5D2vX2+niUASQuK4vD3v95ZgkoFlNG2nr+njaW6QpaGbS3LQHxVmnMk9REO7JlQv9fKPU6nICUQ6plqAsAszu/SSfnZkzfgJuVXX5fyWYmMxfZAaL8L4gAMATBiQXrvW4mIUAAAAASUVORK5CYII=)](https://twilight.rs/)
- [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](.github/CODE_OF_CONDUCT.md)  
+ [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](https://github.com/raidprotect/.github/blob/main/CODE_OF_CONDUCT.md)  
 </div>
 
 > ⚠ **Alpha version:** This version of RaidProtect is a complete rewrite and is
@@ -63,11 +63,11 @@ For more details, read the [`SUPPORT.md`](SUPPORT.md) file.
 ## Installation
 RaidProtect is written in [Rust](https://www.rust-lang.org/) and uses the latest
 stable version of the compiler. It is designed to run on a Linux system, but
-should also work on Windows and MacOS (let us know if you have problems). It
+should also work on Windows and macOS (let us know if you have problems). It
 uses [MongoDB](https://www.mongodb.com/) as its database.
 
 - **Open in GitPod (recommended)**: the easiest way to launch RaidProtect is to
-use [GitPod](https://www.gitpod.io/), a cloud-based IDE. This allow you to have
+use [GitPod](https://www.gitpod.io/), a cloud-based IDE. This allows you to have
 a ready-to-use environment with everything installed to start developing on
 the bot. GitPod offers a generous free plan of 50 hours of usage per month. 
 
