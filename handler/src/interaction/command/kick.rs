@@ -52,12 +52,19 @@ impl KickCommand {
         })?;
 
         // Check member and bot permissions
-        let permissions = state.cache().permissions(guild_context.guild.id);
-        let author_permissions = permissions
-            .guild(context.user.id, &guild_context.member.roles)
+        let author_permissions = state
+            .cache()
+            .permissions(
+                guild_context.guild.id,
+                context.user.id,
+                &guild_context.member.roles,
+            )
             .ok_or(KickCommandError::PermissionNotFound)?;
 
-        if !author_permissions.contains(Permissions::KICK_MEMBERS) {
+        if !author_permissions
+            .guild()
+            .contains(Permissions::KICK_MEMBERS)
+        {
             return Err(KickCommandError::MissingKickPermission);
         }
 
