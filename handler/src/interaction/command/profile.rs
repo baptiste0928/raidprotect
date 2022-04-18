@@ -8,9 +8,14 @@ use twilight_interactions::{
     command::{CommandModel, CreateCommand, ResolvedUser},
     error::ParseError,
 };
+use twilight_model::{
+    application::component::{button::ButtonStyle, ActionRow, Button, Component},
+    channel::{message::MessageFlags, ReactionType},
+};
 use twilight_util::{
-    builder::embed::{
-        image_source::ImageSourceUrlError, EmbedBuilder, EmbedFieldBuilder, ImageSource,
+    builder::{
+        embed::{image_source::ImageSourceUrlError, EmbedBuilder, EmbedFieldBuilder, ImageSource},
+        InteractionResponseDataBuilder,
     },
     snowflake::Snowflake,
 };
@@ -41,14 +46,11 @@ impl ProfileCommand {
         let parsed = ProfileCommand::from_interaction(context.data.into())?;
         let user = parsed.user.resolved;
 
+        let avatar = avatar_url(&user, ImageFormat::Jpeg, ImageSize::Size1024);
         let mut embed = EmbedBuilder::new()
             .color(COLOR_TRANSPARENT)
             .title(Lang::Fr.profile_title(user.discriminator(), &user.name))
-            .thumbnail(ImageSource::url(avatar_url(
-                &user,
-                ImageFormat::Jpeg,
-                ImageSize::Size1024,
-            ))?);
+            .thumbnail(ImageSource::url(&avatar)?);
 
         // User profile creation time.
         let created_at = Duration::from_millis(user.id.timestamp() as u64).as_secs();
@@ -72,7 +74,36 @@ impl ProfileCommand {
             ));
         }
 
-        Ok(CommandResponse::Embed(embed.validate()?.build()))
+        let components = Component::ActionRow(ActionRow {
+            components: vec![
+                Component::Button(Button {
+                    custom_id: Some("demo".to_string()),
+                    disabled: false,
+                    emoji: Some(ReactionType::Unicode {
+                        name: "📩".to_string(),
+                    }),
+                    label: Some("Afficher dans le salon".into()),
+                    style: ButtonStyle::Secondary,
+                    url: None,
+                }),
+                Component::Button(Button {
+                    custom_id: None,
+                    disabled: false,
+                    emoji: None,
+                    label: Some("Photo de profil".into()),
+                    style: ButtonStyle::Link,
+                    url: Some(avatar),
+                }),
+            ],
+        });
+
+        let response = InteractionResponseDataBuilder::new()
+            .embeds([embed.validate()?.build()])
+            .components([components])
+            .flags(MessageFlags::EPHEMERAL)
+            .build();
+
+        Ok(CommandResponse::Custom(response))
     }
 }
 
