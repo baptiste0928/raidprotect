@@ -9,7 +9,10 @@ use twilight_interactions::{
     error::ParseError,
 };
 use twilight_model::{
-    application::component::{button::ButtonStyle, ActionRow, Button, Component},
+    application::{
+        component::{button::ButtonStyle, ActionRow, Button, Component},
+        interaction::application_command::CommandData,
+    },
     channel::{message::MessageFlags, ReactionType},
 };
 use twilight_util::{
@@ -24,7 +27,7 @@ use twilight_validate::embed::EmbedValidationError;
 use crate::{
     embed::COLOR_TRANSPARENT,
     interaction::{
-        context::CommandContext,
+        context::InteractionContext,
         response::{CommandResponse, InteractionError, InteractionErrorKind},
     },
     translations::Lang,
@@ -42,7 +45,9 @@ pub struct ProfileCommand {
 impl ProfileCommand {
     /// Handle interaction for this command.
     #[instrument]
-    pub async fn handle(context: CommandContext) -> Result<CommandResponse, ProfileCommandError> {
+    pub async fn handle(
+        context: InteractionContext<CommandData>,
+    ) -> Result<CommandResponse, ProfileCommandError> {
         let parsed = ProfileCommand::from_interaction(context.data.into())?;
         let user = parsed.user.resolved;
 
@@ -80,10 +85,10 @@ impl ProfileCommand {
                     custom_id: Some("demo".to_string()),
                     disabled: false,
                     emoji: Some(ReactionType::Unicode {
-                        name: "📩".to_string(),
+                        name: "💬".to_string(),
                     }),
-                    label: Some("Afficher dans le salon".into()),
-                    style: ButtonStyle::Secondary,
+                    label: Some("Envoyer dans le salon".into()),
+                    style: ButtonStyle::Primary,
                     url: None,
                 }),
                 Component::Button(Button {

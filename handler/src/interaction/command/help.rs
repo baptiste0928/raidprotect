@@ -6,11 +6,12 @@ use twilight_interactions::{
     command::{CommandModel, CommandOption, CreateCommand, CreateOption},
     error::ParseError,
 };
+use twilight_model::application::interaction::application_command::CommandData;
 use twilight_util::builder::embed::EmbedBuilder;
 use twilight_validate::embed::EmbedValidationError;
 
 use crate::interaction::{
-    context::CommandContext,
+    context::InteractionContext,
     response::{CommandResponse, InteractionError, InteractionErrorKind},
 };
 
@@ -32,7 +33,9 @@ pub enum Command {
 impl HelpCommand {
     /// Handle interaction for this command.
     #[instrument]
-    pub async fn handle(context: CommandContext) -> Result<CommandResponse, HelpCommandError> {
+    pub async fn handle(
+        context: InteractionContext<CommandData>,
+    ) -> Result<CommandResponse, HelpCommandError> {
         let _parsed = HelpCommand::from_interaction(context.data.into())?;
 
         let embed = EmbedBuilder::new().description("Hello world!").build();

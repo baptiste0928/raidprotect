@@ -4,7 +4,10 @@ use raidprotect_model::ClusterState;
 use tracing::{error, warn};
 use twilight_interactions::command::CreateCommand;
 use twilight_model::{
-    application::{command::Command, interaction::ApplicationCommand},
+    application::{
+        command::Command,
+        interaction::{ApplicationCommand, MessageComponentInteraction},
+    },
     id::{marker::ApplicationMarker, Id},
 };
 
@@ -12,8 +15,8 @@ use crate::embed;
 
 use super::{
     command::{help::HelpCommand, profile::ProfileCommand},
-    context::CommandContext,
-    response::{CommandResponder, IntoResponse},
+    context::InteractionContext,
+    response::{InteractionResponder, IntoResponse},
 };
 
 /// Handle incoming [`ApplicationCommand`]
@@ -21,8 +24,8 @@ use super::{
 /// This method will handle incoming commands depending on whereas they can run
 /// on both dms and guilds, or only on guild.
 pub async fn handle_command(command: ApplicationCommand, state: Arc<ClusterState>) {
-    let responder = CommandResponder::from_command(&command);
-    let context = match CommandContext::from_command(command, &state).await {
+    let responder = InteractionResponder::from_command(&command);
+    let context = match InteractionContext::from_command(command, &state).await {
         Ok(context) => context,
         Err(error) => {
             warn!(error = %error, "failed to create command context");
@@ -80,4 +83,22 @@ pub async fn register_commands(
     if let Err(error) = result {
         error!(error = %error, "failed to register commands");
     }
+}
+
+/// Handle incoming [`MessageComponentInteraction`].
+pub async fn handle_component(component: MessageComponentInteraction, state: Arc<ClusterState>) {
+    let responder = InteractionResponder::from_component(&component);
+    let _context = match InteractionContext::from_component(component, &state).await {
+        Ok(context) => context,
+        Err(error) => {
+            warn!(error = %error, "failed to create component context");
+            responder
+                .respond(&state, embed::error::internal_error().into_response())
+                .await;
+
+            return;
+        }
+    };
+
+    todo!()
 }

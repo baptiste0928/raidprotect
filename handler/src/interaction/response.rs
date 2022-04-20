@@ -8,7 +8,7 @@ use std::error::Error;
 use raidprotect_model::ClusterState;
 use tracing::error;
 use twilight_model::{
-    application::interaction::ApplicationCommand,
+    application::interaction::{ApplicationCommand, MessageComponentInteraction},
     channel::{embed::Embed, message::MessageFlags},
     http::interaction::{InteractionResponse, InteractionResponseData, InteractionResponseType},
     id::{
@@ -22,8 +22,8 @@ use crate::embed;
 
 /// Credentials used to respond to an interaction.
 #[derive(Debug)]
-pub struct CommandResponder {
-    /// ID of the command.
+pub struct InteractionResponder {
+    /// ID of the interaction.
     pub id: Id<InteractionMarker>,
     /// ID of the associated application.
     pub application_id: Id<ApplicationMarker>,
@@ -31,13 +31,22 @@ pub struct CommandResponder {
     pub token: String,
 }
 
-impl CommandResponder {
-    /// Initialize a new [`CommandResponder`] from an incoming command data.
+impl InteractionResponder {
+    /// Initialize a new [`InteractionResponder`] from an incoming command data.
     pub fn from_command(command: &ApplicationCommand) -> Self {
         Self {
             id: command.id,
             application_id: command.application_id,
             token: command.token.clone(),
+        }
+    }
+
+    /// Initialize a new [`InteractionResponder`] from an incoming component data.
+    pub fn from_component(component: &MessageComponentInteraction) -> Self {
+        Self {
+            id: component.id,
+            application_id: component.application_id,
+            token: component.token.clone(),
         }
     }
 
