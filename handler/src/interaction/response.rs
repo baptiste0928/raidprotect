@@ -92,24 +92,23 @@ impl IntoResponse for InteractionResponse {
     }
 }
 
-impl<E> IntoResponse for Result<InteractionResponse, E>
+impl<T, E> IntoResponse for Result<T, E>
 where
+    T: IntoResponse,
     E: InteractionError,
 {
     fn into_response(self) -> InteractionResponseData {
-        let response = match self {
-            Ok(response) => response,
+        match self {
+            Ok(response) => response.into_response(),
             Err(error) => match error.into_error() {
-                InteractionErrorKind::Response(response) => *response,
+                InteractionErrorKind::Response(response) => response.into_response(),
                 InteractionErrorKind::Internal(error) => {
                     tracing::error!(error = %error, "error occurred when processing interaction `{}`", E::INTERACTION_NAME);
 
-                    embed::error::internal_error()
+                    embed::error::internal_error().into_response()
                 }
             },
-        };
-
-        response.into_response()
+        }
     }
 }
 

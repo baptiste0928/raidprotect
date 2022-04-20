@@ -3,6 +3,7 @@
 mod handle;
 
 pub mod command;
+pub mod component;
 pub mod context;
 pub mod response;
 

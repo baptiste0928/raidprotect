@@ -9,12 +9,9 @@ use twilight_interactions::{
     command::{CommandModel, CreateCommand, ResolvedUser},
     error::ParseError,
 };
-use twilight_model::{
-    application::{
-        component::{button::ButtonStyle, ActionRow, Button, Component},
-        interaction::application_command::CommandData,
-    },
-    channel::{message::MessageFlags, ReactionType},
+use twilight_model::application::{
+    component::{button::ButtonStyle, ActionRow, Button, Component},
+    interaction::application_command::CommandData,
 };
 use twilight_util::{
     builder::{
@@ -28,6 +25,7 @@ use twilight_validate::embed::EmbedValidationError;
 use crate::{
     embed::COLOR_TRANSPARENT,
     interaction::{
+        component::post_in_chat::PostInChat,
         context::InteractionContext,
         response::{InteractionError, InteractionErrorKind},
     },
@@ -48,7 +46,7 @@ impl ProfileCommand {
     #[instrument]
     pub async fn handle(
         context: InteractionContext<CommandData>,
-    ) -> Result<InteractionResponse, ProfileCommandError> {
+    ) -> Result<PostInChat, ProfileCommandError> {
         let parsed = ProfileCommand::from_interaction(context.data.into())?;
         let user = parsed.user.resolved;
 
@@ -81,35 +79,22 @@ impl ProfileCommand {
         }
 
         let components = Component::ActionRow(ActionRow {
-            components: vec![
-                Component::Button(Button {
-                    custom_id: Some("demo".to_string()),
-                    disabled: false,
-                    emoji: Some(ReactionType::Unicode {
-                        name: "💬".to_string(),
-                    }),
-                    label: Some("Envoyer dans le salon".into()),
-                    style: ButtonStyle::Primary,
-                    url: None,
-                }),
-                Component::Button(Button {
-                    custom_id: None,
-                    disabled: false,
-                    emoji: None,
-                    label: Some("Photo de profil".into()),
-                    style: ButtonStyle::Link,
-                    url: Some(avatar),
-                }),
-            ],
+            components: vec![Component::Button(Button {
+                custom_id: None,
+                disabled: false,
+                emoji: None,
+                label: Some("Photo de profil".into()),
+                style: ButtonStyle::Link,
+                url: Some(avatar),
+            })],
         });
 
         let response = InteractionResponseDataBuilder::new()
             .embeds([embed.validate()?.build()])
             .components([components])
-            .flags(MessageFlags::EPHEMERAL)
             .build();
 
-        Ok(InteractionResponse::Custom(response))
+        Ok(PostInChat::new(InteractionResponse::Custom(response)))
     }
 }
 
