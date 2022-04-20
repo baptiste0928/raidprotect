@@ -1139,6 +1139,7 @@ dependencies = [
 name = "raidprotect-model"
 version = "0.1.0"
 dependencies = [
+ "async-ttl",
  "mongodb",
  "raidprotect-cache",
  "serde",

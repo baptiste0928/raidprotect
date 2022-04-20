@@ -5,7 +5,7 @@ use std::sync::Arc;
 use raidprotect_cache::{InMemoryCache, MessageCache};
 use twilight_http::Client as HttpClient;
 
-use crate::mongodb::MongoDbClient;
+use crate::{interaction::component::PendingComponentQueue, mongodb::MongoDbClient};
 
 /// Current state of the cluster.
 ///
@@ -21,6 +21,8 @@ pub struct ClusterState {
     http: Arc<HttpClient>,
     /// Message cache client
     messages: MessageCache,
+    /// Pending components queue
+    pending_components: PendingComponentQueue,
 }
 
 impl ClusterState {
@@ -30,12 +32,14 @@ impl ClusterState {
         mongodb: MongoDbClient,
         http: Arc<HttpClient>,
         messages: MessageCache,
+        pending_components: PendingComponentQueue,
     ) -> Self {
         Self {
             cache,
             mongodb,
             http,
             messages,
+            pending_components,
         }
     }
 
@@ -57,5 +61,10 @@ impl ClusterState {
     /// Get the cluster [`MessageCache`].
     pub fn messages(&self) -> &MessageCache {
         &self.messages
+    }
+
+    /// Get the cluster [`PendingComponentQueue`].
+    pub fn pending_components(&self) -> &PendingComponentQueue {
+        &self.pending_components
     }
 }

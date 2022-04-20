@@ -2,6 +2,7 @@
 
 use std::time::Duration;
 
+use raidprotect_model::interaction::InteractionResponse;
 use thiserror::Error;
 use tracing::instrument;
 use twilight_interactions::{
@@ -28,7 +29,7 @@ use crate::{
     embed::COLOR_TRANSPARENT,
     interaction::{
         context::InteractionContext,
-        response::{CommandResponse, InteractionError, InteractionErrorKind},
+        response::{InteractionError, InteractionErrorKind},
     },
     translations::Lang,
     util::{avatar_url, ImageFormat, ImageSize, TimestampStyle},
@@ -47,7 +48,7 @@ impl ProfileCommand {
     #[instrument]
     pub async fn handle(
         context: InteractionContext<CommandData>,
-    ) -> Result<CommandResponse, ProfileCommandError> {
+    ) -> Result<InteractionResponse, ProfileCommandError> {
         let parsed = ProfileCommand::from_interaction(context.data.into())?;
         let user = parsed.user.resolved;
 
@@ -108,7 +109,7 @@ impl ProfileCommand {
             .flags(MessageFlags::EPHEMERAL)
             .build();
 
-        Ok(CommandResponse::Custom(response))
+        Ok(InteractionResponse::Custom(response))
     }
 }
 

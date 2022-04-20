@@ -1,5 +1,6 @@
 //! Help command.
 
+use raidprotect_model::interaction::InteractionResponse;
 use thiserror::Error;
 use tracing::{error, instrument};
 use twilight_interactions::{
@@ -12,7 +13,7 @@ use twilight_validate::embed::EmbedValidationError;
 
 use crate::interaction::{
     context::InteractionContext,
-    response::{CommandResponse, InteractionError, InteractionErrorKind},
+    response::{InteractionError, InteractionErrorKind},
 };
 
 /// Help command model.
@@ -35,12 +36,12 @@ impl HelpCommand {
     #[instrument]
     pub async fn handle(
         context: InteractionContext<CommandData>,
-    ) -> Result<CommandResponse, HelpCommandError> {
+    ) -> Result<InteractionResponse, HelpCommandError> {
         let _parsed = HelpCommand::from_interaction(context.data.into())?;
 
         let embed = EmbedBuilder::new().description("Hello world!").build();
 
-        Ok(CommandResponse::Embed(embed))
+        Ok(InteractionResponse::Embed(embed))
     }
 }
 

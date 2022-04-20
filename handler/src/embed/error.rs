@@ -1,13 +1,14 @@
 //! Error embeds.
 
+use raidprotect_model::interaction::InteractionResponse;
 use twilight_util::builder::embed::{EmbedBuilder, EmbedFooterBuilder};
 
-use crate::{interaction::response::CommandResponse, translations::Lang};
+use crate::translations::Lang;
 
 use super::COLOR_RED;
 
 /// Internal error embed
-pub fn internal_error() -> CommandResponse {
+pub fn internal_error() -> InteractionResponse {
     let embed = EmbedBuilder::new()
         .title(Lang::Fr.internal_error_title())
         .color(COLOR_RED)
@@ -17,29 +18,29 @@ pub fn internal_error() -> CommandResponse {
         ))
         .build();
 
-    CommandResponse::EphemeralEmbed(embed)
+    InteractionResponse::EphemeralEmbed(embed)
 }
 
 /// Unknown command received
-pub fn unknown_command() -> CommandResponse {
+pub fn unknown_command() -> InteractionResponse {
     let embed = EmbedBuilder::new()
         .title(Lang::Fr.unknown_command_title())
         .color(COLOR_RED)
         .description(Lang::Fr.unknown_command_description())
         .build();
 
-    CommandResponse::EphemeralEmbed(embed)
+    InteractionResponse::EphemeralEmbed(embed)
 }
 
 /// Command not available in direct messages
-pub fn guild_only() -> CommandResponse {
+pub fn guild_only() -> InteractionResponse {
     let embed = EmbedBuilder::new()
         .title(Lang::Fr.guild_only_title())
         .color(COLOR_RED)
         .description(Lang::Fr.guild_only_description())
         .build();
 
-    CommandResponse::EphemeralEmbed(embed)
+    InteractionResponse::EphemeralEmbed(embed)
 }
 
 #[cfg(test)]

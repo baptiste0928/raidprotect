@@ -5,12 +5,15 @@
 
 use std::error::Error;
 
-use raidprotect_model::ClusterState;
+use raidprotect_model::{interaction::InteractionResponse, ClusterState};
 use tracing::error;
 use twilight_model::{
     application::interaction::{ApplicationCommand, MessageComponentInteraction},
-    channel::{embed::Embed, message::MessageFlags},
-    http::interaction::{InteractionResponse, InteractionResponseData, InteractionResponseType},
+    channel::message::MessageFlags,
+    http::interaction::{
+        InteractionResponse as HttpInteractionResponse, InteractionResponseData,
+        InteractionResponseType,
+    },
     id::{
         marker::{ApplicationMarker, InteractionMarker},
         Id,
@@ -53,7 +56,7 @@ impl InteractionResponder {
     /// Send a response to an interaction.
     pub async fn respond(&self, state: &ClusterState, response: InteractionResponseData) {
         let client = state.http().interaction(self.application_id);
-        let response = InteractionResponse {
+        let response = HttpInteractionResponse {
             kind: InteractionResponseType::ChannelMessageWithSource,
             data: Some(response),
         };
@@ -68,16 +71,28 @@ impl InteractionResponder {
     }
 }
 
-/// Convert a type into [`InteractionResponseData`].
-///
-/// This type is used for interaction responses. It is implemented for common
-/// types such as [`Embed`].
+/// Convert a type into [`InteractionResponseData`]..
 pub trait IntoResponse {
     /// Convert this type into [`InteractionResponseData`].
     fn into_response(self) -> InteractionResponseData;
 }
 
-impl<E> IntoResponse for Result<CommandResponse, E>
+impl IntoResponse for InteractionResponse {
+    fn into_response(self) -> InteractionResponseData {
+        match self {
+            InteractionResponse::Embed(embed) => InteractionResponseDataBuilder::new()
+                .embeds([embed])
+                .build(),
+            InteractionResponse::EphemeralEmbed(embed) => InteractionResponseDataBuilder::new()
+                .embeds([embed])
+                .flags(MessageFlags::EPHEMERAL)
+                .build(),
+            InteractionResponse::Custom(response) => response,
+        }
+    }
+}
+
+impl<E> IntoResponse for Result<InteractionResponse, E>
 where
     E: InteractionError,
 {
@@ -95,36 +110,6 @@ where
         };
 
         response.into_response()
-    }
-}
-
-/// Response to a bot command.
-///
-/// This enum contains types that can be used to respond to a bot command. The
-/// [`CommandResponse::Custom`] variant can be used to respond with a custom
-/// [`InteractionResponseData`].
-#[derive(Debug, Clone)]
-pub enum CommandResponse {
-    /// Respond with an embed.
-    Embed(Embed),
-    /// Respond with an embed sent as ephemeral message.
-    EphemeralEmbed(Embed),
-    /// Respond with a custom [`InteractionResponseData`].
-    Custom(InteractionResponseData),
-}
-
-impl IntoResponse for CommandResponse {
-    fn into_response(self) -> InteractionResponseData {
-        match self {
-            CommandResponse::Embed(embed) => InteractionResponseDataBuilder::new()
-                .embeds([embed])
-                .build(),
-            CommandResponse::EphemeralEmbed(embed) => InteractionResponseDataBuilder::new()
-                .embeds([embed])
-                .flags(MessageFlags::EPHEMERAL)
-                .build(),
-            CommandResponse::Custom(response) => response,
-        }
     }
 }
 
@@ -149,13 +134,13 @@ pub trait InteractionError {
 /// See the [`InteractionError`] trait for more information.
 #[derive(Debug)]
 pub enum InteractionErrorKind {
-    Response(Box<CommandResponse>),
+    Response(Box<InteractionResponse>),
     Internal(Box<dyn Error + Send + Sync>),
 }
 
 impl InteractionErrorKind {
     /// Initialize a new [`InteractionErrorKind::Response`].
-    pub fn response(response: CommandResponse) -> Self {
+    pub fn response(response: InteractionResponse) -> Self {
         Self::Response(Box::new(response))
     }
 
