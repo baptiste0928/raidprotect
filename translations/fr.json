@@ -3,6 +3,7 @@
   "guild_only_title": "Cette commande ne fonctionne pas en messages privés",
   "internal_error_description": "La commande que vous avez effectuée a renvoyé un résultat imprévu. Pas de panique, nous avons été informés du problème ! En attendant, veuillez réessayer la commande de nouveau.\n\n**Si le problème persiste, merci de nous en informer.** Vous pouvez nous contacter en [rejoignant notre serveur Discord](https://discord.gg/raidprotect).",
   "internal_error_title": "Oups, une erreur inconnue s'est produite ...",
+  "post_in_chat_button": "Envoyer dans le salon",
   "profile_button": "Afficher le profil complet",
   "profile_created_at": "Création du compte",
   "profile_joined_at": "Membre de ce serveur",

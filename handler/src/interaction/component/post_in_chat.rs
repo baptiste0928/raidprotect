@@ -11,7 +11,7 @@ use twilight_model::{
     http::interaction::InteractionResponseData,
 };
 
-use crate::interaction::response::IntoResponse;
+use crate::{interaction::response::IntoResponse, translations::Lang};
 
 pub struct PostInChat {
     /// The message to post.
@@ -45,7 +45,7 @@ impl IntoResponse for PostInChat {
             emoji: Some(ReactionType::Unicode {
                 name: "💬".to_string(),
             }),
-            label: Some("Envoyer dans le salon".into()),
+            label: Some(Lang::Fr.post_in_chat_button().to_string()),
             style: ButtonStyle::Primary,
             url: None,
         });

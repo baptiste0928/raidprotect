@@ -15,7 +15,10 @@ use twilight_model::application::{
 };
 use twilight_util::{
     builder::{
-        embed::{image_source::ImageSourceUrlError, EmbedBuilder, EmbedFieldBuilder, ImageSource},
+        embed::{
+            image_source::ImageSourceUrlError, EmbedBuilder, EmbedFieldBuilder, EmbedFooterBuilder,
+            ImageSource,
+        },
         InteractionResponseDataBuilder,
     },
     snowflake::Snowflake,
@@ -54,6 +57,7 @@ impl ProfileCommand {
         let mut embed = EmbedBuilder::new()
             .color(COLOR_TRANSPARENT)
             .title(Lang::Fr.profile_title(user.discriminator(), &user.name))
+            .footer(EmbedFooterBuilder::new(format!("ID: {}", user.id)).build())
             .thumbnail(ImageSource::url(&avatar)?);
 
         // User profile creation time.
