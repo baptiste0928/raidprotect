@@ -5,7 +5,6 @@
 //!
 //! The user-side event handling is done in the `raidprotect_handler` crate.
 
-pub mod model;
 mod process;
 
 pub use process::ProcessEvent;

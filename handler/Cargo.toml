@@ -11,6 +11,7 @@ publish = false
 raidprotect-model = { path = "../model" }
 raidprotect-analyzer = { path = "../analyzer" }
 
+nanoid = "0.4"
 rosetta-i18n = "0.1"
 thiserror = "1"
 tracing = "0.1"

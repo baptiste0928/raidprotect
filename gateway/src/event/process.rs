@@ -89,6 +89,9 @@ impl ProcessEvent for incoming::InteractionCreate {
             Interaction::ApplicationCommand(command) => {
                 tokio::spawn(interaction::handle_command(*command, state));
             }
+            Interaction::MessageComponent(component) => {
+                tokio::spawn(interaction::handle_component(*component, state));
+            }
             _ => {
                 trace!("unprocessed interaction type");
             }

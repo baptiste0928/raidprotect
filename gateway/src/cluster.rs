@@ -6,6 +6,7 @@ use futures::StreamExt;
 use raidprotect_cache::{InMemoryCache, MessageCache, MessageExpireTask};
 use raidprotect_handler::interaction::register_commands;
 use raidprotect_model::{
+    interaction::component::{PendingComponentExpireTask, PendingComponentQueue},
     mongodb::{MongoDbClient, MongoDbError},
     ClusterState,
 };
@@ -38,6 +39,8 @@ pub struct ShardCluster {
     state: Arc<ClusterState>,
     /// Message cache expiration task
     messages_expire: MessageExpireTask,
+    /// Pending components expiration task
+    pending_components_expire: PendingComponentExpireTask,
 }
 
 impl ShardCluster {
@@ -64,6 +67,7 @@ impl ShardCluster {
 
         let cache = InMemoryCache::new(application.id.cast());
         let (messages, messages_expire) = MessageCache::new();
+        let (pending_components, pending_components_expire) = PendingComponentQueue::new();
 
         let mongodb = MongoDbClient::connect(mongodb_uri, mongodb_database).await?;
         mongodb.ping().await?; // Ensure database is reachable
@@ -82,7 +86,7 @@ impl ShardCluster {
 
         info!("started cluster with {} shards", cluster.shards().len());
 
-        let state = ClusterState::new(cache, mongodb, http, messages);
+        let state = ClusterState::new(cache, mongodb, http, messages, pending_components);
 
         register_commands(&state, application.id, command_guild).await;
 
@@ -91,6 +95,7 @@ impl ShardCluster {
             events,
             state: Arc::new(state),
             messages_expire,
+            pending_components_expire,
         })
     }
 
@@ -109,6 +114,12 @@ impl ShardCluster {
         let messages_expire = self.messages_expire.clone();
         tokio::spawn(async move {
             messages_expire.run().await;
+        });
+
+        // Start pending components expiration task
+        let pending_components_expire = self.pending_components_expire.clone();
+        tokio::spawn(async move {
+            pending_components_expire.run().await;
         });
 
         // Handle incoming events
