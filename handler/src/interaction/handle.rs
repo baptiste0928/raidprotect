@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use raidprotect_model::ClusterState;
+use raidprotect_model::{interaction::component::PendingComponent, ClusterState};
 use tracing::{error, warn};
 use twilight_interactions::command::CreateCommand;
 use twilight_model::{
@@ -15,6 +15,7 @@ use crate::embed;
 
 use super::{
     command::{help::HelpCommand, profile::ProfileCommand},
+    component::post_in_chat::PostInChat,
     context::InteractionContext,
     response::{InteractionResponder, IntoResponse},
 };
@@ -39,7 +40,9 @@ pub async fn handle_command(command: ApplicationCommand, state: Arc<ClusterState
 
     let response = match &*context.data.name {
         "help" => HelpCommand::handle(context).await.into_response(),
-        "profile" => ProfileCommand::handle(context).await.into_response(),
+        "profile" => ProfileCommand::handle(context, &state)
+            .await
+            .into_response(),
         name => {
             warn!(name = name, "unknown command received");
 
@@ -88,7 +91,7 @@ pub async fn register_commands(
 /// Handle incoming [`MessageComponentInteraction`].
 pub async fn handle_component(component: MessageComponentInteraction, state: Arc<ClusterState>) {
     let responder = InteractionResponder::from_component(&component);
-    let _context = match InteractionContext::from_component(component, &state).await {
+    let context = match InteractionContext::from_component(component, &state).await {
         Ok(context) => context,
         Err(error) => {
             warn!(error = %error, "failed to create component context");
@@ -100,5 +103,17 @@ pub async fn handle_component(component: MessageComponentInteraction, state: Arc
         }
     };
 
-    todo!()
+    let response = if let Some(pending_component) = state
+        .pending_components()
+        .get(&context.data.custom_id)
+        .await
+    {
+        match pending_component {
+            PendingComponent::PostInChatButton(component) => PostInChat::handle(component),
+        }
+    } else {
+        embed::error::expired_component().into_response()
+    };
+
+    responder.respond(&state, response).await;
 }

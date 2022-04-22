@@ -3,6 +3,7 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use async_ttl::{config::AsyncTtlConfig, AsyncTtl, AsyncTtlExpireTask};
+use twilight_model::id::{marker::UserMarker, Id};
 
 use super::InteractionResponse;
 
@@ -56,4 +57,6 @@ pub enum PendingComponent {
 pub struct PostInChatButton {
     /// Response to send to the channel.
     pub response: InteractionResponse,
+    /// Id of the initial interaction author.
+    pub author_id: Id<UserMarker>,
 }

@@ -4,11 +4,18 @@
 //! in the channel an ephemeral response.
 
 use nanoid::nanoid;
-use raidprotect_model::interaction::InteractionResponse;
+use raidprotect_model::{
+    interaction::{
+        component::{PendingComponent, PostInChatButton},
+        InteractionResponse,
+    },
+    ClusterState,
+};
 use twilight_model::{
     application::component::{button::ButtonStyle, ActionRow, Button, Component},
     channel::{message::MessageFlags, ReactionType},
     http::interaction::InteractionResponseData,
+    id::{marker::UserMarker, Id},
 };
 
 use crate::{interaction::response::IntoResponse, translations::Lang};
@@ -21,10 +28,38 @@ pub struct PostInChat {
 }
 
 impl PostInChat {
-    pub fn new(message: InteractionResponse) -> Self {
+    pub async fn new(
+        message: InteractionResponse,
+        author_id: Id<UserMarker>,
+        state: &ClusterState,
+    ) -> Self {
         let custom_id = nanoid!();
 
+        state
+            .pending_components()
+            .insert(
+                custom_id.clone(),
+                PendingComponent::PostInChatButton(PostInChatButton {
+                    response: message.clone(),
+                    author_id,
+                }),
+            )
+            .await;
+
         Self { message, custom_id }
+    }
+
+    pub fn handle(component: PostInChatButton) -> InteractionResponseData {
+        let mut response = component.response.into_response();
+
+        // Remove ephemeral flag
+        if let Some(flags) = response.flags.as_mut() {
+            flags.set(MessageFlags::EPHEMERAL, false);
+        }
+
+        response.content = Some(Lang::Fr.post_in_chat_author(component.author_id));
+
+        response
     }
 }
 

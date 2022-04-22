@@ -2,7 +2,7 @@
 
 use std::time::Duration;
 
-use raidprotect_model::interaction::InteractionResponse;
+use raidprotect_model::{interaction::InteractionResponse, ClusterState};
 use thiserror::Error;
 use tracing::instrument;
 use twilight_interactions::{
@@ -49,6 +49,7 @@ impl ProfileCommand {
     #[instrument]
     pub async fn handle(
         context: InteractionContext<CommandData>,
+        state: &ClusterState,
     ) -> Result<PostInChat, ProfileCommandError> {
         let parsed = ProfileCommand::from_interaction(context.data.into())?;
         let user = parsed.user.resolved;
@@ -98,7 +99,12 @@ impl ProfileCommand {
             .components([components])
             .build();
 
-        Ok(PostInChat::new(InteractionResponse::Custom(response)))
+        Ok(PostInChat::new(
+            InteractionResponse::Custom(response),
+            context.user.id,
+            state,
+        )
+        .await)
     }
 }
 

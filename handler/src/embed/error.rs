@@ -43,6 +43,16 @@ pub fn guild_only() -> InteractionResponse {
     InteractionResponse::EphemeralEmbed(embed)
 }
 
+pub fn expired_component() -> InteractionResponse {
+    let embed = EmbedBuilder::new()
+        .title(Lang::Fr.expired_component_title())
+        .color(COLOR_RED)
+        .description(Lang::Fr.expired_component_description())
+        .build();
+
+    InteractionResponse::EphemeralEmbed(embed)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -60,5 +70,10 @@ mod tests {
     #[test]
     fn test_guild_only() {
         guild_only();
+    }
+
+    #[test]
+    fn test_expired_component() {
+        expired_component();
     }
 }
