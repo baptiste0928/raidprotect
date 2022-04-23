@@ -7,8 +7,7 @@ use raidprotect_cache::{InMemoryCache, MessageCache, MessageExpireTask};
 use raidprotect_handler::interaction::register_commands;
 use raidprotect_model::{
     interaction::component::{PendingComponentExpireTask, PendingComponentQueue},
-    mongodb::{MongoDbClient, MongoDbError},
-    ClusterState,
+    ClusterState, MongoDbClient, MongoDbError,
 };
 use raidprotect_util::shutdown::ShutdownSubscriber;
 use thiserror::Error;

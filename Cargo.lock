@@ -1100,8 +1100,6 @@ version = "0.1.0"
 dependencies = [
  "async-ttl",
  "dashmap",
- "serde",
- "serde_with",
  "thiserror",
  "tokio",
  "tracing",
@@ -1159,6 +1157,7 @@ dependencies = [
  "serde_with",
  "twilight-http",
  "twilight-model",
+ "url",
 ]
 
 [[package]]
@@ -2065,6 +2064,7 @@ dependencies = [
  "idna",
  "matches",
  "percent-encoding",
+ "serde",
 ]
 
 [[package]]

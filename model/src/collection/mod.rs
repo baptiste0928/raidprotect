@@ -1,4 +1,4 @@
-//! Models used in MongoDB collections.
+//! MongoDB collections models.
 //!
 //! This module contains all models used in MongoDB database. These models can
 //! be serialized and deserialized using `serde`.

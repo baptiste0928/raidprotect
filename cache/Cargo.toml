@@ -10,8 +10,6 @@ publish = false
 [dependencies]
 async-ttl = { git = "https://github.com/baptiste0928/async-ttl" }
 dashmap = "5.1"
-serde = { version = "1", features = ["derive"] }
-serde_with = "1.12"
 thiserror = "1"
 tokio = { version = "1", features = ["sync"] }
 tracing = "0.1"

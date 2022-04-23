@@ -9,7 +9,7 @@ use std::num::NonZeroU64;
 
 use serde::{de, ser, Deserialize, Deserializer, Serializer};
 use serde_with::{DeserializeAs, SerializeAs};
-use twilight_model::id::Id;
+use twilight_model::{datetime::Timestamp, id::Id};
 
 /// Serialize twilight [`Id`] as [`i64`].
 ///
@@ -62,6 +62,8 @@ impl<T: Copy> SerializeAs<Id<T>> for IdAsI64 {
 ///
 /// This type implement [`SerializeAs`] and [`DeserializeAs`] and should be
 /// used with the [`serde_as`] macro.
+///
+/// [`serde_as`]: serde_with::serde_as
 #[derive(Debug)]
 pub struct IdAsU64;
 
@@ -85,14 +87,48 @@ impl<T: Copy> SerializeAs<Id<T>> for IdAsU64 {
     }
 }
 
+/// Serialize twilight [`Timestamp`] as [`i64`].
+///
+/// The default implementation serializes timestamps as ISO 8601 datetime.
+///
+/// This type implement [`SerializeAs`] and [`DeserializeAs`] and should be
+/// used with the [`serde_as`] macro.
+///
+/// [`serde_as`]: serde_with::serde_as
+#[derive(Debug)]
+pub struct TimestampAsI64;
+
+impl<'de> DeserializeAs<'de, Timestamp> for TimestampAsI64 {
+    fn deserialize_as<D>(deserializer: D) -> Result<Timestamp, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let micros = i64::deserialize(deserializer)?;
+
+        Timestamp::from_micros(micros).map_err(de::Error::custom)
+    }
+}
+
+impl SerializeAs<Timestamp> for TimestampAsI64 {
+    fn serialize_as<S>(source: &Timestamp, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_i64(source.as_micros())
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{IdAsI64, IdAsU64};
+    use super::{IdAsI64, IdAsU64, TimestampAsI64};
 
     use serde::{Deserialize, Serialize};
     use serde_test::{assert_de_tokens_error, assert_ser_tokens_error, assert_tokens, Token};
     use serde_with::serde_as;
-    use twilight_model::id::{marker::GenericMarker, Id};
+    use twilight_model::{
+        datetime::Timestamp,
+        id::{marker::GenericMarker, Id},
+    };
 
     #[serde_as]
     #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -180,6 +216,25 @@ mod tests {
                     name: "IdU64Wrapper",
                 },
                 Token::U64(1),
+            ],
+        );
+    }
+
+    #[serde_as]
+    #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+    struct TimestampWrapper(#[serde_as(as = "TimestampAsI64")] Timestamp);
+
+    #[test]
+    fn test_timestamp() {
+        let timestamp = TimestampWrapper(Timestamp::from_micros(1_628_594_197_123_456).unwrap());
+
+        assert_tokens(
+            &timestamp,
+            &[
+                Token::NewtypeStruct {
+                    name: "TimestampWrapper",
+                },
+                Token::I64(1_628_594_197_123_456),
             ],
         );
     }
