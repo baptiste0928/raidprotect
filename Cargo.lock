@@ -1100,6 +1100,8 @@ version = "0.1.0"
 dependencies = [
  "async-ttl",
  "dashmap",
+ "serde",
+ "serde_with",
  "thiserror",
  "tokio",
  "tracing",

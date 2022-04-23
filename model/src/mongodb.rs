@@ -16,7 +16,10 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use twilight_model::id::{marker::GuildMarker, Id};
 
-use crate::collection::{serde_helpers::IdAsI64, Guild, GUILDS_COLLECTION};
+use crate::{
+    collection::{Guild, GUILDS_COLLECTION},
+    serde::IdAsI64,
+};
 
 /// Wrapper around a MongoDB [`Client`].
 ///

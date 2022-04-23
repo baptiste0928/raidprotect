@@ -6,6 +6,8 @@
 pub mod collection;
 pub mod interaction;
 pub mod mongodb;
+pub mod serde;
+
 mod state;
 
 pub use state::ClusterState;

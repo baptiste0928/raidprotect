@@ -1,9 +1,11 @@
-//! Serde helpers used in the `collection` module.
+//! Serde helpers.
 //!
 //! These modules are intended to be used with [`serde_as`] and customize the
 //! serialization and deserialization behavior of the fields they are applied on.
 //!
 //! [`serde_as`]: serde_with::serde_as
+
+use std::num::NonZeroU64;
 
 use serde::{de, ser, Deserialize, Deserializer, Serializer};
 use serde_with::{DeserializeAs, SerializeAs};
@@ -56,62 +58,94 @@ impl<T: Copy> SerializeAs<Id<T>> for IdAsI64 {
     }
 }
 
+/// Serialize twilight [`Id`] as [`u64`].
+///
+/// This type implement [`SerializeAs`] and [`DeserializeAs`] and should be
+/// used with the [`serde_as`] macro.
+#[derive(Debug)]
+pub struct IdAsU64;
+
+impl<'de, T> DeserializeAs<'de, Id<T>> for IdAsU64 {
+    fn deserialize_as<D>(deserializer: D) -> Result<Id<T>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let id = NonZeroU64::deserialize(deserializer)?;
+
+        Ok(Id::from(id))
+    }
+}
+
+impl<T: Copy> SerializeAs<Id<T>> for IdAsU64 {
+    fn serialize_as<S>(source: &Id<T>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u64(source.get())
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::IdAsI64;
+    use super::{IdAsI64, IdAsU64};
 
     use serde::{Deserialize, Serialize};
-    use serde_test::{
-        assert_de_tokens, assert_de_tokens_error, assert_ser_tokens_error, assert_tokens, Token,
-    };
+    use serde_test::{assert_de_tokens_error, assert_ser_tokens_error, assert_tokens, Token};
     use serde_with::serde_as;
     use twilight_model::id::{marker::GenericMarker, Id};
 
     #[serde_as]
     #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-    struct IdWrapper(#[serde_as(as = "IdAsI64")] Id<GenericMarker>);
+    struct IdI64Wrapper(#[serde_as(as = "IdAsI64")] Id<GenericMarker>);
 
     #[test]
-    fn test_id() {
-        let id = IdWrapper(Id::new(1));
+    fn test_id_i64() {
+        let id = IdI64Wrapper(Id::new(1));
 
         assert_tokens(
             &id,
-            &[Token::NewtypeStruct { name: "IdWrapper" }, Token::I64(1)],
+            &[
+                Token::NewtypeStruct {
+                    name: "IdI64Wrapper",
+                },
+                Token::I64(1),
+            ],
         );
     }
 
     #[test]
-    fn test_de_id_other() {
-        let id = IdWrapper(Id::new(1));
-
-        assert_de_tokens(
-            &id,
-            &[Token::NewtypeStruct { name: "IdWrapper" }, Token::U64(1)],
-        )
-    }
-
-    #[test]
-    fn test_de_id_zero() {
-        assert_de_tokens_error::<IdWrapper>(
-            &[Token::NewtypeStruct { name: "IdWrapper" }, Token::I64(0)],
+    fn test_de_id_i64_zero() {
+        assert_de_tokens_error::<IdI64Wrapper>(
+            &[
+                Token::NewtypeStruct {
+                    name: "IdI64Wrapper",
+                },
+                Token::I64(0),
+            ],
             "invalid value: integer `0`, expected nonzero positive i64",
         );
     }
 
     #[test]
-    fn test_de_id_negative() {
-        assert_de_tokens_error::<IdWrapper>(
-            &[Token::NewtypeStruct { name: "IdWrapper" }, Token::I64(-20)],
+    fn test_de_id_i64_negative() {
+        assert_de_tokens_error::<IdI64Wrapper>(
+            &[
+                Token::NewtypeStruct {
+                    name: "IdI64Wrapper",
+                },
+                Token::I64(-20),
+            ],
             "invalid value: integer `-20`, expected nonzero positive i64",
         );
     }
 
     #[test]
-    fn test_de_id_overflow() {
-        assert_de_tokens_error::<IdWrapper>(
+    fn test_de_id_i64_overflow() {
+        assert_de_tokens_error::<IdI64Wrapper>(
             &[
-                Token::NewtypeStruct { name: "IdWrapper" },
+                Token::NewtypeStruct {
+                    name: "IdI64Wrapper",
+                },
                 Token::U64(u64::MAX),
             ],
             "invalid value: integer `18446744073709551615`, expected i64",
@@ -119,13 +153,34 @@ mod tests {
     }
 
     #[test]
-    fn test_ser_id_overflow() {
-        let id = IdWrapper(Id::new(u64::MAX));
+    fn test_ser_id_i64_overflow() {
+        let id = IdI64Wrapper(Id::new(u64::MAX));
 
         assert_ser_tokens_error(
             &id,
-            &[Token::NewtypeStruct { name: "IdWrapper" }],
+            &[Token::NewtypeStruct {
+                name: "IdI64Wrapper",
+            }],
             "cannot convert 18446744073709551615 to i64",
         )
+    }
+
+    #[serde_as]
+    #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+    struct IdU64Wrapper(#[serde_as(as = "IdAsU64")] Id<GenericMarker>);
+
+    #[test]
+    fn test_id_u64() {
+        let id = IdU64Wrapper(Id::new(1));
+
+        assert_tokens(
+            &id,
+            &[
+                Token::NewtypeStruct {
+                    name: "IdU64Wrapper",
+                },
+                Token::U64(1),
+            ],
+        );
     }
 }

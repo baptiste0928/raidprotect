@@ -5,7 +5,7 @@ use twilight_model::id::{
     Id,
 };
 
-use super::serde_helpers::IdAsI64;
+use crate::serde::IdAsI64;
 
 /// Name of the `guilds` collection
 pub const GUILDS_COLLECTION: &str = "guilds";
