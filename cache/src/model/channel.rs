@@ -1,3 +1,6 @@
+use raidprotect_util::serde::IdAsU64;
+use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 use twilight_model::{
     channel::{permission_overwrite::PermissionOverwrite, ChannelType},
     id::{
@@ -12,7 +15,7 @@ use twilight_model::{
 /// does not interact with voice channels.
 ///
 /// [`Channel`]: twilight_model::channel::Channel
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum CachedChannel {
     /// Text channel.
     Text(CachedTextChannel),
@@ -58,15 +61,19 @@ impl CachedChannel {
 /// Cached model of a text [`Channel`].
 ///
 /// [`Channel`]: twilight_model::channel::Channel
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct CachedTextChannel {
     /// Id of the channel.
+    #[serde_as(as = "IdAsU64")]
     pub id: Id<ChannelMarker>,
     /// Id of the guild to which the channel belongs.
+    #[serde_as(as = "IdAsU64")]
     pub guild_id: Id<GuildMarker>,
     /// Name of the channel.
     pub name: String,
     /// If the channel is in a category, the category id.
+    #[serde_as(as = "Option<IdAsU64>")]
     pub parent_id: Option<Id<ChannelMarker>>,
     /// Sorting position of the channel.
     pub position: i64,
@@ -85,11 +92,14 @@ impl From<CachedTextChannel> for CachedChannel {
 /// Cached model of a category [`Channel`].
 ///
 /// [`Channel`]: twilight_model::channel::Channel
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct CachedCategoryChannel {
     /// Id of the category.
+    #[serde_as(as = "IdAsU64")]
     pub id: Id<ChannelMarker>,
     /// Id of the guild to which the category belongs.
+    #[serde_as(as = "IdAsU64")]
     pub guild_id: Id<GuildMarker>,
     /// Name of the category.
     pub name: String,
@@ -108,11 +118,14 @@ impl From<CachedCategoryChannel> for CachedChannel {
 /// Cached model of a public or private thread.
 ///
 /// The bot does not distinguish between private and public threads during processing.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct CachedThread {
     /// Id of the thread.
+    #[serde_as(as = "IdAsU64")]
     pub id: Id<ChannelMarker>,
     /// Id of the guild to which the thread belongs.
+    #[serde_as(as = "IdAsU64")]
     pub guild_id: Id<GuildMarker>,
     /// Name of the thread.
     pub name: String,
@@ -122,6 +135,7 @@ pub struct CachedThread {
     ///
     /// This field can be [`None`] if the parent channel has been
     /// deleted.
+    #[serde_as(as = "Option<IdAsU64>")]
     pub parent_id: Option<Id<ChannelMarker>>,
     /// Amount of seconds a user has to wait between two message.
     pub rate_limit_per_user: Option<u64>,

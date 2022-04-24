@@ -21,7 +21,7 @@ use twilight_model::id::{
     Id,
 };
 
-use crate::model::CachedMessage;
+use crate::model::message::CachedMessage;
 
 /// Message cache expiration task.
 pub type MessageExpireTask = AsyncTtlExpireTask<MessageCacheInner, CacheKey, CachedMessage>;

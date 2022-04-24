@@ -25,6 +25,7 @@ mod process;
 
 pub mod model;
 pub mod permission;
+pub mod redis;
 
 pub use cache::InMemoryCache;
 pub use message::{MessageCache, MessageExpireTask};
