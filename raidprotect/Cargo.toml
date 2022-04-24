@@ -12,6 +12,7 @@ raidprotect-cache = { path = "../cache" }
 raidprotect-event = { path = "../event" }
 raidprotect-interaction = { path = "../interaction" }
 raidprotect-model = { path = "../model" }
+raidprotect-state = { path = "../state" }
 raidprotect-util = { path = "../util" }
 
 anyhow = "1"

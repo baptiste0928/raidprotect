@@ -5,6 +5,7 @@ members = [
     "interaction",
     "model",
     "raidprotect",
+    "state",
     "translations",
     "util",
 ]

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use raidprotect_event::message::ALLOWED_MESSAGES_TYPES;
-use raidprotect_model::ClusterState;
+use raidprotect_state::ClusterState;
 use tracing::trace;
 use twilight_model::{
     application::interaction::Interaction,

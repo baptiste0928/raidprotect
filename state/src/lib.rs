@@ -1,11 +1,13 @@
-//! Models used to store the bot state.
+//! # RaidProtect state
+//!
+//! This crate expose the [`ClusterState`] that hold the shared bot state. This
+//! type is in a dedicated crate to avoid circular crate dependencies.
 
 use std::sync::Arc;
 
 use raidprotect_cache::{InMemoryCache, MessageCache};
+use raidprotect_model::{interaction::component::PendingComponentQueue, mongodb::MongoDbClient};
 use twilight_http::Client as HttpClient;
-
-use crate::{interaction::component::PendingComponentQueue, mongodb::MongoDbClient};
 
 /// Current state of the cluster.
 ///

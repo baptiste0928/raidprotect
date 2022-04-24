@@ -4,13 +4,11 @@
 //! in the channel an ephemeral response.
 
 use nanoid::nanoid;
-use raidprotect_model::{
-    interaction::{
-        component::{PendingComponent, PostInChatButton},
-        InteractionResponse,
-    },
-    ClusterState,
+use raidprotect_model::interaction::{
+    component::{PendingComponent, PostInChatButton},
+    InteractionResponse,
 };
+use raidprotect_state::ClusterState;
 use raidprotect_translations::Lang;
 use twilight_model::{
     application::component::{button::ButtonStyle, ActionRow, Button, Component},

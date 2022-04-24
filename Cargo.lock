@@ -1080,6 +1080,7 @@ dependencies = [
  "raidprotect-event",
  "raidprotect-interaction",
  "raidprotect-model",
+ "raidprotect-state",
  "raidprotect-util",
  "serde",
  "thiserror",
@@ -1112,6 +1113,7 @@ dependencies = [
  "linkify",
  "raidprotect-cache",
  "raidprotect-model",
+ "raidprotect-state",
  "twilight-model",
  "unicode-segmentation",
  "url",
@@ -1123,6 +1125,7 @@ version = "0.1.0"
 dependencies = [
  "nanoid",
  "raidprotect-model",
+ "raidprotect-state",
  "raidprotect-translations",
  "raidprotect-util",
  "thiserror",
@@ -1146,6 +1149,15 @@ dependencies = [
  "serde_with",
  "twilight-http",
  "twilight-model",
+]
+
+[[package]]
+name = "raidprotect-state"
+version = "0.1.0"
+dependencies = [
+ "raidprotect-cache",
+ "raidprotect-model",
+ "twilight-http",
 ]
 
 [[package]]

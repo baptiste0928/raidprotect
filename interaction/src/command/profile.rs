@@ -2,7 +2,8 @@
 
 use std::time::Duration;
 
-use raidprotect_model::{interaction::InteractionResponse, ClusterState};
+use raidprotect_model::interaction::InteractionResponse;
+use raidprotect_state::ClusterState;
 use raidprotect_translations::Lang;
 use raidprotect_util::resource::{avatar_url, ImageFormat, ImageSize, TimestampStyle};
 use thiserror::Error;

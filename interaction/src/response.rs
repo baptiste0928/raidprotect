@@ -4,7 +4,8 @@
 
 use std::error::Error;
 
-use raidprotect_model::{interaction::InteractionResponse, ClusterState};
+use raidprotect_model::interaction::InteractionResponse;
+use raidprotect_state::ClusterState;
 use tracing::error;
 use twilight_model::{
     application::interaction::{ApplicationCommand, MessageComponentInteraction},

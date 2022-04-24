@@ -8,8 +8,8 @@ use raidprotect_interaction::register_commands;
 use raidprotect_model::{
     interaction::component::{PendingComponentExpireTask, PendingComponentQueue},
     mongodb::{MongoDbClient, MongoDbError},
-    ClusterState,
 };
+use raidprotect_state::ClusterState;
 use raidprotect_util::shutdown::ShutdownSubscriber;
 use thiserror::Error;
 use tracing::{info, info_span, instrument, trace};

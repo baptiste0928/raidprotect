@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use raidprotect_model::ClusterState;
+use raidprotect_state::ClusterState;
 use twilight_model::channel::Message;
 
 use super::parser::parse_message;

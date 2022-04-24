@@ -9,6 +9,7 @@ publish = false
 
 [dependencies]
 raidprotect-model = { path = "../model" }
+raidprotect-state = { path = "../state" }
 raidprotect-translations = { path = "../translations" }
 raidprotect-util = { path = "../util" }
 

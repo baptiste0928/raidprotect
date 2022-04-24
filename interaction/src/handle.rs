@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use raidprotect_model::{interaction::component::PendingComponent, ClusterState};
+use raidprotect_model::interaction::component::PendingComponent;
+use raidprotect_state::ClusterState;
 use tracing::{error, warn};
 use twilight_interactions::command::CreateCommand;
 use twilight_model::{
