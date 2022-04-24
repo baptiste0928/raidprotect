@@ -1123,9 +1123,8 @@ version = "0.1.0"
 dependencies = [
  "nanoid",
  "raidprotect-model",
+ "raidprotect-translations",
  "raidprotect-util",
- "rosetta-build",
- "rosetta-i18n",
  "thiserror",
  "tracing",
  "twilight-http",
@@ -1147,6 +1146,14 @@ dependencies = [
  "serde_with",
  "twilight-http",
  "twilight-model",
+]
+
+[[package]]
+name = "raidprotect-translations"
+version = "0.1.0"
+dependencies = [
+ "rosetta-build",
+ "rosetta-i18n",
 ]
 
 [[package]]

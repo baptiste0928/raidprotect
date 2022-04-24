@@ -11,6 +11,7 @@ use raidprotect_model::{
     },
     ClusterState,
 };
+use raidprotect_translations::Lang;
 use twilight_model::{
     application::component::{button::ButtonStyle, ActionRow, Button, Component},
     channel::{message::MessageFlags, ReactionType},
@@ -18,7 +19,7 @@ use twilight_model::{
     id::{marker::UserMarker, Id},
 };
 
-use crate::{response::IntoResponse, translations::Lang};
+use crate::response::IntoResponse;
 
 pub struct PostInChat {
     /// The message to post.

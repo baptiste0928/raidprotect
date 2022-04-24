@@ -12,9 +12,3 @@ pub mod embed;
 pub mod response;
 
 pub use handle::{handle_command, handle_component, register_commands};
-
-pub mod translations {
-    //! Translations loaded using [`rosetta_i18n`].
-
-    rosetta_i18n::include_translations!();
-}

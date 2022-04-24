@@ -3,6 +3,7 @@
 use std::time::Duration;
 
 use raidprotect_model::{interaction::InteractionResponse, ClusterState};
+use raidprotect_translations::Lang;
 use raidprotect_util::resource::{avatar_url, ImageFormat, ImageSize, TimestampStyle};
 use thiserror::Error;
 use tracing::instrument;
@@ -31,7 +32,6 @@ use crate::{
     context::InteractionContext,
     embed::COLOR_TRANSPARENT,
     response::{InteractionError, InteractionErrorKind},
-    translations::Lang,
 };
 
 /// Profile command model.

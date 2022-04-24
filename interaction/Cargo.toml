@@ -9,10 +9,10 @@ publish = false
 
 [dependencies]
 raidprotect-model = { path = "../model" }
+raidprotect-translations = { path = "../translations" }
 raidprotect-util = { path = "../util" }
 
 nanoid = "0.4"
-rosetta-i18n = "0.1"
 thiserror = "1"
 tracing = "0.1"
 twilight-interactions = "0.10"
@@ -20,6 +20,3 @@ twilight-model = "0.10"
 twilight-http = "0.10"
 twilight-util = { version = "0.10.1", features = ["builder", "snowflake"] }
 twilight-validate = "0.10"
-
-[build-dependencies]
-rosetta-build = "0.1"

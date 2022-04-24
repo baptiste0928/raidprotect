@@ -3,7 +3,7 @@
 use raidprotect_model::interaction::InteractionResponse;
 use twilight_util::builder::embed::{EmbedBuilder, EmbedFooterBuilder};
 
-use crate::translations::Lang;
+use raidprotect_translations::Lang;
 
 use super::COLOR_RED;
 
