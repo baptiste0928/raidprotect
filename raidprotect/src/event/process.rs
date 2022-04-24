@@ -1,9 +1,6 @@
 use std::sync::Arc;
 
-use raidprotect_handler::{
-    automod::{self, ALLOWED_MESSAGES_TYPES},
-    interaction,
-};
+use raidprotect_event::message::ALLOWED_MESSAGES_TYPES;
 use raidprotect_model::ClusterState;
 use tracing::trace;
 use twilight_model::{
@@ -87,10 +84,10 @@ impl ProcessEvent for incoming::InteractionCreate {
     fn process(self, state: Arc<ClusterState>) {
         match self.0 {
             Interaction::ApplicationCommand(command) => {
-                tokio::spawn(interaction::handle_command(*command, state));
+                tokio::spawn(raidprotect_interaction::handle_command(*command, state));
             }
             Interaction::MessageComponent(component) => {
-                tokio::spawn(interaction::handle_component(*component, state));
+                tokio::spawn(raidprotect_interaction::handle_component(*component, state));
             }
             _ => {
                 trace!("unprocessed interaction type");
@@ -102,7 +99,7 @@ impl ProcessEvent for incoming::InteractionCreate {
 impl ProcessEvent for incoming::MessageCreate {
     fn process(self, state: Arc<ClusterState>) {
         if self.guild_id.is_some() && ALLOWED_MESSAGES_TYPES.contains(&self.kind) {
-            tokio::spawn(automod::handle_message(self.0, state));
+            tokio::spawn(raidprotect_event::message::handle_message(self.0, state));
         }
     }
 }

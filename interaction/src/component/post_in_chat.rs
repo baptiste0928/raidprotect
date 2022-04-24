@@ -18,7 +18,7 @@ use twilight_model::{
     id::{marker::UserMarker, Id},
 };
 
-use crate::{interaction::response::IntoResponse, translations::Lang};
+use crate::{response::IntoResponse, translations::Lang};
 
 pub struct PostInChat {
     /// The message to post.

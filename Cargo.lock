@@ -1075,23 +1075,19 @@ dependencies = [
  "anyhow",
  "dotenv",
  "envy",
- "raidprotect-gateway",
+ "futures",
+ "raidprotect-cache",
+ "raidprotect-event",
+ "raidprotect-interaction",
+ "raidprotect-model",
  "raidprotect-util",
  "serde",
+ "thiserror",
  "tokio",
  "tracing",
-]
-
-[[package]]
-name = "raidprotect-analyzer"
-version = "0.1.0"
-dependencies = [
- "any_ascii",
- "linkify",
- "raidprotect-cache",
+ "twilight-gateway",
+ "twilight-http",
  "twilight-model",
- "unicode-segmentation",
- "url",
 ]
 
 [[package]]
@@ -1109,31 +1105,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "raidprotect-gateway"
+name = "raidprotect-event"
 version = "0.1.0"
 dependencies = [
- "dashmap",
- "futures",
+ "any_ascii",
+ "linkify",
  "raidprotect-cache",
- "raidprotect-handler",
  "raidprotect-model",
- "raidprotect-util",
- "serde",
- "thiserror",
- "tokio",
- "tracing",
- "twilight-gateway",
- "twilight-http",
  "twilight-model",
+ "unicode-segmentation",
+ "url",
 ]
 
 [[package]]
-name = "raidprotect-handler"
+name = "raidprotect-interaction"
 version = "0.1.0"
 dependencies = [
  "nanoid",
- "raidprotect-analyzer",
  "raidprotect-model",
+ "raidprotect-util",
  "rosetta-build",
  "rosetta-i18n",
  "thiserror",
@@ -1168,6 +1158,7 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
+ "twilight-model",
 ]
 
 [[package]]

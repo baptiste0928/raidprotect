@@ -1,8 +1,9 @@
 use std::sync::Arc;
 
-use raidprotect_analyzer::parse_message;
 use raidprotect_model::ClusterState;
 use twilight_model::channel::Message;
+
+use super::parser::parse_message;
 
 /// Handle incoming [`Message`].
 ///

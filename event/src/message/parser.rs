@@ -6,16 +6,11 @@
 use any_ascii::any_ascii;
 use linkify::{LinkFinder, LinkKind};
 use raidprotect_cache::model::{CachedMessage, MessageLink};
-use twilight_model::channel::{message::MessageType, Message};
+use twilight_model::channel::Message;
 use unicode_segmentation::UnicodeSegmentation;
 use url::Url;
 
-/// Messages types processed by the bot.
-pub const ALLOWED_MESSAGES_TYPES: [MessageType; 3] = [
-    MessageType::Regular,
-    MessageType::Reply,
-    MessageType::ThreadStarterMessage,
-];
+use super::ALLOWED_MESSAGES_TYPES;
 
 /// Domains used for Discord invitations link.
 const INVITE_DOMAINS: [&str; 3] = ["discord.gg", "discord.com", "discordapp.com"];

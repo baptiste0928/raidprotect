@@ -1,7 +1,6 @@
 //! Interactions responses.
 //!
-//! This type hold types and traits used to respond to an interaction.
-//!
+//! This module exports types and traits used to respond to an interaction.
 
 use std::error::Error;
 

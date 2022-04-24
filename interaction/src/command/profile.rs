@@ -3,6 +3,7 @@
 use std::time::Duration;
 
 use raidprotect_model::{interaction::InteractionResponse, ClusterState};
+use raidprotect_util::resource::{avatar_url, ImageFormat, ImageSize, TimestampStyle};
 use thiserror::Error;
 use tracing::instrument;
 use twilight_interactions::{
@@ -26,14 +27,11 @@ use twilight_util::{
 use twilight_validate::embed::EmbedValidationError;
 
 use crate::{
+    component::post_in_chat::PostInChat,
+    context::InteractionContext,
     embed::COLOR_TRANSPARENT,
-    interaction::{
-        component::post_in_chat::PostInChat,
-        context::InteractionContext,
-        response::{InteractionError, InteractionErrorKind},
-    },
+    response::{InteractionError, InteractionErrorKind},
     translations::Lang,
-    util::{avatar_url, ImageFormat, ImageSize, TimestampStyle},
 };
 
 /// Profile command model.

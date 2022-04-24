@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use futures::StreamExt;
 use raidprotect_cache::{InMemoryCache, MessageCache, MessageExpireTask};
-use raidprotect_handler::interaction::register_commands;
+use raidprotect_interaction::register_commands;
 use raidprotect_model::{
     interaction::component::{PendingComponentExpireTask, PendingComponentQueue},
     mongodb::{MongoDbClient, MongoDbError},
@@ -141,11 +141,6 @@ impl ShardCluster {
                 event.process(self.state.clone());
             });
         }
-    }
-
-    /// Get the current [`ClusterState`].
-    pub fn state(&self) -> Arc<ClusterState> {
-        self.state.clone()
     }
 }
 
