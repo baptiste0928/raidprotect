@@ -1,10 +1,11 @@
 [workspace]
 members = [
-    "analyzer",
     "cache",
-    "gateway",
-    "handler",
+    "event",
+    "interaction",
     "model",
     "raidprotect",
+    "state",
+    "translations",
     "util",
 ]

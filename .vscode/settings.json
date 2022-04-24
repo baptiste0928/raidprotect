@@ -6,7 +6,7 @@
     "rust-analyzer.cargo.loadOutDirsFromCheck": true,
 
     "i18n-ally.localesPaths": [
-        "translations"
+        "translations/locales"
     ],
     "i18n-ally.keystyle": "flat",
     "i18n-ally.sourceLanguage": "fr"

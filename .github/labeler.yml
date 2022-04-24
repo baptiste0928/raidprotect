@@ -6,25 +6,20 @@ labels:
       files:
         all: ["*", "!Cargo.lock"]
 
-  - label: c-analyzer
-    sync: true
-    matcher:
-      files: "analyzer/**/*"
-
   - label: c-cache
     sync: true
     matcher:
       files: "cache/**/*"
 
-  - label: c-gateway
+  - label: c-event
     sync: true
     matcher:
-      files: "gateway/**/*"
+      files: "event/**/*"
 
-  - label: c-handler
+  - label: c-interaction
     sync: true
     matcher:
-      files: "handler/**/*"
+      files: "interaction/**/*"
 
   - label: c-model
     sync: true
