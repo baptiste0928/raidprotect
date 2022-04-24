@@ -5,15 +5,16 @@
 //!
 //! ## Crates structure
 //! - `cache`: custom cache that store Discord objects
-//! - `gateway`: receive and process incoming events
-//! - `handler`: event handlers (commands, interactions, etc.)
+//! - `event`: Discord event handlers
+//! - `interaction`: interaction handlers
 //! - `model`: models shared between crates
 //! - `util`: contain utilities such as logging and shutdown
 
+mod cluster;
 mod config;
+mod event;
 
 use anyhow::{Context, Result};
-use raidprotect_gateway::ShardCluster;
 use raidprotect_util::shutdown::{wait_shutdown, Shutdown};
 use tracing::{debug, info};
 
@@ -24,7 +25,7 @@ async fn main() -> Result<()> {
 
     // Initialize shard cluster
     let shutdown = Shutdown::new();
-    let cluster = ShardCluster::new(
+    let cluster = cluster::ShardCluster::new(
         config.token,
         config.command_guild,
         &config.mongodb_uri,
