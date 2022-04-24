@@ -1143,7 +1143,7 @@ version = "0.1.0"
 dependencies = [
  "async-ttl",
  "mongodb",
- "raidprotect-cache",
+ "raidprotect-util",
  "serde",
  "serde_test",
  "serde_with",
@@ -1174,6 +1174,8 @@ name = "raidprotect-util"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "serde_test",
+ "serde_with",
  "tokio",
  "tracing",
  "tracing-appender",

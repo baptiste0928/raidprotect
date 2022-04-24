@@ -7,4 +7,3 @@ pub mod cache;
 pub mod collection;
 pub mod interaction;
 pub mod mongodb;
-pub mod serde;

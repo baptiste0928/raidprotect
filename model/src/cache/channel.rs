@@ -1,3 +1,4 @@
+use raidprotect_util::serde::IdAsU64;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use twilight_model::{
@@ -7,8 +8,6 @@ use twilight_model::{
         Id,
     },
 };
-
-use crate::serde::IdAsU64;
 
 /// Cached model of a [`Channel`].
 ///
