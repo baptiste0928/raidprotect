@@ -9,6 +9,8 @@ use twilight_model::{
     },
 };
 
+use crate::redis::RedisModel;
+
 /// Cached model of a [`Channel`].
 ///
 /// Only text channels and threads are cached as the bot
@@ -55,6 +57,18 @@ impl CachedChannel {
                 | ChannelType::GuildPrivateThread
                 | ChannelType::GuildNewsThread
         )
+    }
+}
+
+impl RedisModel for CachedChannel {
+    type Id = Id<ChannelMarker>;
+
+    fn key(&self) -> String {
+        Self::key_from(&self.id())
+    }
+
+    fn key_from(id: &Self::Id) -> String {
+        format!("c:channel:{id}")
     }
 }
 

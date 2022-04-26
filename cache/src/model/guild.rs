@@ -13,6 +13,8 @@ use twilight_model::{
     util::ImageHash,
 };
 
+use crate::redis::RedisModel;
+
 /// Cached model of a [`Guild`].
 ///
 /// [`Guild`]: twilight_model::guild::Guild
@@ -67,6 +69,18 @@ pub struct CurrentMember {
     pub roles: HashSet<Id<RoleMarker>>,
 }
 
+impl RedisModel for CachedGuild {
+    type Id = Id<GuildMarker>;
+
+    fn key(&self) -> String {
+        Self::key_from(&self.id)
+    }
+
+    fn key_from(id: &Self::Id) -> String {
+        format!("c:guild:{id}")
+    }
+}
+
 /// Cached model of a [`Role`].
 ///
 /// This model is not cached within guilds to limit
@@ -104,6 +118,18 @@ pub struct CachedRole {
     ///
     /// Managed roles include bot, integration or boost roles.
     pub managed: bool,
+}
+
+impl RedisModel for CachedRole {
+    type Id = Id<RoleMarker>;
+
+    fn key(&self) -> String {
+        Self::key_from(&self.id)
+    }
+
+    fn key_from(id: &Self::Id) -> String {
+        format!("c:role:{id}")
+    }
 }
 
 impl PartialOrd for CachedRole {

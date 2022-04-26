@@ -7,18 +7,18 @@ use std::time::Duration;
 
 use bb8::{Pool, PooledConnection, RunError};
 use bb8_redis::RedisConnectionManager;
-use redis::{AsyncCommands, RedisError};
+use redis::{AsyncCommands, ErrorKind, FromRedisValue, RedisError};
 use serde::{de::DeserializeOwned, Serialize};
 use thiserror::Error;
-use twilight_model::id::{
-    marker::{ChannelMarker, GuildMarker, RoleMarker},
-    Id,
-};
+use twilight_model::id::{marker::GuildMarker, Id};
 
 use crate::model::{CachedChannel, CachedGuild, CachedRole};
 
 /// Alias for a [`Result`] with [`RedisClientError`] as error type.
 pub type RedisResult<T> = Result<T, RedisClientError>;
+
+/// Alias for Redis connection type.
+pub type RedisConnection<'a> = PooledConnection<'a, RedisConnectionManager>;
 
 /// Redis client.
 ///
@@ -42,52 +42,14 @@ impl RedisClient {
     }
 
     /// Get a new connection from the connection pool
-    pub async fn conn(&self) -> RedisResult<PooledConnection<'_, RedisConnectionManager>> {
+    pub async fn conn(&self) -> RedisResult<RedisConnection<'_>> {
         Ok(self.pool.get().await?)
     }
 
-    /// Serialize a value before storing in Redis.
-    ///
-    /// The value is serialized in MessagePack using [`rmp_serde`] and compressed
-    /// with [`zstd`].
-    pub(crate) fn serialize<T: Serialize>(value: &T) -> RedisResult<Vec<u8>> {
-        let serialized = rmp_serde::to_vec(value)?;
-
-        zstd::encode_all(serialized.as_slice(), 0).map_err(RedisClientError::Zstd)
-    }
-
-    /// Deserialize a value before storing in Redis.
-    ///
-    /// The value is decompressed with [`zstd`] and deserialized from MessagePack
-    /// using [`rmp_serde`].
-    pub(crate) fn deserialize<T: DeserializeOwned>(value: impl AsRef<[u8]>) -> RedisResult<T> {
-        let serialized = zstd::decode_all(value.as_ref()).map_err(RedisClientError::Zstd)?;
-
-        Ok(rmp_serde::from_slice(&serialized)?)
-    }
-
-    /// Get a [`CachedGuild`] by id.
-    pub async fn guild(&self, id: Id<GuildMarker>) -> RedisResult<Option<CachedGuild>> {
+    pub async fn get<T: RedisModel>(&self, id: &T::Id) -> RedisResult<Option<T>> {
         let mut conn = self.conn().await?;
-        let req: Option<Vec<u8>> = conn.get(format!("c:guild:{}", id)).await?;
 
-        req.map(Self::deserialize).transpose()
-    }
-
-    /// Get a [`CachedChannel`] by id.
-    pub async fn channel(&self, id: Id<ChannelMarker>) -> RedisResult<Option<CachedChannel>> {
-        let mut conn = self.conn().await?;
-        let req: Option<Vec<u8>> = conn.get(format!("c:channel:{}", id)).await?;
-
-        req.map(Self::deserialize).transpose()
-    }
-
-    /// Get a [`CachedRole`] by id.
-    pub async fn role(&self, id: Id<RoleMarker>) -> RedisResult<Option<CachedRole>> {
-        let mut conn = self.conn().await?;
-        let req: Option<Vec<u8>> = conn.get(format!("c:role:{}", id)).await?;
-
-        req.map(Self::deserialize).transpose()
+        Ok(conn.get(T::key_from(id)).await?)
     }
 
     /// Get all the [`CachedChannel`] of a guild.
@@ -95,23 +57,19 @@ impl RedisClient {
     /// If the guild is not cached, an empty [`Vec`] is returned.
     pub async fn guild_channels(&self, id: Id<GuildMarker>) -> RedisResult<Vec<CachedChannel>> {
         let mut conn = self.conn().await?;
-        let req: Option<Vec<u8>> = conn.get(format!("c:guild:{}", id)).await?;
-        let guild: Option<CachedGuild> = req.map(Self::deserialize).transpose()?;
+        let guild: Option<CachedGuild> = conn.get(CachedGuild::key_from(&id)).await?;
 
         if let Some(guild) = guild {
             let mut pipe = redis::pipe();
 
             for channel in guild.channels {
-                pipe.get(format!("c:channel:{}", channel));
+                pipe.get(CachedChannel::key_from(&channel));
             }
 
-            let channels: Vec<Vec<u8>> = pipe.query_async(&mut *conn).await?;
-            if !channels.is_empty() {
-                return channels.iter().map(Self::deserialize).collect();
-            }
+            Ok(pipe.query_async(&mut *conn).await?)
+        } else {
+            Ok(Vec::new())
         }
-
-        Ok(Vec::new())
     }
 
     /// Get all the [`CachedRole`] of a guild.
@@ -119,23 +77,73 @@ impl RedisClient {
     /// If the guild is not cached, an empty [`Vec`] is returned.
     pub async fn guild_roles(&self, id: Id<GuildMarker>) -> RedisResult<Vec<CachedRole>> {
         let mut conn = self.conn().await?;
-        let req: Option<Vec<u8>> = conn.get(format!("c:guild:{}", id)).await?;
-        let guild: Option<CachedGuild> = req.map(Self::deserialize).transpose()?;
+        let guild: Option<CachedGuild> = conn.get(CachedGuild::key_from(&id)).await?;
 
         if let Some(guild) = guild {
             let mut pipe = redis::pipe();
 
             for role in guild.roles {
-                pipe.get(format!("c:role:{}", role));
+                pipe.get(CachedRole::key_from(&role));
             }
 
-            let roles: Vec<Vec<u8>> = pipe.query_async(&mut *conn).await?;
-            if !roles.is_empty() {
-                return roles.iter().map(Self::deserialize).collect();
-            }
+            Ok(pipe.query_async(&mut *conn).await?)
+        } else {
+            Ok(Vec::new())
         }
+    }
+}
 
-        Ok(Vec::new())
+/// This trait is implemented by types representing a Redis model.
+///
+/// It provides methods to get the model key used
+/// in Redis, as well as a default implement of [`ToRedisArgs`] and
+/// [`FromRedisValue`].
+pub trait RedisModel: Serialize + DeserializeOwned {
+    /// Type used for the unique model identifier.
+    type Id;
+
+    /// Get the current value key.
+    fn key(&self) -> String;
+
+    /// Get the key for this model from a unique id.
+    fn key_from(id: &Self::Id) -> String;
+
+    /// Serialize this model.
+    ///
+    /// The default implementation serialize the model in MessagePack using
+    /// [`rmp_serde`] and compress it with [`zstd`].
+    fn serialize(&self) -> RedisResult<Vec<u8>> {
+        let serialized = rmp_serde::to_vec(self)?;
+
+        zstd::encode_all(&*serialized, 0).map_err(RedisClientError::Zstd)
+    }
+
+    /// Deserialize this model.
+    ///
+    /// The default implementation decompress the model with [`zstd`] and
+    /// deserialize it from MessagePack with [`rmp_serde`].
+    fn deserialize(value: &[u8]) -> RedisResult<Self> {
+        let decoded = zstd::decode_all(value).map_err(RedisClientError::Zstd)?;
+
+        Ok(rmp_serde::from_slice(&decoded)?)
+    }
+}
+
+impl<T: RedisModel> FromRedisValue for T {
+    fn from_redis_value(value: &redis::Value) -> Result<Self, RedisError> {
+        let data = match value {
+            redis::Value::Data(data) => data,
+            _ => {
+                return Err(RedisError::from((
+                    ErrorKind::TypeError,
+                    "response was not binary data",
+                )))
+            }
+        };
+
+        Self::deserialize(&*data).map_err(|err| {
+            RedisError::from((ErrorKind::TypeError, "invalid response", err.to_string()))
+        })
     }
 }
 
