@@ -19,7 +19,6 @@
 //! | Roles                 | `RoleCreate`, `RoleUpdate`, `RoleDelete`                          |
 //! | Current user member   | `MemberAdd`, `MemberUpdate`                                       |
 
-mod cache;
 mod message;
 mod process;
 
@@ -27,6 +26,5 @@ pub mod model;
 pub mod permission;
 pub mod redis;
 
-pub use cache::InMemoryCache;
 pub use message::{MessageCache, MessageExpireTask};
 pub use process::UpdateCache;
