@@ -14,7 +14,6 @@ async-ttl = { git = "https://github.com/baptiste0928/async-ttl" }
 mongodb = { version = "2.2.0", features = ["tokio-runtime", "zstd-compression"] }
 serde = { version = "1", features = ["derive"] }
 serde_with = "1"
-twilight-http = "0.10"
 twilight-model = "0.10"
 url = { version = "2", features = ["serde"] }
 
