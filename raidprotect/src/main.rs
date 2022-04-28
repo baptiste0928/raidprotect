@@ -21,18 +21,14 @@ use tracing::{debug, info};
 #[tokio::main]
 async fn main() -> Result<()> {
     let config = config::parse_config().context("Failed to load configuration")?;
-    let _guard = config.log.init("raidprotect");
+    let log_config = config.log.clone();
+    let _guard = log_config.init("raidprotect");
 
     // Initialize shard cluster
     let shutdown = Shutdown::new();
-    let cluster = cluster::ShardCluster::new(
-        config.token,
-        config.command_guild,
-        &config.mongodb_uri,
-        config.mongodb_database,
-    )
-    .await
-    .context("Failed to start shard cluster")?;
+    let cluster = cluster::ShardCluster::new(config)
+        .await
+        .context("Failed to start shard cluster")?;
 
     // Start the shard cluster
     let cluster_run = tokio::spawn(cluster.start(shutdown.subscriber()));

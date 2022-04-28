@@ -1,3 +1,8 @@
+//! Messages cache models.
+
+use raidprotect_util::serde::{IdAsU64, TimestampAsI64};
+use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 use twilight_model::{
     channel::Attachment,
     datetime::Timestamp,
@@ -10,21 +15,23 @@ use url::Url;
 
 /// Cached model of a [`Message`].
 ///
-/// This model is used with [`MessageCache`].
-///
 /// [`Message`]: twilight_model::channel::message::Message
-/// [`MessageCache`]: crate::MessageCache
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct CachedMessage {
     /// ID of the message.
+    #[serde_as(as = "IdAsU64")]
     pub id: Id<MessageMarker>,
     /// Message author id.
+    #[serde_as(as = "IdAsU64")]
     pub author_id: Id<UserMarker>,
     /// Message channel id.
+    #[serde_as(as = "IdAsU64")]
     pub channel_id: Id<ChannelMarker>,
     /// Message content.
     pub content: String,
     /// Timestamp of when the message was created.
+    #[serde_as(as = "TimestampAsI64")]
     pub timestamp: Timestamp,
     /// List of message words.
     ///
@@ -38,15 +45,17 @@ pub struct CachedMessage {
     /// Whether the message mentions everyone (@everyone or @here mentions)
     pub mention_everyone: bool,
     /// List of users mentioned in the message.
+    #[serde_as(as = "Vec<IdAsU64>")]
     pub mention_users: Vec<Id<UserMarker>>,
     /// List of roles mentioned in the message.
+    #[serde_as(as = "Vec<IdAsU64>")]
     pub mention_roles: Vec<Id<RoleMarker>>,
 }
 
 /// Kind of message link.
 ///
 /// This type is used in [`CachedMessage`].
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum MessageLink {
     /// Invite URL
     Invite(Url),

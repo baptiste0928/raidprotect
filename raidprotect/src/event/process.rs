@@ -1,47 +1,59 @@
 use std::sync::Arc;
 
+use async_trait::async_trait;
+use raidprotect_cache::UpdateCache;
 use raidprotect_event::message::ALLOWED_MESSAGES_TYPES;
 use raidprotect_state::ClusterState;
-use tracing::trace;
+use tracing::{error, trace};
 use twilight_model::{
     application::interaction::Interaction,
     gateway::{event::Event as GatewayEvent, payload::incoming},
 };
 
 /// Process incoming events.
+#[async_trait]
 pub trait ProcessEvent: Sized {
     /// Process incoming event.
-    fn process(self, state: Arc<ClusterState>);
+    async fn process(self, state: Arc<ClusterState>);
 }
 
 macro_rules! process_events {
     ($self:ident, $state:ident => $( $event:path ),+ ) => {
         match $self {
             $(
-                $event(event) => event.process($state),
+                $event(event) => event.process($state).await,
             )+
             event => trace!(kind = event.kind().name(), "unprocessed event type"),
         }
     };
 }
 
+async fn process_cache_event<E: UpdateCache>(event: E, state: &ClusterState) {
+    if let Err(error) = event.update(state.redis(), state.current_user()).await {
+        error!(error = %error, "failed to update cache");
+    }
+}
+
 macro_rules! process_cache_events {
     ( $( $event:ident ),+ ) => {
         $(
+            #[async_trait]
             impl ProcessEvent for incoming::$event {
-                fn process(self, state: Arc<ClusterState>) {
-                    state.cache().update(&self);
+                async fn process(self, state: Arc<ClusterState>) {
+                    process_cache_event(self, &state).await;
                 }
             }
         )+
     };
 }
 
+#[async_trait]
 impl ProcessEvent for GatewayEvent {
-    fn process(self, state: Arc<ClusterState>) {
+    async fn process(self, state: Arc<ClusterState>) {
         use GatewayEvent::*;
 
-        process_events! { self, state =>
+        // `self` is renamed `__self` in async_trait macro expansion
+        process_events! { __self, state =>
             GuildCreate,
             GuildDelete,
             UnavailableGuild,
@@ -80,14 +92,15 @@ process_cache_events! {
     MemberUpdate
 }
 
+#[async_trait]
 impl ProcessEvent for incoming::InteractionCreate {
-    fn process(self, state: Arc<ClusterState>) {
+    async fn process(self, state: Arc<ClusterState>) {
         match self.0 {
             Interaction::ApplicationCommand(command) => {
-                tokio::spawn(raidprotect_interaction::handle_command(*command, state));
+                raidprotect_interaction::handle_command(*command, state).await;
             }
             Interaction::MessageComponent(component) => {
-                tokio::spawn(raidprotect_interaction::handle_component(*component, state));
+                raidprotect_interaction::handle_component(*component, state).await;
             }
             _ => {
                 trace!("unprocessed interaction type");
@@ -96,8 +109,9 @@ impl ProcessEvent for incoming::InteractionCreate {
     }
 }
 
+#[async_trait]
 impl ProcessEvent for incoming::MessageCreate {
-    fn process(self, state: Arc<ClusterState>) {
+    async fn process(self, state: Arc<ClusterState>) {
         if self.guild_id.is_some() && ALLOWED_MESSAGES_TYPES.contains(&self.kind) {
             tokio::spawn(raidprotect_event::message::handle_message(self.0, state));
         }

@@ -8,11 +8,21 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+raidprotect-util = { path = "../util" }
+
+async-trait = "0.1"
 async-ttl = { git = "https://github.com/baptiste0928/async-ttl" }
-dashmap = "5.1"
+bb8 = "0.8"
+bb8-redis = "0.11"
+redis = { version = "0.21", features = ["tokio-comp"] }
+rmp-serde = "1.1"
+serde = { version = "1", features = ["derive"] }
+serde_with = "1"
 thiserror = "1"
 tokio = { version = "1", features = ["sync"] }
 tracing = "0.1"
 twilight-model = "0.10"
 twilight-util = { version = "0.10", features = ["permission-calculator"] }
 url = "2.2"
+zstd = "0.11"
+

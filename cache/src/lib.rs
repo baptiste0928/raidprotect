@@ -2,7 +2,7 @@
 //!
 //! Implementation of the custom cache used to store Discord objects.
 //!
-//! This cache is based on [`dashmap`] and store Discord objects used by the bot
+//! This cache is based on Redis and store Discord objects used by the bot
 //! including guilds, channels and roles. The cache is built to use as little
 //! memory as possible, and such only store useful fields.
 //!
@@ -19,13 +19,12 @@
 //! | Roles                 | `RoleCreate`, `RoleUpdate`, `RoleDelete`                          |
 //! | Current user member   | `MemberAdd`, `MemberUpdate`                                       |
 
-mod cache;
 mod message;
 mod process;
 
 pub mod model;
 pub mod permission;
+pub mod redis;
 
-pub use cache::InMemoryCache;
 pub use message::{MessageCache, MessageExpireTask};
 pub use process::UpdateCache;

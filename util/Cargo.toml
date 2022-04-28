@@ -9,9 +9,13 @@ publish = false
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
+serde_with = "1"
 tokio = { version = "1", features = ["macros", "signal", "sync", "time"] }
 twilight-model = "0.10"
 
 tracing = { version = "0.1", features = ["release_max_level_info"] }
 tracing-appender = "0.2"
 tracing-subscriber = { version = "0.3", features = ["std", "fmt", "ansi"], default-features = false }
+
+[dev-dependencies]
+serde_test = "1"

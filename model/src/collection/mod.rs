@@ -1,4 +1,4 @@
-//! Models used in MongoDB collections.
+//! MongoDB collections models.
 //!
 //! This module contains all models used in MongoDB database. These models can
 //! be serialized and deserialized using `serde`.
@@ -12,6 +12,5 @@
 //!
 
 mod guild;
-pub mod serde_helpers;
 
 pub use guild::{Config, Guild, GUILDS_COLLECTION};

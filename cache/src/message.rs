@@ -1,12 +1,9 @@
 //! Message cache.
 //!
 //! This module expose the cache used to store messages for anti-spam processing.
-//! Unlike [`InMemoryCache`], each cached message has a TTL and expires after 2
-//! minutes.
+//! Each cached message has a TTL and expires after 2 minutes.
 //!
 //! The cache uses the [`async_ttl`] crate.
-//!
-//! [`InMemoryCache`]: super::InMemoryCache
 
 use std::{
     collections::{HashMap, VecDeque},
@@ -21,7 +18,7 @@ use twilight_model::id::{
     Id,
 };
 
-use crate::model::CachedMessage;
+use crate::model::message::CachedMessage;
 
 /// Message cache expiration task.
 pub type MessageExpireTask = AsyncTtlExpireTask<MessageCacheInner, CacheKey, CachedMessage>;
