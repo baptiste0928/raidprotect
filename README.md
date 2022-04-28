@@ -64,7 +64,8 @@ For more details, read the [`SUPPORT.md`](SUPPORT.md) file.
 RaidProtect is written in [Rust](https://www.rust-lang.org/) and uses the latest
 stable version of the compiler. It is designed to run on a Linux system, but
 should also work on Windows and macOS (let us know if you have problems). It
-uses [MongoDB](https://www.mongodb.com/) as its database.
+uses [MongoDB](https://www.mongodb.com/) as its database and [KeyDB](https://keydb.dev/)
+(a faster Redis fork) for the cache.
 
 - **Open in GitPod (recommended)**: the easiest way to launch RaidProtect is to
 use [GitPod](https://www.gitpod.io/), a cloud-based IDE. This allows you to have
@@ -73,9 +74,13 @@ the bot. GitPod offers a generous free plan of 50 hours of usage per month.
 
   [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/raidprotect/raidprotect)
   
-- **Running locally**: make sure you have a MongoDB database installed to start
-the bot. A simple way is to use a Docker/Podman container to launch a local
-instance: `docker run --name mongodb-raidprotect -d -p 27017:27017 mongo:latest`.
+- **Running locally**: make sure you have a MongoDB database and a Redis database
+running an avaiable to start the bot. A simple way is to use a Docker (or Podman)
+container to launch local instances:
+  ```
+  $ docker run --name mongodb-raidprotect -d -p 27017:27017 mongo:latest
+  $ docker run --name keydb-raidprotect -d -p 6379:6379 eqalpha/keydb:latest
+  ```
 
 ### Creating the bot account
 You must create a bot account in order to launch RaidProtect. See
