@@ -48,7 +48,7 @@ pub fn cache_guild(
     }
 
     for role in &guild.roles {
-        cache_role(pipe, role, guild.id);
+        cache_role(pipe, role, guild.id)?;
 
         roles.insert(role.id);
     }

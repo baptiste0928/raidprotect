@@ -13,7 +13,7 @@ use twilight_model::{
     util::ImageHash,
 };
 
-use crate::redis::RedisModel;
+use crate::{permission::RoleOrdering, redis::RedisModel};
 
 /// Cached model of a [`Guild`].
 ///
@@ -120,6 +120,13 @@ pub struct CachedRole {
     pub managed: bool,
 }
 
+impl CachedRole {
+    /// Get the [`RoleOrdering`] associated with this role.
+    pub fn as_ordering(&self) -> RoleOrdering {
+        RoleOrdering::from_cached(self)
+    }
+}
+
 impl RedisModel for CachedRole {
     type Id = Id<RoleMarker>;
 
@@ -129,17 +136,5 @@ impl RedisModel for CachedRole {
 
     fn key_from(id: &Self::Id) -> String {
         format!("c:role:{id}")
-    }
-}
-
-impl PartialOrd for CachedRole {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.position.partial_cmp(&other.position)
-    }
-}
-
-impl Ord for CachedRole {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.position.cmp(&other.position)
     }
 }

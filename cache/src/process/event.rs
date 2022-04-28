@@ -34,7 +34,7 @@ pub trait UpdateCache {
 impl UpdateCache for GuildCreate {
     async fn update(&self, redis: &RedisClient, current_user: Id<UserMarker>) -> RedisResult<()> {
         let mut pipe = redis::pipe();
-        super::resource::cache_guild(&mut pipe, current_user, &self.0);
+        super::resource::cache_guild(&mut pipe, current_user, &self.0)?;
 
         let mut conn = redis.conn().await?;
         pipe.query_async(&mut *conn).await?;
@@ -248,7 +248,7 @@ impl UpdateCache for RoleCreate {
     async fn update(&self, redis: &RedisClient, _current_user: Id<UserMarker>) -> RedisResult<()> {
         let mut pipe = redis::pipe();
 
-        super::resource::cache_role(&mut pipe, &self.role, self.guild_id);
+        super::resource::cache_role(&mut pipe, &self.role, self.guild_id)?;
 
         if let Some(mut guild) = redis.get::<CachedGuild>(&self.guild_id).await? {
             guild.roles.insert(self.role.id);
@@ -287,7 +287,7 @@ impl UpdateCache for RoleUpdate {
         let mut pipe = redis::pipe();
         let mut conn = redis.conn().await?;
 
-        super::resource::cache_role(&mut pipe, &self.role, self.guild_id);
+        super::resource::cache_role(&mut pipe, &self.role, self.guild_id)?;
         pipe.query_async(&mut *conn).await?;
 
         Ok(())
@@ -306,11 +306,11 @@ impl UpdateCache for MemberAdd {
             let cached = CurrentMember {
                 id: self.user.id,
                 communication_disabled_until: self.communication_disabled_until,
-                roles: self.roles.into_iter().collect(),
+                roles: self.roles.iter().copied().collect(),
             };
 
             guild.current_member = Some(cached);
-            redis.set(&guild).await;
+            redis.set(&guild).await?;
         }
 
         Ok(())
@@ -329,11 +329,11 @@ impl UpdateCache for MemberUpdate {
             let cached = CurrentMember {
                 id: self.user.id,
                 communication_disabled_until: self.communication_disabled_until,
-                roles: self.roles.into_iter().collect(),
+                roles: self.roles.iter().copied().collect(),
             };
 
             guild.current_member = Some(cached);
-            redis.set(&guild).await;
+            redis.set(&guild).await?;
         }
         Ok(())
     }

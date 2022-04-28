@@ -5,7 +5,6 @@
 
 use std::cmp::Ordering;
 
-use dashmap::mapref::one::Ref;
 use twilight_model::{
     guild::Permissions,
     id::{
@@ -15,40 +14,43 @@ use twilight_model::{
 };
 use twilight_util::permission_calculator::PermissionCalculator;
 
-use crate::{model::CachedRole, InMemoryCache};
+use crate::{
+    model::{CachedGuild, CachedRole},
+    redis::{RedisClient, RedisModel, RedisResult},
+};
 
 /// Calculate the permissions of a member with information from the cache.
-///
-/// This type holds references to cached values and should live the least
-/// possible to avoid locking the cache.
-pub struct CachePermissions<'cache> {
+pub struct CachePermissions {
     guild_id: Id<GuildMarker>,
     user_id: Id<UserMarker>,
-    member_roles: MemberRoles<'cache>,
+    member_roles: MemberRoles,
     is_owner: bool,
 }
 
-impl<'cache> CachePermissions<'cache> {
-    /// Initialize [`CachePermissions`] from a cache reference.
+impl CachePermissions {
+    /// Initialize [`CachePermissions`] from a redis client.
     ///
     /// If the guild is not found in the cache, [`None`] is returned.
-    pub(crate) fn new(
-        cache: &'cache InMemoryCache,
+    pub(crate) async fn new(
+        redis: &RedisClient,
         guild_id: Id<GuildMarker>,
         user_id: Id<UserMarker>,
         member_roles: &[Id<RoleMarker>],
-    ) -> Option<Self> {
-        let guild = cache.guild(guild_id)?;
+    ) -> RedisResult<Option<Self>> {
+        if let Some(guild) = redis.get::<CachedGuild>(&guild_id).await? {
+            let is_owner = user_id == guild.owner_id;
 
-        let is_owner = user_id == guild.owner_id;
-        let member_roles = MemberRoles::query(cache, guild_id, member_roles)?;
+            if let Some(member_roles) = MemberRoles::query(redis, guild_id, member_roles).await? {
+                return Ok(Some(Self {
+                    guild_id,
+                    user_id,
+                    member_roles,
+                    is_owner,
+                }));
+            }
+        }
 
-        Some(Self {
-            guild_id,
-            user_id,
-            member_roles,
-            is_owner,
-        })
+        Ok(None)
     }
 
     /// Checks if a user is the owner of a guild.
@@ -65,7 +67,7 @@ impl<'cache> CachePermissions<'cache> {
                 .member_roles
                 .roles
                 .iter()
-                .map(|role| RoleOrdering::from_cached(role))
+                .map(RoleOrdering::from_cached)
                 .collect();
             roles.sort();
 
@@ -99,34 +101,50 @@ impl<'cache> CachePermissions<'cache> {
     }
 }
 
-/// Reference to a [`CachedRole`].
-type CachedRoleRef<'cache> = Ref<'cache, Id<RoleMarker>, CachedRole>;
-
 /// List of resolved roles of a member.
-struct MemberRoles<'cache> {
+struct MemberRoles {
     /// Everyone role
-    pub everyone: CachedRoleRef<'cache>,
+    pub everyone: CachedRole,
     /// List of roles of the user
-    pub roles: Vec<CachedRoleRef<'cache>>,
+    pub roles: Vec<CachedRole>,
 }
 
-impl<'cache> MemberRoles<'cache> {
+impl MemberRoles {
     /// Query roles of a member in the cache.
-    fn query(
-        cache: &'cache InMemoryCache,
+    async fn query(
+        redis: &RedisClient,
         guild_id: Id<GuildMarker>,
         member_roles: &[Id<RoleMarker>],
-    ) -> Option<MemberRoles<'cache>> {
+    ) -> RedisResult<Option<MemberRoles>> {
+        // Get user roles
+        let mut pipe = redis::pipe();
+        for role in member_roles {
+            pipe.get(CachedRole::key_from(role));
+        }
+
+        let mut conn = redis.conn().await?;
+        let result: Vec<_> = pipe.query_async(&mut *conn).await?;
+
+        // Filter everyone role and other roles
         let everyone_id = guild_id.cast();
+        let mut everyone_role = None;
+        let mut roles = Vec::new();
 
-        let everyone = cache.role(everyone_id)?;
-        let roles = member_roles
-            .iter()
-            .filter(|id| **id != everyone_id) // Remove everyone role
-            .map(|id| cache.role(*id))
-            .collect::<Option<Vec<_>>>()?;
+        for value in result {
+            let role = CachedRole::deserialize_model(value)?;
 
-        Some(MemberRoles { everyone, roles })
+            if role.id == everyone_id {
+                everyone_role = Some(role);
+            } else {
+                roles.push(role)
+            }
+        }
+
+        if let Some(everyone) = everyone_role {
+            Ok(Some(MemberRoles { everyone, roles }))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -156,7 +174,7 @@ pub struct RoleOrdering {
 
 impl RoleOrdering {
     /// Initialize a new [`RoleOrdering`] from a [`CachedRole`].
-    fn from_cached(role: &CachedRole) -> Self {
+    pub(crate) fn from_cached(role: &CachedRole) -> Self {
         Self {
             id: role.id,
             position: role.position,

@@ -10,9 +10,15 @@ use bb8_redis::RedisConnectionManager;
 use redis::{AsyncCommands, RedisError};
 use serde::{de::DeserializeOwned, Serialize};
 use thiserror::Error;
-use twilight_model::id::{marker::GuildMarker, Id};
+use twilight_model::id::{
+    marker::{GuildMarker, RoleMarker, UserMarker},
+    Id,
+};
 
-use crate::model::{CachedChannel, CachedGuild, CachedRole};
+use crate::{
+    model::{CachedChannel, CachedGuild, CachedRole},
+    permission::CachePermissions,
+};
 
 /// Alias for a [`Result`] with [`RedisClientError`] as error type.
 pub type RedisResult<T> = Result<T, RedisClientError>;
@@ -108,6 +114,18 @@ impl RedisClient {
         } else {
             Ok(Vec::new())
         }
+    }
+
+    /// Get a [`CachePermissions`] for a given guild member.
+    ///
+    /// If the guild is not found in the cache, [`None`] is returned.
+    pub async fn permissions(
+        &self,
+        guild_id: Id<GuildMarker>,
+        user_id: Id<UserMarker>,
+        member_roles: &[Id<RoleMarker>],
+    ) -> RedisResult<Option<CachePermissions>> {
+        CachePermissions::new(self, guild_id, user_id, member_roles).await
     }
 }
 
