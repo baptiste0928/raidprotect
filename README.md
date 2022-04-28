@@ -75,7 +75,7 @@ the bot. GitPod offers a generous free plan of 50 hours of usage per month.
   [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/raidprotect/raidprotect)
   
 - **Running locally**: make sure you have a MongoDB database and a Redis database
-running an avaiable to start the bot. A simple way is to use a Docker (or Podman)
+running an available to start the bot. A simple way is to use a Docker (or Podman)
 container to launch local instances:
   ```
   $ docker run --name mongodb-raidprotect -d -p 27017:27017 mongo:latest
