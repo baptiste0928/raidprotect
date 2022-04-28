@@ -68,6 +68,14 @@ impl RedisClient {
         Ok(())
     }
 
+    /// Run a `PING` command to check if Redis is connected.
+    pub async fn ping(&self) -> RedisResult<()> {
+        let mut conn = self.conn().await?;
+        redis::cmd("PING").query_async(&mut *conn).await?;
+
+        Ok(())
+    }
+
     /// Get all the [`CachedChannel`] of a guild.
     ///
     /// If the guild is not cached, an empty [`Vec`] is returned.

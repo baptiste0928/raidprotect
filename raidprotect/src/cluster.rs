@@ -65,6 +65,8 @@ impl ShardCluster {
         info!("logged as {} with ID {}", application.name, current_user);
 
         let redis = RedisClient::new(&config.redis_uri).await?;
+        redis.ping().await?; // Ensure redis is reachable
+
         let (messages, messages_expire) = MessageCache::new();
         let (pending_components, pending_components_expire) = PendingComponentQueue::new();
 
