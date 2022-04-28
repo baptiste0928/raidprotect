@@ -12,7 +12,7 @@ use twilight_model::{
     channel::{Channel, ChannelType},
     guild::{Guild, Role},
     id::{
-        marker::{GuildMarker, UserMarker},
+        marker::{ApplicationMarker, GuildMarker},
         Id,
     },
 };
@@ -27,7 +27,7 @@ use crate::{
 
 pub fn cache_guild(
     pipe: &mut Pipeline,
-    current_user: Id<UserMarker>,
+    current_user: Id<ApplicationMarker>,
     guild: &Guild,
 ) -> RedisResult<()> {
     // Insert channels and roles into the cache.
@@ -57,7 +57,7 @@ pub fn cache_guild(
     let current_member = guild
         .members
         .iter()
-        .find(|m| m.user.id == current_user)
+        .find(|m| m.user.id == current_user.cast())
         .map(|member| CurrentMember {
             id: member.user.id,
             communication_disabled_until: member.communication_disabled_until,

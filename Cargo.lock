@@ -1129,6 +1129,7 @@ name = "raidprotect"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "dotenv",
  "envy",
  "futures",
@@ -1224,6 +1225,7 @@ dependencies = [
  "raidprotect-cache",
  "raidprotect-model",
  "twilight-http",
+ "twilight-model",
 ]
 
 [[package]]

@@ -26,6 +26,12 @@ pub struct Config {
     /// **Warning:** if set, all previously created global commands will be
     /// removed to avoid duplicates. Do not enable this in production.
     pub command_guild: Option<u64>,
+    /// Redis connection uri.
+    ///
+    /// The connection uri should use the `redis://` scheme. Defaults to
+    /// `redis://localhost:6379` if missing.
+    #[serde(default = "default_redis_uri")]
+    pub redis_uri: String,
     /// MongoDB connection uri.
     ///
     /// The format of the connection string is described [here]. Defaults to
@@ -42,6 +48,11 @@ pub struct Config {
     /// Logging configuration.
     #[serde(flatten, default)]
     pub log: LogConfig,
+}
+
+/// Default Redis connection uri.
+fn default_redis_uri() -> String {
+    "redis://localhost:6379".to_string()
 }
 
 /// Default MongoDB connection uri.
