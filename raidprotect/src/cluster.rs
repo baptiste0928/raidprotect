@@ -49,7 +49,7 @@ pub struct ShardCluster {
 impl ShardCluster {
     /// Initialize a new [`ShardCluster`].
     ///
-    /// This method also initialize an [`HttpClient`] and an [`InMemoryCache`],
+    /// This method also initialize an [`HttpClient`] and a [`RedisClient`],
     /// that can be later retrieved using corresponding methods.
     pub async fn new(config: Config) -> Result<Self, ClusterError> {
         // Initialize HTTP client and get current user.

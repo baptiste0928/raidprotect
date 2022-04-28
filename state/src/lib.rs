@@ -50,7 +50,7 @@ impl ClusterState {
         }
     }
 
-    /// Get the cluster [`InMemoryCache`].
+    /// Get the cluster [`RedisClient`].
     pub fn redis(&self) -> &RedisClient {
         &self.redis
     }

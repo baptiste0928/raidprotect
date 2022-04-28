@@ -131,9 +131,8 @@ impl RedisClient {
 
 /// This trait is implemented by types representing a Redis model.
 ///
-/// It provides methods to get the model key used
-/// in Redis, as well as a default implement of [`ToRedisArgs`] and
-/// [`FromRedisValue`].
+/// It provides methods to get the model key used in Redis, as well as methods
+/// for serialization and deserialization.
 pub trait RedisModel: Serialize + DeserializeOwned {
     /// Type used for the unique model identifier.
     type Id;
