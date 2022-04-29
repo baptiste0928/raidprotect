@@ -115,10 +115,10 @@ For a complete and up-to-date list of available configuration options, refer to
 the [`raidprotect/src/config.rs`](raidprotect/src/config.rs) file.
 
 ### Starting the bot
-You should be able to compile and launch the bot with `cargo run` (ensure the
-MongoDB database is running and exposed to `localhost:27017` - this can be
-changed in the configuration). Feel free to ask in our Discord server if you run
-into any problem.
+You should be able to compile and launch the bot with `cargo run` (ensure that
+both MongoDB and KeyDB/Redis are running locally with the default port - the
+connection uri can be changed with environment variables). Feel free to ask in
+our Discord server if you run into any problem.
 
 Congratulations, you now have a working local instance of RaidProtect. 🎉
 
