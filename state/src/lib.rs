@@ -5,8 +5,8 @@
 
 use std::sync::Arc;
 
-use raidprotect_cache::{redis::RedisClient, MessageCache};
-use raidprotect_model::{interaction::component::PendingComponentQueue, mongodb::MongoDbClient};
+use raidprotect_cache::redis::RedisClient;
+use raidprotect_model::mongodb::MongoDbClient;
 use twilight_http::Client as HttpClient;
 use twilight_model::id::{marker::ApplicationMarker, Id};
 
@@ -22,10 +22,6 @@ pub struct ClusterState {
     mongodb: MongoDbClient,
     /// Http client
     http: Arc<HttpClient>,
-    /// Message cache client
-    messages: MessageCache,
-    /// Pending components queue
-    pending_components: PendingComponentQueue,
     /// Bot user id
     current_user: Id<ApplicationMarker>,
 }
@@ -36,16 +32,12 @@ impl ClusterState {
         redis: RedisClient,
         mongodb: MongoDbClient,
         http: Arc<HttpClient>,
-        messages: MessageCache,
-        pending_components: PendingComponentQueue,
         current_user: Id<ApplicationMarker>,
     ) -> Self {
         Self {
             redis,
             mongodb,
             http,
-            messages,
-            pending_components,
             current_user,
         }
     }
@@ -63,16 +55,6 @@ impl ClusterState {
     /// Get the cluster [`HttpClient`].
     pub fn http(&self) -> &HttpClient {
         &self.http
-    }
-
-    /// Get the cluster [`MessageCache`].
-    pub fn messages(&self) -> &MessageCache {
-        &self.messages
-    }
-
-    /// Get the cluster [`PendingComponentQueue`].
-    pub fn pending_components(&self) -> &PendingComponentQueue {
-        &self.pending_components
     }
 
     /// Get the bot user id

@@ -43,6 +43,3 @@ deny = []
 # Only crates.io is allowed
 unknown-registry = "deny"
 unknown-git = "deny"
-
-[sources.allow-org]
-github = ["raidprotect", "baptiste0928"]

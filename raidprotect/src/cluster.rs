@@ -3,15 +3,9 @@
 use std::sync::Arc;
 
 use futures::StreamExt;
-use raidprotect_cache::{
-    redis::{RedisClient, RedisClientError},
-    MessageCache, MessageExpireTask,
-};
+use raidprotect_cache::redis::{RedisClient, RedisClientError};
 use raidprotect_interaction::register_commands;
-use raidprotect_model::{
-    interaction::component::{PendingComponentExpireTask, PendingComponentQueue},
-    mongodb::{MongoDbClient, MongoDbError},
-};
+use raidprotect_model::mongodb::{MongoDbClient, MongoDbError};
 use raidprotect_state::ClusterState;
 use raidprotect_util::shutdown::ShutdownSubscriber;
 use thiserror::Error;
@@ -40,10 +34,6 @@ pub struct ShardCluster {
     events: Events,
     /// Shared cluster state
     state: Arc<ClusterState>,
-    /// Message cache expiration task
-    messages_expire: MessageExpireTask,
-    /// Pending components expiration task
-    pending_components_expire: PendingComponentExpireTask,
 }
 
 impl ShardCluster {
@@ -67,9 +57,6 @@ impl ShardCluster {
         let redis = RedisClient::new(&config.redis_uri).await?;
         redis.ping().await?; // Ensure redis is reachable
 
-        let (messages, messages_expire) = MessageCache::new();
-        let (pending_components, pending_components_expire) = PendingComponentQueue::new();
-
         let mongodb = MongoDbClient::connect(&config.mongodb_uri, config.mongodb_database).await?;
         mongodb.ping().await?; // Ensure database is reachable
 
@@ -87,14 +74,7 @@ impl ShardCluster {
 
         info!("started cluster with {} shards", cluster.shards().len());
 
-        let state = ClusterState::new(
-            redis,
-            mongodb,
-            http,
-            messages,
-            pending_components,
-            current_user,
-        );
+        let state = ClusterState::new(redis, mongodb, http, current_user);
 
         register_commands(&state, application.id, config.command_guild).await;
 
@@ -102,8 +82,6 @@ impl ShardCluster {
             cluster: Arc::new(cluster),
             events,
             state: Arc::new(state),
-            messages_expire,
-            pending_components_expire,
         })
     }
 
@@ -116,18 +94,6 @@ impl ShardCluster {
         let cluster = self.cluster.clone();
         tokio::spawn(async move {
             cluster.up().await;
-        });
-
-        // Start message cache expiration task
-        let messages_expire = self.messages_expire.clone();
-        tokio::spawn(async move {
-            messages_expire.run().await;
-        });
-
-        // Start pending components expiration task
-        let pending_components_expire = self.pending_components_expire.clone();
-        tokio::spawn(async move {
-            pending_components_expire.run().await;
         });
 
         // Handle incoming events

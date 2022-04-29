@@ -76,14 +76,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-ttl"
-version = "0.1.0"
-source = "git+https://github.com/baptiste0928/async-ttl#312c1553b5f82770f409dd9e1f85701a2d5ba0a4"
-dependencies = [
- "tokio",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1142,16 +1134,15 @@ name = "raidprotect-cache"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "async-ttl",
  "bb8",
  "bb8-redis",
+ "raidprotect-model",
  "raidprotect-util",
  "redis",
  "rmp-serde",
  "serde",
  "serde_with",
  "thiserror",
- "tokio",
  "tracing",
  "twilight-model",
  "twilight-util",
@@ -1178,6 +1169,7 @@ name = "raidprotect-interaction"
 version = "0.1.0"
 dependencies = [
  "nanoid",
+ "raidprotect-cache",
  "raidprotect-model",
  "raidprotect-state",
  "raidprotect-translations",
@@ -1195,14 +1187,12 @@ dependencies = [
 name = "raidprotect-model"
 version = "0.1.0"
 dependencies = [
- "async-ttl",
  "mongodb",
  "raidprotect-util",
  "serde",
  "serde_test",
  "serde_with",
  "twilight-model",
- "url",
 ]
 
 [[package]]
