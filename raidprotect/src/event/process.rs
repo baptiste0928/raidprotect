@@ -30,7 +30,7 @@ macro_rules! process_events {
 
 async fn process_cache_event<E: UpdateCache>(event: E, state: &ClusterState) {
     if let Err(error) = event.update(state.redis(), state.current_user()).await {
-        error!(error = %error, "failed to update cache");
+        error!(error = %error, kind = E::NAME, "failed to update cache");
     }
 }
 

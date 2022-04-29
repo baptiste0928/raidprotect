@@ -23,6 +23,11 @@ use crate::{
 /// the cache up-to-date.
 #[async_trait]
 pub trait UpdateCache {
+    /// Name of the event.
+    ///
+    /// This is used for logging purpose in case of caching error.
+    const NAME: &'static str;
+
     /// Update the cache based on event data.
     ///
     /// If an old value of the updated entry is present in the cache, it will be
@@ -36,6 +41,8 @@ pub trait UpdateCache {
 
 #[async_trait]
 impl UpdateCache for GuildCreate {
+    const NAME: &'static str = "GuildCreate";
+
     async fn update(
         &self,
         redis: &RedisClient,
@@ -53,6 +60,8 @@ impl UpdateCache for GuildCreate {
 
 #[async_trait]
 impl UpdateCache for GuildDelete {
+    const NAME: &'static str = "GuildDelete";
+
     async fn update(
         &self,
         redis: &RedisClient,
@@ -80,6 +89,8 @@ impl UpdateCache for GuildDelete {
 
 #[async_trait]
 impl UpdateCache for UnavailableGuild {
+    const NAME: &'static str = "UnavailableGuild";
+
     async fn update(
         &self,
         redis: &RedisClient,
@@ -109,6 +120,8 @@ impl UpdateCache for UnavailableGuild {
 
 #[async_trait]
 impl UpdateCache for GuildUpdate {
+    const NAME: &'static str = "GuildUpdate";
+
     async fn update(
         &self,
         redis: &RedisClient,
@@ -127,6 +140,8 @@ impl UpdateCache for GuildUpdate {
 
 #[async_trait]
 impl UpdateCache for ChannelCreate {
+    const NAME: &'static str = "ChannelCreate";
+
     async fn update(
         &self,
         redis: &RedisClient,
@@ -157,6 +172,8 @@ impl UpdateCache for ChannelCreate {
 
 #[async_trait]
 impl UpdateCache for ChannelDelete {
+    const NAME: &'static str = "ChannelDelete";
+
     async fn update(
         &self,
         redis: &RedisClient,
@@ -184,6 +201,8 @@ impl UpdateCache for ChannelDelete {
 
 #[async_trait]
 impl UpdateCache for ChannelUpdate {
+    const NAME: &'static str = "ChannelUpdate";
+
     async fn update(
         &self,
         redis: &RedisClient,
@@ -209,6 +228,8 @@ impl UpdateCache for ChannelUpdate {
 
 #[async_trait]
 impl UpdateCache for ThreadCreate {
+    const NAME: &'static str = "ThreadCreate";
+
     async fn update(
         &self,
         redis: &RedisClient,
@@ -239,6 +260,8 @@ impl UpdateCache for ThreadCreate {
 
 #[async_trait]
 impl UpdateCache for ThreadDelete {
+    const NAME: &'static str = "ThreadDelete";
+
     async fn update(
         &self,
         redis: &RedisClient,
@@ -264,6 +287,8 @@ impl UpdateCache for ThreadDelete {
 
 #[async_trait]
 impl UpdateCache for ThreadUpdate {
+    const NAME: &'static str = "ThreadUpdate";
+
     async fn update(
         &self,
         redis: &RedisClient,
@@ -289,6 +314,8 @@ impl UpdateCache for ThreadUpdate {
 
 #[async_trait]
 impl UpdateCache for RoleCreate {
+    const NAME: &'static str = "RoleCreate";
+
     async fn update(
         &self,
         redis: &RedisClient,
@@ -312,6 +339,8 @@ impl UpdateCache for RoleCreate {
 
 #[async_trait]
 impl UpdateCache for RoleDelete {
+    const NAME: &'static str = "RoleDelete";
+
     async fn update(
         &self,
         redis: &RedisClient,
@@ -335,6 +364,8 @@ impl UpdateCache for RoleDelete {
 
 #[async_trait]
 impl UpdateCache for RoleUpdate {
+    const NAME: &'static str = "RoleUpdate";
+
     async fn update(
         &self,
         redis: &RedisClient,
@@ -352,6 +383,8 @@ impl UpdateCache for RoleUpdate {
 
 #[async_trait]
 impl UpdateCache for MemberAdd {
+    const NAME: &'static str = "MemberAdd";
+
     async fn update(
         &self,
         redis: &RedisClient,
@@ -379,6 +412,8 @@ impl UpdateCache for MemberAdd {
 
 #[async_trait]
 impl UpdateCache for MemberUpdate {
+    const NAME: &'static str = "MemberUpdate";
+
     async fn update(
         &self,
         redis: &RedisClient,
