@@ -1,10 +1,10 @@
-use std::sync::Arc;
+use std::{fmt::Debug, sync::Arc};
 
 use async_trait::async_trait;
 use raidprotect_cache::UpdateCache;
 use raidprotect_event::message::ALLOWED_MESSAGES_TYPES;
 use raidprotect_state::ClusterState;
-use tracing::{error, trace};
+use tracing::{debug, error, trace};
 use twilight_model::{
     application::interaction::Interaction,
     gateway::{event::Event as GatewayEvent, payload::incoming},
@@ -28,9 +28,10 @@ macro_rules! process_events {
     };
 }
 
-async fn process_cache_event<E: UpdateCache>(event: E, state: &ClusterState) {
+async fn process_cache_event<E: UpdateCache + Debug>(event: E, state: &ClusterState) {
     if let Err(error) = event.update(state.redis(), state.current_user()).await {
-        error!(error = %error, "failed to update cache");
+        error!(error = %error, kind = E::NAME, "failed to update cache");
+        debug!(event = ?event);
     }
 }
 
