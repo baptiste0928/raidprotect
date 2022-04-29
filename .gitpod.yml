@@ -4,6 +4,9 @@ tasks:
   - init: mkdir -p /workspace/data
     command: mongod --dbpath /workspace/data
 
+  - init: docker pull eqalpha/keydb:latest
+    command: docker run -p 6379:6379 eqalpha/keydb:latest
+
   - init: sleep 10 && cargo doc
     command: npx -qy http-server target/doc/ -p 8080
 
