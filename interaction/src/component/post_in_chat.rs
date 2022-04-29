@@ -4,10 +4,11 @@
 //! in the channel an ephemeral response.
 
 use nanoid::nanoid;
-use raidprotect_model::interaction::{
-    component::{PendingComponent, PostInChatButton},
-    InteractionResponse,
+use raidprotect_cache::{
+    model::component::{PendingComponent, PostInChatButton},
+    redis::RedisClientError,
 };
+use raidprotect_model::interaction::InteractionResponse;
 use raidprotect_state::ClusterState;
 use raidprotect_translations::Lang;
 use twilight_model::{
@@ -31,21 +32,17 @@ impl PostInChat {
         message: InteractionResponse,
         author_id: Id<UserMarker>,
         state: &ClusterState,
-    ) -> Self {
+    ) -> Result<Self, RedisClientError> {
         let custom_id = nanoid!();
+        let component = PendingComponent::PostInChatButton(PostInChatButton {
+            id: custom_id.clone(),
+            response: message.clone(),
+            author_id,
+        });
 
-        state
-            .pending_components()
-            .insert(
-                custom_id.clone(),
-                PendingComponent::PostInChatButton(PostInChatButton {
-                    response: message.clone(),
-                    author_id,
-                }),
-            )
-            .await;
+        state.redis().set(&component).await?;
 
-        Self { message, custom_id }
+        Ok(Self { message, custom_id })
     }
 
     pub fn handle(component: PostInChatButton) -> InteractionResponseData {

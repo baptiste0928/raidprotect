@@ -1,5 +1,8 @@
-//! Interaction response model.
+//! Interaction models.
+//!
+//! These models are used to store interaction models such as responses.
 
+use serde::{Deserialize, Serialize};
 use twilight_model::{channel::embed::Embed, http::interaction::InteractionResponseData};
 
 /// Response to an interaction.
@@ -7,7 +10,7 @@ use twilight_model::{channel::embed::Embed, http::interaction::InteractionRespon
 /// This enum contains types that can be used to respond to an interaction. The
 /// [`InteractionResponse::Custom`] variant can be used to respond with a custom
 /// [`InteractionResponseData`].
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum InteractionResponse {
     /// Respond with an embed.
     Embed(Embed),

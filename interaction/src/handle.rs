@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use raidprotect_model::interaction::component::PendingComponent;
+use raidprotect_cache::model::component::PendingComponent;
 use raidprotect_state::ClusterState;
 use tracing::{error, warn};
 use twilight_interactions::command::CreateCommand;
@@ -104,12 +104,24 @@ pub async fn handle_component(component: MessageComponentInteraction, state: Arc
         }
     };
 
-    let response = if let Some(pending_component) = state
-        .pending_components()
-        .get(&context.data.custom_id)
+    let pending_component = match state
+        .redis()
+        .get::<PendingComponent>(&context.data.custom_id)
         .await
     {
-        match pending_component {
+        Ok(component) => component,
+        Err(error) => {
+            error!(error = %error, "failed to fetch component state");
+            responder
+                .respond(&state, embed::error::internal_error().into_response())
+                .await;
+
+            return;
+        }
+    };
+
+    let response = if let Some(component) = pending_component {
+        match component {
             PendingComponent::PostInChatButton(component) => PostInChat::handle(component),
         }
     } else {

@@ -2,6 +2,7 @@
 
 use std::time::Duration;
 
+use raidprotect_cache::redis::RedisClientError;
 use raidprotect_model::interaction::InteractionResponse;
 use raidprotect_state::ClusterState;
 use raidprotect_translations::Lang;
@@ -103,7 +104,7 @@ impl ProfileCommand {
             context.user.id,
             state,
         )
-        .await)
+        .await?)
     }
 }
 
@@ -116,6 +117,8 @@ pub enum ProfileCommandError {
     Embed(#[from] EmbedValidationError),
     #[error("failed to build image url: {0}")]
     ImageUrl(#[from] ImageSourceUrlError),
+    #[error(transparent)]
+    Redis(#[from] RedisClientError),
 }
 
 impl InteractionError for ProfileCommandError {
@@ -126,6 +129,7 @@ impl InteractionError for ProfileCommandError {
             ProfileCommandError::Parse(error) => InteractionErrorKind::internal(error),
             ProfileCommandError::Embed(error) => InteractionErrorKind::internal(error),
             ProfileCommandError::ImageUrl(error) => InteractionErrorKind::internal(error),
+            ProfileCommandError::Redis(error) => InteractionErrorKind::internal(error),
         }
     }
 }

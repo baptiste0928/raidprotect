@@ -63,7 +63,13 @@ impl RedisClient {
     /// Set a value in Redis.
     pub async fn set<T: RedisModel>(&self, value: &T) -> RedisResult<()> {
         let mut conn = self.conn().await?;
-        conn.set(value.key(), value.serialize_model()?).await?;
+
+        if let Some(expires_after) = T::EXPIRES_AFTER {
+            conn.set_ex(value.key(), value.serialize_model()?, expires_after)
+                .await?;
+        } else {
+            conn.set(value.key(), value.serialize_model()?).await?;
+        }
 
         Ok(())
     }
@@ -143,7 +149,12 @@ impl RedisClient {
 /// for serialization and deserialization.
 pub trait RedisModel: Serialize + DeserializeOwned {
     /// Type used for the unique model identifier.
-    type Id;
+    type Id: ?Sized;
+
+    /// Default key expiration delay.
+    ///
+    /// If set to `None`, the key never expires.
+    const EXPIRES_AFTER: Option<usize> = None;
 
     /// Get the current value key.
     fn key(&self) -> String;

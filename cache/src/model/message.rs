@@ -13,6 +13,8 @@ use twilight_model::{
 };
 use url::Url;
 
+use crate::redis::RedisModel;
+
 /// Cached model of a [`Message`].
 ///
 /// [`Message`]: twilight_model::channel::message::Message
@@ -50,6 +52,21 @@ pub struct CachedMessage {
     /// List of roles mentioned in the message.
     #[serde_as(as = "Vec<IdAsU64>")]
     pub mention_roles: Vec<Id<RoleMarker>>,
+}
+
+impl RedisModel for CachedMessage {
+    type Id = Id<MessageMarker>;
+
+    // Message expiration duration (2 minutes)
+    const EXPIRES_AFTER: Option<usize> = Some(2 * 60);
+
+    fn key(&self) -> String {
+        Self::key_from(&self.id)
+    }
+
+    fn key_from(id: &Self::Id) -> String {
+        format!("c:msg:{id}")
+    }
 }
 
 /// Kind of message link.

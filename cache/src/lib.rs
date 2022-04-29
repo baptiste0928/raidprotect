@@ -19,12 +19,10 @@
 //! | Roles                 | `RoleCreate`, `RoleUpdate`, `RoleDelete`                          |
 //! | Current user member   | `MemberAdd`, `MemberUpdate`                                       |
 
-mod message;
 mod process;
 
 pub mod model;
 pub mod permission;
 pub mod redis;
 
-pub use message::{MessageCache, MessageExpireTask};
 pub use process::UpdateCache;
