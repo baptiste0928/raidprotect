@@ -141,6 +141,16 @@ impl RedisClient {
     ) -> RedisResult<Option<CachePermissions>> {
         CachePermissions::new(self, guild_id, user_id, member_roles).await
     }
+
+    /// Get a [`CachePermissions`] for the bot member in a given guild.
+    ///
+    /// If the guild is not found in the cache, [`None`] is returned.
+    pub async fn current_member_permissions(
+        &self,
+        guild_id: Id<GuildMarker>,
+    ) -> RedisResult<Option<CachePermissions>> {
+        CachePermissions::current_member(self, guild_id).await
+    }
 }
 
 /// This trait is implemented by types representing a Redis model.

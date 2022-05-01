@@ -86,7 +86,7 @@ impl RedisModel for CachedGuild {
 /// This model is not cached within guilds to limit
 /// data to send when requesting a [`CachedGuild`].
 ///
-/// This type implement [`Ord`] and [`PartialOrd`] for comparaisons
+/// This type implement [`Ord`] and [`PartialOrd`] for comparisons
 /// between two role based on their position.
 ///
 /// [`Role`]: twilight_model::guild::Role
