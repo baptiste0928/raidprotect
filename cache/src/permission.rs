@@ -40,13 +40,40 @@ impl CachePermissions {
         if let Some(guild) = redis.get::<CachedGuild>(&guild_id).await? {
             let is_owner = user_id == guild.owner_id;
 
-            if let Some(member_roles) = MemberRoles::query(redis, guild_id, member_roles).await? {
+            if let Some(member_roles) =
+                MemberRoles::query(redis, guild_id, member_roles.iter()).await?
+            {
                 return Ok(Some(Self {
                     guild_id,
                     user_id,
                     member_roles,
                     is_owner,
                 }));
+            }
+        }
+
+        Ok(None)
+    }
+
+    /// Initialize [`CachePermissions`] for the bot current member.
+    pub(crate) async fn current_member(
+        redis: &RedisClient,
+        guild_id: Id<GuildMarker>,
+    ) -> RedisResult<Option<Self>> {
+        if let Some(guild) = redis.get::<CachedGuild>(&guild_id).await? {
+            if let Some(current_member) = guild.current_member {
+                let is_owner = current_member.id == guild.owner_id;
+
+                if let Some(member_roles) =
+                    MemberRoles::query(redis, guild_id, current_member.roles.iter()).await?
+                {
+                    return Ok(Some(Self {
+                        guild_id,
+                        user_id: current_member.id,
+                        member_roles,
+                        is_owner,
+                    }));
+                }
             }
         }
 
@@ -114,7 +141,7 @@ impl MemberRoles {
     async fn query(
         redis: &RedisClient,
         guild_id: Id<GuildMarker>,
-        member_roles: &[Id<RoleMarker>],
+        member_roles: impl Iterator<Item = &Id<RoleMarker>>,
     ) -> RedisResult<Option<MemberRoles>> {
         // Get user roles
         let mut pipe = redis::pipe();
