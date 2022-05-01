@@ -25,7 +25,7 @@ use super::response::{InteractionError, InteractionErrorKind};
 ///
 /// This type is used for both command and interaction components as the types
 /// are similar. A generic parameter is used for the `data` field.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InteractionContext<D> {
     /// ID of the command.
     pub id: Id<InteractionMarker>,
@@ -37,14 +37,21 @@ pub struct InteractionContext<D> {
     pub data: D,
     /// The channel the command was triggered from.
     pub channel: Id<ChannelMarker>,
-    /// If command occurred in a guild, the guild configuration from database.
-    pub guild: Option<collection::Guild>,
+    /// If the command was triggered in a guild, the guild context.
+    pub guild: Option<GuildContext>,
     /// User that triggered the command.
     pub user: User,
-    /// If command occurred in a guild, the member that triggered the command.
-    pub member: Option<PartialMember>,
     /// The user locale.
     pub locale: String,
+}
+
+/// Additional context for commands triggered in a guild.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GuildContext {
+    /// The guild configuration from database.
+    pub guild: collection::Guild,
+    /// The member that triggered the command.
+    pub member: PartialMember,
 }
 
 impl<D> InteractionContext<D> {
@@ -88,9 +95,8 @@ impl InteractionContext<CommandData> {
             token: command.token,
             data: command.data,
             channel: command.channel_id,
-            guild: Some(guild),
+            guild: Some(GuildContext { guild, member }),
             user,
-            member: Some(member),
             locale: command.locale,
         })
     }
@@ -107,7 +113,6 @@ impl InteractionContext<CommandData> {
             channel: command.channel_id,
             guild: None,
             user,
-            member: None,
             locale: command.locale,
         })
     }
@@ -149,9 +154,8 @@ impl InteractionContext<MessageComponentInteractionData> {
             token: component.token,
             data: component.data,
             channel: component.channel_id,
-            guild: Some(guild),
+            guild: Some(GuildContext { guild, member }),
             user,
-            member: Some(member),
             locale: component.locale,
         })
     }
@@ -170,7 +174,6 @@ impl InteractionContext<MessageComponentInteractionData> {
             channel: component.channel_id,
             guild: None,
             user,
-            member: None,
             locale: component.locale,
         })
     }
