@@ -148,3 +148,9 @@ impl InteractionErrorKind {
         Self::Internal(Box::new(error))
     }
 }
+
+impl From<InteractionResponse> for InteractionErrorKind {
+    fn from(response: InteractionResponse) -> Self {
+        Self::response(response)
+    }
+}
