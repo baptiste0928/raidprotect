@@ -17,7 +17,9 @@ use twilight_interactions::{
     command::{CommandModel, CreateCommand, ResolvedUser},
     error::ParseError,
 };
-use twilight_model::{application::interaction::application_command::CommandData, guild::Permissions};
+use twilight_model::{
+    application::interaction::application_command::CommandData, guild::Permissions,
+};
 
 use crate::{
     context::InteractionContext,
@@ -45,30 +47,59 @@ impl KickCommand {
         state: &ClusterState,
     ) -> Result<InteractionResponse, KickCommandError> {
         let parsed = KickCommand::from_interaction(context.data.into())?;
-        let guild_context = &context.guild.ok_or(KickCommandError::GuildOnly)?;
+        let guild = &context.guild.ok_or(KickCommandError::GuildOnly)?;
 
         let user = parsed.user.resolved;
-        let _member = parsed
+        let member = parsed
             .user
             .member
             .ok_or(KickCommandError::MissingMember { user: user.name })?;
 
-        // Check member and bot permissions
+        // Fetch the author and the bot permissions.
         let author_permissions = state
             .redis()
-            .permissions(
-                guild_context.guild.id,
-                context.user.id,
-                &guild_context.member.roles,
-            )
+            .permissions(guild.guild.id, context.user.id, &guild.member.roles)
             .await?
             .ok_or(KickCommandError::PermissionNotFound)?;
+
+        let member_permissions = state
+            .redis()
+            .permissions(guild.guild.id, user.id, &member.roles)
+            .await?
+            .ok_or(KickCommandError::PermissionNotFound)?;
+
+        let bot_permissions = state
+            .redis()
+            .current_member_permissions(guild.id)
+            .await?
+            .ok_or(KickCommandError::PermissionNotFound)?;
+
+        // Check if the author and the bot have required permissions.
+        if member_permissions.is_owner() {
+            return Err(KickCommandError::MemberOwner);
+        }
 
         if !author_permissions
             .guild()
             .contains(Permissions::KICK_MEMBERS)
         {
             return Err(KickCommandError::MissingKickPermission);
+        }
+
+        if !bot_permissions.guild().contains(Permissions::KICK_MEMBERS) {
+            return Err(KickCommandError::BotMissingKickPermission);
+        }
+
+        // Check if the role hierarchy allow the author and the bot to perform
+        // the kick.
+        let member_highest_role = member_permissions.highest_role();
+
+        if member_highest_role >= author_permissions.highest_role() {
+            return Err(KickCommandError::UserHierarchy);
+        }
+
+        if member_highest_role >= bot_permissions.highest_role() {
+            return Err(KickCommandError::BotHierarchy);
         }
 
         todo!()
@@ -84,6 +115,14 @@ pub enum KickCommandError {
     MissingMember { user: String },
     #[error("user has not the kick permission")]
     MissingKickPermission,
+    #[error("bot has not the kick permission")]
+    BotMissingKickPermission,
+    #[error("member is the owner of the guild")]
+    MemberOwner,
+    #[error("member has a role above the author")]
+    UserHierarchy,
+    #[error("member has a role above the bot")]
+    BotHierarchy,
     #[error("failed to parse command: {0}")]
     Parse(#[from] ParseError),
     #[error("unable to get permissions from cache")]
@@ -100,6 +139,12 @@ impl InteractionError for KickCommandError {
             KickCommandError::GuildOnly => embed::error::guild_only().into(),
             KickCommandError::MissingMember { user } => embed::kick::not_member(user).into(),
             KickCommandError::MissingKickPermission => embed::kick::missing_permission().into(),
+            KickCommandError::BotMissingKickPermission => {
+                embed::kick::bot_missing_permission().into()
+            }
+            KickCommandError::MemberOwner => embed::kick::member_owner().into(),
+            KickCommandError::UserHierarchy => embed::kick::user_hierarchy().into(),
+            KickCommandError::BotHierarchy => embed::kick::bot_hierarchy().into(),
             KickCommandError::Parse(error) => InteractionErrorKind::internal(error),
             KickCommandError::PermissionNotFound => InteractionErrorKind::internal(self),
             KickCommandError::Redis(error) => InteractionErrorKind::internal(error),

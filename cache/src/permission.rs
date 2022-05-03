@@ -37,7 +37,7 @@ impl CachePermissions {
         user_id: Id<UserMarker>,
         member_roles: &[Id<RoleMarker>],
     ) -> RedisResult<Option<Self>> {
-        if let Some(guild) = redis.get::<CachedGuild>(&guild_id).await? {
+        if let Some(guild) = dbg!(redis.get::<CachedGuild>(&guild_id).await?) {
             let is_owner = user_id == guild.owner_id;
 
             if let Some(member_roles) =

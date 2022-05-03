@@ -12,7 +12,7 @@ use twilight_model::{
     id::{marker::ApplicationMarker, Id},
 };
 
-use crate::embed;
+use crate::{command::kick::KickCommand, embed};
 
 use super::{
     command::{help::HelpCommand, profile::ProfileCommand},
@@ -44,6 +44,7 @@ pub async fn handle_command(command: ApplicationCommand, state: Arc<ClusterState
         "profile" => ProfileCommand::handle(context, &state)
             .await
             .into_response(),
+        "kick" => KickCommand::handle(context, &state).await.into_response(),
         name => {
             warn!(name = name, "unknown command received");
 
@@ -65,6 +66,7 @@ pub async fn register_commands(
     let commands: Vec<Command> = vec![
         HelpCommand::create_command().into(),
         ProfileCommand::create_command().into(),
+        KickCommand::create_command().into(),
     ];
 
     let client = state.http().interaction(application_id);
