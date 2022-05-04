@@ -8,7 +8,7 @@
 //! sent in the guild's logs channel. The kicked user receives a pm with the
 //! reason of the kick.
 
-use raidprotect_cache::redis::RedisClientError;
+use raidprotect_cache::{permission::PermissionError, redis::RedisClientError};
 use raidprotect_model::interaction::InteractionResponse;
 use raidprotect_state::ClusterState;
 use thiserror::Error;
@@ -56,23 +56,12 @@ impl KickCommand {
             .ok_or(KickCommandError::MissingMember { user: user.name })?;
 
         // Fetch the author and the bot permissions.
-        let author_permissions = state
-            .redis()
-            .permissions(guild.guild.id, context.user.id, &guild.member.roles)
-            .await?
-            .ok_or(KickCommandError::PermissionNotFound)?;
-
-        let member_permissions = state
-            .redis()
-            .permissions(guild.guild.id, user.id, &member.roles)
-            .await?
-            .ok_or(KickCommandError::PermissionNotFound)?;
-
-        let bot_permissions = state
-            .redis()
-            .current_member_permissions(guild.id)
-            .await?
-            .ok_or(KickCommandError::PermissionNotFound)?;
+        let permissions = state.redis().permissions(guild.guild.id).await?;
+        let author_permissions = permissions
+            .member(context.user.id, &guild.member.roles)
+            .await?;
+        let member_permissions = permissions.member(user.id, &member.roles).await?;
+        let bot_permissions = permissions.current_member().await?;
 
         // Check if the author and the bot have required permissions.
         if member_permissions.is_owner() {
@@ -126,7 +115,7 @@ pub enum KickCommandError {
     #[error("failed to parse command: {0}")]
     Parse(#[from] ParseError),
     #[error("unable to get permissions from cache")]
-    PermissionNotFound,
+    Permission(#[from] PermissionError),
     #[error(transparent)]
     Redis(#[from] RedisClientError),
 }
@@ -146,7 +135,7 @@ impl InteractionError for KickCommandError {
             KickCommandError::UserHierarchy => embed::kick::user_hierarchy().into(),
             KickCommandError::BotHierarchy => embed::kick::bot_hierarchy().into(),
             KickCommandError::Parse(error) => InteractionErrorKind::internal(error),
-            KickCommandError::PermissionNotFound => InteractionErrorKind::internal(self),
+            KickCommandError::Permission(error) => InteractionErrorKind::internal(error),
             KickCommandError::Redis(error) => InteractionErrorKind::internal(error),
         }
     }

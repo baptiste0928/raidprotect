@@ -10,14 +10,11 @@ use bb8_redis::RedisConnectionManager;
 use redis::{AsyncCommands, RedisError};
 use serde::{de::DeserializeOwned, Serialize};
 use thiserror::Error;
-use twilight_model::id::{
-    marker::{GuildMarker, RoleMarker, UserMarker},
-    Id,
-};
+use twilight_model::id::{marker::GuildMarker, Id};
 
 use crate::{
     model::{CachedChannel, CachedGuild, CachedRole},
-    permission::CachePermissions,
+    permission::{GuildPermissions, PermissionError},
 };
 
 /// Alias for a [`Result`] with [`RedisClientError`] as error type.
@@ -130,26 +127,14 @@ impl RedisClient {
         }
     }
 
-    /// Get a [`CachePermissions`] for a given guild member.
+    /// Get a [`GuildPermissions`] for a given guild.
     ///
     /// If the guild is not found in the cache, [`None`] is returned.
     pub async fn permissions(
         &self,
         guild_id: Id<GuildMarker>,
-        user_id: Id<UserMarker>,
-        member_roles: &[Id<RoleMarker>],
-    ) -> RedisResult<Option<CachePermissions>> {
-        CachePermissions::new(self, guild_id, user_id, member_roles).await
-    }
-
-    /// Get a [`CachePermissions`] for the bot member in a given guild.
-    ///
-    /// If the guild is not found in the cache, [`None`] is returned.
-    pub async fn current_member_permissions(
-        &self,
-        guild_id: Id<GuildMarker>,
-    ) -> RedisResult<Option<CachePermissions>> {
-        CachePermissions::current_member(self, guild_id).await
+    ) -> Result<GuildPermissions<'_>, PermissionError> {
+        GuildPermissions::new(self, guild_id).await
     }
 }
 
