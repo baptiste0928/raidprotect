@@ -4,5 +4,4 @@
 //! database connection wrappers.
 
 pub mod collection;
-pub mod interaction;
 pub mod mongodb;

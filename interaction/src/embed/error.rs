@@ -1,9 +1,10 @@
 //! Error embeds.
 
-use raidprotect_model::interaction::InteractionResponse;
 use twilight_util::builder::embed::{EmbedBuilder, EmbedFooterBuilder};
 
 use raidprotect_translations::Lang;
+
+use crate::response::InteractionResponse;
 
 use super::COLOR_RED;
 

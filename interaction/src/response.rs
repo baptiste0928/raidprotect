@@ -4,12 +4,15 @@
 
 use std::error::Error;
 
-use raidprotect_model::interaction::InteractionResponse;
 use raidprotect_state::ClusterState;
 use tracing::error;
+use twilight_http::error::ErrorType;
 use twilight_model::{
-    application::interaction::{ApplicationCommand, MessageComponentInteraction},
-    channel::message::MessageFlags,
+    application::{
+        component::Component,
+        interaction::{ApplicationCommand, MessageComponentInteraction},
+    },
+    channel::{embed::Embed, message::MessageFlags},
     http::interaction::{
         InteractionResponse as HttpInteractionResponse, InteractionResponseData,
         InteractionResponseType,
@@ -22,7 +25,6 @@ use twilight_model::{
 use twilight_util::builder::InteractionResponseDataBuilder;
 
 use crate::embed;
-
 /// Credentials used to respond to an interaction.
 #[derive(Debug)]
 pub struct InteractionResponder {
@@ -54,41 +56,85 @@ impl InteractionResponder {
     }
 
     /// Send a response to an interaction.
-    pub async fn respond(&self, state: &ClusterState, response: InteractionResponseData) {
+    pub async fn respond(&self, state: &ClusterState, response: HttpInteractionResponse) {
         let client = state.http().interaction(self.application_id);
-        let response = HttpInteractionResponse {
-            kind: InteractionResponseType::ChannelMessageWithSource,
-            data: Some(response),
-        };
 
         if let Err(error) = client
             .create_response(self.id, &self.token, &response)
             .exec()
             .await
         {
-            error!(error = %error, "failed to respond to interaction");
+            let body = match error.kind() {
+                ErrorType::Response { body, .. } => std::str::from_utf8(body).ok(),
+                _ => None,
+            };
+
+            error!(error = %error, body = ?body, "failed to respond to interaction");
         }
     }
+}
+
+/// Response to an interaction.
+///
+/// This enum contains types that can be used to respond to an interaction. The
+/// [`InteractionResponse::Custom`] variant can be used to respond with a custom
+/// [`InteractionResponseData`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum InteractionResponse {
+    /// Respond with an embed.
+    Embed(Embed),
+    /// Respond with an embed sent as ephemeral message.
+    EphemeralEmbed(Embed),
+    /// Respond with a modal.
+    Modal {
+        custom_id: String,
+        title: String,
+        components: Component,
+    },
+    /// Respond with a custom [`InteractionResponseData`].
+    Custom(InteractionResponseData),
 }
 
 /// Convert a type into [`InteractionResponseData`]..
 pub trait IntoResponse {
     /// Convert this type into [`InteractionResponseData`].
-    fn into_response(self) -> InteractionResponseData;
+    fn into_response(self) -> HttpInteractionResponse;
 }
 
 impl IntoResponse for InteractionResponse {
-    fn into_response(self) -> InteractionResponseData {
-        match self {
-            InteractionResponse::Embed(embed) => InteractionResponseDataBuilder::new()
-                .embeds([embed])
-                .build(),
-            InteractionResponse::EphemeralEmbed(embed) => InteractionResponseDataBuilder::new()
-                .embeds([embed])
-                .flags(MessageFlags::EPHEMERAL)
-                .build(),
-            InteractionResponse::Custom(response) => response,
-        }
+    fn into_response(self) -> HttpInteractionResponse {
+        let kind = match self {
+            Self::Modal { .. } => InteractionResponseType::Modal,
+            _ => InteractionResponseType::ChannelMessageWithSource,
+        };
+
+        let data = match self {
+            Self::Embed(embed) => Some(
+                InteractionResponseDataBuilder::new()
+                    .embeds([embed])
+                    .build(),
+            ),
+            Self::EphemeralEmbed(embed) => Some(
+                InteractionResponseDataBuilder::new()
+                    .embeds([embed])
+                    .flags(MessageFlags::EPHEMERAL)
+                    .build(),
+            ),
+            Self::Modal {
+                custom_id,
+                title,
+                components,
+            } => Some(
+                InteractionResponseDataBuilder::new()
+                    .custom_id(custom_id)
+                    .title(title)
+                    .components([components])
+                    .build(),
+            ),
+            Self::Custom(response) => Some(response),
+        };
+
+        HttpInteractionResponse { kind, data }
     }
 }
 
@@ -97,7 +143,7 @@ where
     T: IntoResponse,
     E: InteractionError,
 {
-    fn into_response(self) -> InteractionResponseData {
+    fn into_response(self) -> HttpInteractionResponse {
         match self {
             Ok(response) => response.into_response(),
             Err(error) => match error.into_error() {

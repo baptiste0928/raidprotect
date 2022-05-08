@@ -9,7 +9,6 @@
 //! reason of the kick.
 
 use raidprotect_cache::{permission::PermissionError, redis::RedisClientError};
-use raidprotect_model::interaction::InteractionResponse;
 use raidprotect_state::ClusterState;
 use thiserror::Error;
 use tracing::instrument;
@@ -18,13 +17,17 @@ use twilight_interactions::{
     error::ParseError,
 };
 use twilight_model::{
-    application::interaction::application_command::CommandData, guild::Permissions,
+    application::{
+        component::{text_input::TextInputStyle, ActionRow, Component, TextInput},
+        interaction::application_command::CommandData,
+    },
+    guild::Permissions,
 };
 
 use crate::{
     context::InteractionContext,
     embed,
-    response::{InteractionError, InteractionErrorKind},
+    response::{InteractionError, InteractionErrorKind, InteractionResponse},
 };
 
 /// Kick command model.
@@ -91,7 +94,52 @@ impl KickCommand {
             return Err(KickCommandError::BotHierarchy);
         }
 
-        todo!()
+        // Send reason modal.
+        match parsed.reason {
+            Some(_reason) => todo!(),
+            None => KickCommand::reason_modal(),
+        }
+    }
+
+    /// Modal that asks the user to enter a reason for the kick.
+    ///
+    /// This modal is only shown if the user has not specified a reason in the
+    /// initial command.
+    fn reason_modal() -> Result<InteractionResponse, KickCommandError> {
+        let components = Component::ActionRow(ActionRow {
+            components: vec![
+                Component::TextInput(TextInput {
+                    custom_id: "reason".to_string(),
+                    label: "Raison de l'expulsion".to_string(),
+                    max_length: Some(100),
+                    min_length: None,
+                    placeholder: Some(
+                        "Raison envoyée en message privé au membre expulsé".to_string(),
+                    ),
+                    required: Some(false),
+                    style: TextInputStyle::Short,
+                    value: None,
+                }),
+                Component::TextInput(TextInput {
+                    custom_id: "notes".to_string(),
+                    label: "Notes".to_string(),
+                    max_length: Some(1000),
+                    min_length: None,
+                    placeholder: Some(
+                        "Notes supplémentaires visibles par les modérateurs du serveur".to_string(),
+                    ),
+                    required: Some(false),
+                    style: TextInputStyle::Paragraph,
+                    value: None,
+                }),
+            ],
+        });
+
+        Ok(InteractionResponse::Modal {
+            custom_id: "kick_reason_modal".to_string(),
+            title: "Expulsion".to_string(),
+            components,
+        })
     }
 }
 
