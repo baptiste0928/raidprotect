@@ -69,7 +69,7 @@ impl InteractionResponder {
                 _ => None,
             };
 
-            error!(error = %error, body = ?body, "failed to respond to interaction");
+            error!(error = %error, body, "failed to respond to interaction");
         }
     }
 }
