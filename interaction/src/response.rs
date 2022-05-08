@@ -89,9 +89,21 @@ pub enum InteractionResponse {
     Modal {
         custom_id: String,
         title: String,
-        components: Component,
+        components: Vec<Component>,
     },
+    /// Respond with a [`DeferredChannelMessageWithSource`] interaction type.
+    ///
+    /// [`DeferredChannelMessageWithSource`]: InteractionResponseType::DeferredChannelMessageWithSource
+    DeferredMessage,
+    /// Respond with an ephemeral [`DeferredChannelMessageWithSource`] interaction type.
+    ///
+    /// [`DeferredChannelMessageWithSource`]: InteractionResponseType::DeferredChannelMessageWithSource
+    EphemeralDeferredMessage,
     /// Respond with a custom [`InteractionResponseData`].
+    ///
+    /// This will respond with a [`ChannelMessageWithSource`] interaction type.
+    ///
+    /// [`ChannelMessageWithSource`]: InteractionResponseType::ChannelMessageWithSource
     Custom(InteractionResponseData),
 }
 
@@ -105,6 +117,9 @@ impl IntoResponse for InteractionResponse {
     fn into_response(self) -> HttpInteractionResponse {
         let kind = match self {
             Self::Modal { .. } => InteractionResponseType::Modal,
+            Self::DeferredMessage | Self::EphemeralDeferredMessage => {
+                InteractionResponseType::DeferredChannelMessageWithSource
+            }
             _ => InteractionResponseType::ChannelMessageWithSource,
         };
 
@@ -128,7 +143,13 @@ impl IntoResponse for InteractionResponse {
                 InteractionResponseDataBuilder::new()
                     .custom_id(custom_id)
                     .title(title)
-                    .components([components])
+                    .components(components)
+                    .build(),
+            ),
+            Self::DeferredMessage => None,
+            Self::EphemeralDeferredMessage => Some(
+                InteractionResponseDataBuilder::new()
+                    .flags(MessageFlags::EPHEMERAL)
                     .build(),
             ),
             Self::Custom(response) => Some(response),

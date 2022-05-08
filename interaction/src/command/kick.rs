@@ -10,6 +10,8 @@
 
 use raidprotect_cache::{permission::PermissionError, redis::RedisClientError};
 use raidprotect_state::ClusterState;
+use raidprotect_translations::Lang;
+use raidprotect_util::text::TextProcessExt;
 use thiserror::Error;
 use tracing::instrument;
 use twilight_interactions::{
@@ -53,10 +55,9 @@ impl KickCommand {
         let guild = &context.guild.ok_or(KickCommandError::GuildOnly)?;
 
         let user = parsed.user.resolved;
-        let member = parsed
-            .user
-            .member
-            .ok_or(KickCommandError::MissingMember { user: user.name })?;
+        let member = parsed.user.member.ok_or(KickCommandError::MissingMember {
+            user: user.name.clone(),
+        })?;
 
         // Fetch the author and the bot permissions.
         let permissions = state.redis().permissions(guild.guild.id).await?;
@@ -96,8 +97,8 @@ impl KickCommand {
 
         // Send reason modal.
         match parsed.reason {
-            Some(_reason) => todo!(),
-            None => KickCommand::reason_modal(),
+            Some(_reason) => Ok(InteractionResponse::EphemeralDeferredMessage),
+            None => KickCommand::reason_modal(user.name),
         }
     }
 
@@ -105,39 +106,37 @@ impl KickCommand {
     ///
     /// This modal is only shown if the user has not specified a reason in the
     /// initial command.
-    fn reason_modal() -> Result<InteractionResponse, KickCommandError> {
-        let components = Component::ActionRow(ActionRow {
-            components: vec![
-                Component::TextInput(TextInput {
+    fn reason_modal(username: String) -> Result<InteractionResponse, KickCommandError> {
+        let components = vec![
+            Component::ActionRow(ActionRow {
+                components: vec![Component::TextInput(TextInput {
                     custom_id: "reason".to_string(),
-                    label: "Raison de l'expulsion".to_string(),
+                    label: Lang::Fr.modal_kick_reason_label().to_string(),
                     max_length: Some(100),
                     min_length: None,
-                    placeholder: Some(
-                        "Raison envoyée en message privé au membre expulsé".to_string(),
-                    ),
+                    placeholder: Some(Lang::Fr.modal_reason_placeholder().to_string()),
                     required: Some(false),
                     style: TextInputStyle::Short,
                     value: None,
-                }),
-                Component::TextInput(TextInput {
+                })],
+            }),
+            Component::ActionRow(ActionRow {
+                components: vec![Component::TextInput(TextInput {
                     custom_id: "notes".to_string(),
-                    label: "Notes".to_string(),
+                    label: Lang::Fr.modal_notes_label().to_string(),
                     max_length: Some(1000),
                     min_length: None,
-                    placeholder: Some(
-                        "Notes supplémentaires visibles par les modérateurs du serveur".to_string(),
-                    ),
+                    placeholder: Some(Lang::Fr.modal_notes_placeholder().to_string()),
                     required: Some(false),
                     style: TextInputStyle::Paragraph,
                     value: None,
-                }),
-            ],
-        });
+                })],
+            }),
+        ];
 
         Ok(InteractionResponse::Modal {
             custom_id: "kick_reason_modal".to_string(),
-            title: "Expulsion".to_string(),
+            title: Lang::Fr.modal_kick_title(username.truncate(15)),
             components,
         })
     }
