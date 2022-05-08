@@ -48,6 +48,8 @@ pub struct InteractionContext<D> {
 /// Additional context for commands triggered in a guild.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GuildContext {
+    /// ID of the guild.
+    pub id: Id<GuildMarker>,
     /// The guild configuration from database.
     pub guild: collection::Guild,
     /// The member that triggered the command.
@@ -95,7 +97,11 @@ impl InteractionContext<CommandData> {
             token: command.token,
             data: command.data,
             channel: command.channel_id,
-            guild: Some(GuildContext { guild, member }),
+            guild: Some(GuildContext {
+                id: guild_id,
+                guild,
+                member,
+            }),
             user,
             locale: command.locale,
         })
@@ -154,7 +160,11 @@ impl InteractionContext<MessageComponentInteractionData> {
             token: component.token,
             data: component.data,
             channel: component.channel_id,
-            guild: Some(GuildContext { guild, member }),
+            guild: Some(GuildContext {
+                id: guild_id,
+                guild,
+                member,
+            }),
             user,
             locale: component.locale,
         })

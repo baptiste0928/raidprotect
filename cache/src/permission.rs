@@ -5,6 +5,8 @@
 
 use std::cmp::Ordering;
 
+use redis::RedisError;
+use thiserror::Error;
 use twilight_model::{
     guild::Permissions,
     id::{
@@ -16,7 +18,7 @@ use twilight_util::permission_calculator::PermissionCalculator;
 
 use crate::{
     model::{CachedGuild, CachedRole},
-    redis::{RedisClient, RedisModel, RedisResult},
+    redis::{RedisClient, RedisClientError, RedisModel},
 };
 
 /// Calculate the permissions for a given guild.
@@ -30,25 +32,25 @@ impl<'a> GuildPermissions<'a> {
     pub(crate) async fn new(
         redis: &'a RedisClient,
         guild_id: Id<GuildMarker>,
-    ) -> RedisResult<Option<GuildPermissions<'a>>> {
+    ) -> Result<GuildPermissions<'a>, PermissionError> {
         if let Some(guild) = redis.get::<CachedGuild>(&guild_id).await? {
-            return Ok(Some(Self { redis, guild }));
+            Ok(Self { redis, guild })
+        } else {
+            Err(PermissionError::MissingGuild)
         }
-
-        Ok(None)
     }
 
     /// Compute permissions for a given guild member.
     pub async fn member(
-        self,
+        &self,
         member_id: Id<UserMarker>,
         member_roles: &[Id<RoleMarker>],
-    ) -> RedisResult<Option<CachePermissions>> {
+    ) -> Result<CachePermissions, PermissionError> {
         CachePermissions::new(self, member_id, member_roles).await
     }
 
     /// Compute permissions for the current bot member.
-    pub async fn current_member(self) -> RedisResult<Option<CachePermissions>> {
+    pub async fn current_member(&self) -> Result<CachePermissions, PermissionError> {
         CachePermissions::current_member(self).await
     }
 }
@@ -66,52 +68,46 @@ impl CachePermissions {
     ///
     /// If the guild is not found in the cache, [`None`] is returned.
     pub(crate) async fn new(
-        guild_permissions: GuildPermissions<'_>,
+        guild_permissions: &GuildPermissions<'_>,
         member_id: Id<UserMarker>,
         member_roles: &[Id<RoleMarker>],
-    ) -> RedisResult<Option<Self>> {
+    ) -> Result<Self, PermissionError> {
         let guild_id = guild_permissions.guild.id;
         let is_owner = member_id == guild_permissions.guild.owner_id;
 
-        if let Some(member_roles) =
-            MemberRoles::query(guild_permissions.redis, guild_id, member_roles.iter()).await?
-        {
-            return Ok(Some(Self {
-                guild_id,
-                member_id,
-                member_roles,
-                is_owner,
-            }));
-        }
+        let member_roles =
+            MemberRoles::query(guild_permissions.redis, guild_id, member_roles.iter()).await?;
 
-        Ok(None)
+        Ok(Self {
+            guild_id,
+            member_id,
+            member_roles,
+            is_owner,
+        })
     }
 
     /// Initialize [`CachePermissions`] for the bot current member.
     pub(crate) async fn current_member(
-        guild_permissions: GuildPermissions<'_>,
-    ) -> RedisResult<Option<Self>> {
-        if let Some(current_member) = guild_permissions.guild.current_member {
-            let guild_id = guild_permissions.guild.id;
-            let is_owner = current_member.id == guild_permissions.guild.owner_id;
+        guild_permissions: &GuildPermissions<'_>,
+    ) -> Result<Self, PermissionError> {
+        let member = guild_permissions
+            .guild
+            .current_member
+            .as_ref()
+            .ok_or(PermissionError::MissingCurrentMember)?;
 
-            if let Some(member_roles) = MemberRoles::query(
-                guild_permissions.redis,
-                guild_id,
-                current_member.roles.iter(),
-            )
-            .await?
-            {
-                return Ok(Some(Self {
-                    guild_id,
-                    member_id: current_member.id,
-                    member_roles,
-                    is_owner,
-                }));
-            }
-        }
+        let guild_id = guild_permissions.guild.id;
+        let is_owner = member.id == guild_permissions.guild.owner_id;
 
-        Ok(None)
+        let member_roles =
+            MemberRoles::query(guild_permissions.redis, guild_id, member.roles.iter()).await?;
+
+        Ok(Self {
+            guild_id,
+            member_id: member.id,
+            member_roles,
+            is_owner,
+        })
     }
 
     /// Checks if a user is the owner of a guild.
@@ -176,7 +172,7 @@ impl MemberRoles {
         redis: &RedisClient,
         guild_id: Id<GuildMarker>,
         member_roles: impl Iterator<Item = &Id<RoleMarker>>,
-    ) -> RedisResult<Option<MemberRoles>> {
+    ) -> Result<MemberRoles, PermissionError> {
         let everyone_id = guild_id.cast();
 
         // Get user roles
@@ -203,10 +199,29 @@ impl MemberRoles {
         }
 
         if let Some(everyone) = everyone_role {
-            Ok(Some(MemberRoles { everyone, roles }))
+            Ok(MemberRoles { everyone, roles })
         } else {
-            Ok(None)
+            Err(PermissionError::MissingEveryone)
         }
+    }
+}
+
+/// Error occurred while computing permissions.
+#[derive(Debug, Error)]
+pub enum PermissionError {
+    #[error(transparent)]
+    Redis(#[from] RedisClientError),
+    #[error("guild not found in cache")]
+    MissingGuild,
+    #[error("everyone role not found in cache")]
+    MissingEveryone,
+    #[error("current member not found in cache")]
+    MissingCurrentMember,
+}
+
+impl From<RedisError> for PermissionError {
+    fn from(error: RedisError) -> Self {
+        Self::Redis(RedisClientError::from(error))
     }
 }
 

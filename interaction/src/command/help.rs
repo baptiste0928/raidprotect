@@ -1,6 +1,5 @@
 //! Help command.
 
-use raidprotect_model::interaction::InteractionResponse;
 use thiserror::Error;
 use tracing::{error, instrument};
 use twilight_interactions::{
@@ -13,7 +12,7 @@ use twilight_validate::embed::EmbedValidationError;
 
 use crate::{
     context::InteractionContext,
-    response::{InteractionError, InteractionErrorKind},
+    response::{InteractionError, InteractionErrorKind, InteractionResponse},
 };
 
 /// Help command model.

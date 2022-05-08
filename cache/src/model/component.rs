@@ -1,10 +1,12 @@
 //! State for message component interactions (buttons, select menus).
 
-use raidprotect_model::interaction::InteractionResponse;
 use raidprotect_util::serde::IdAsU64;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-use twilight_model::id::{marker::UserMarker, Id};
+use twilight_model::{
+    http::interaction::InteractionResponseData,
+    id::{marker::UserMarker, Id},
+};
 
 use crate::redis::RedisModel;
 
@@ -47,7 +49,7 @@ pub struct PostInChatButton {
     /// Component unique identifier.
     pub id: String,
     /// Response to send to the channel.
-    pub response: InteractionResponse,
+    pub response: InteractionResponseData,
     /// Id of the initial interaction author.
     #[serde_as(as = "IdAsU64")]
     pub author_id: Id<UserMarker>,

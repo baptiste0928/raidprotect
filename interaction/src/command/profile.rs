@@ -1,9 +1,10 @@
 //! Profile command.
+//!
+//! This command shows basic information about a given user.
 
 use std::time::Duration;
 
 use raidprotect_cache::redis::RedisClientError;
-use raidprotect_model::interaction::InteractionResponse;
 use raidprotect_state::ClusterState;
 use raidprotect_translations::Lang;
 use raidprotect_util::resource::{avatar_url, ImageFormat, ImageSize, TimestampStyle};
@@ -99,12 +100,7 @@ impl ProfileCommand {
             .components([components])
             .build();
 
-        Ok(PostInChat::new(
-            InteractionResponse::Custom(response),
-            context.user.id,
-            state,
-        )
-        .await?)
+        Ok(PostInChat::new(response, context.user.id, state).await?)
     }
 }
 

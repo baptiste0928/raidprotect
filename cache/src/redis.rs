@@ -14,7 +14,7 @@ use twilight_model::id::{marker::GuildMarker, Id};
 
 use crate::{
     model::{CachedChannel, CachedGuild, CachedRole},
-    permission::GuildPermissions,
+    permission::{GuildPermissions, PermissionError},
 };
 
 /// Alias for a [`Result`] with [`RedisClientError`] as error type.
@@ -133,7 +133,7 @@ impl RedisClient {
     pub async fn permissions(
         &self,
         guild_id: Id<GuildMarker>,
-    ) -> RedisResult<Option<GuildPermissions<'_>>> {
+    ) -> Result<GuildPermissions<'_>, PermissionError> {
         GuildPermissions::new(self, guild_id).await
     }
 }
