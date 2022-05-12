@@ -107,9 +107,7 @@ RaidProtect load configuration from environment variables prefixed with `RAIDPRO
 
 **The only required configuration is the bot token** with the `RAIDPROTECT_TOKEN`
 environment variable. This token can be obtained from the Discord Developer
-Portal. You may also set the `RAIDPROTECT_COMMAND_GUILD` with the id of the
-server you use for testing the bot. This will register slash commands as guild
-rather than global commands, so they will be updated instantly.
+Portal.
 
 For a complete and up-to-date list of available configuration options, refer to
 the [`raidprotect/src/config.rs`](raidprotect/src/config.rs) file.
