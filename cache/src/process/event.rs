@@ -1,7 +1,6 @@
 //! Update the cache based on incoming event data.
 
 use async_trait::async_trait;
-
 use tracing::error;
 use twilight_model::{
     gateway::payload::incoming::{

@@ -7,7 +7,6 @@
 use std::time::Duration;
 
 pub use mongodb::error::Error as MongoDbError;
-
 use mongodb::{
     bson::{doc, to_bson, to_document},
     options, Client, Database,

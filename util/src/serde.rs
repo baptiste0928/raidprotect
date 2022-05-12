@@ -120,8 +120,6 @@ impl SerializeAs<Timestamp> for TimestampAsI64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{IdAsI64, IdAsU64, TimestampAsI64};
-
     use serde::{Deserialize, Serialize};
     use serde_test::{assert_de_tokens_error, assert_ser_tokens_error, assert_tokens, Token};
     use serde_with::serde_as;
@@ -129,6 +127,8 @@ mod tests {
         datetime::Timestamp,
         id::{marker::GenericMarker, Id},
     };
+
+    use super::{IdAsI64, IdAsU64, TimestampAsI64};
 
     #[serde_as]
     #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
