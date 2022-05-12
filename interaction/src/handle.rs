@@ -56,13 +56,7 @@ pub async fn handle_command(command: ApplicationCommand, state: Arc<ClusterState
 }
 
 /// Register commands to the Discord API.
-///
-/// The commands will be registered globally unless a `command_guild` is set.
-pub async fn register_commands(
-    state: &ClusterState,
-    application_id: Id<ApplicationMarker>,
-    command_guild: Option<u64>,
-) {
+pub async fn register_commands(state: &ClusterState, application_id: Id<ApplicationMarker>) {
     let commands: Vec<Command> = vec![
         HelpCommand::create_command().into(),
         ProfileCommand::create_command().into(),
@@ -71,22 +65,7 @@ pub async fn register_commands(
 
     let client = state.http().interaction(application_id);
 
-    let result = match command_guild {
-        Some(id) => {
-            // Remove all previous global commands to avoid duplicates
-            if let Err(error) = client.set_global_commands(&[]).exec().await {
-                warn!(error = %error, "failed to remove global commands");
-            }
-
-            client
-                .set_guild_commands(Id::new(id), &commands)
-                .exec()
-                .await
-        }
-        None => client.set_global_commands(&commands).exec().await,
-    };
-
-    if let Err(error) = result {
+    if let Err(error) = client.set_global_commands(&commands).exec().await {
         error!(error = %error, "failed to register commands");
     }
 }

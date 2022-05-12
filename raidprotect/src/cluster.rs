@@ -76,7 +76,7 @@ impl ShardCluster {
 
         let state = ClusterState::new(redis, mongodb, http, current_user);
 
-        register_commands(&state, application.id, config.command_guild).await;
+        register_commands(&state, application.id).await;
 
         Ok(Self {
             cluster: Arc::new(cluster),
