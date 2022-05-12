@@ -1,6 +1,6 @@
 name: "Pull Request Labeler"
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, edited, reopened]
 
 jobs:
@@ -9,6 +9,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Validate pull request title
+        uses: amannn/action-semantic-pull-request@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            ci
+            chore
+            deps
+            feat
+            fix
+            refactor
+
       - name: Add labels to pull request
         uses: fuxingloh/multi-labeler@v1
         with:
