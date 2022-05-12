@@ -12,14 +12,13 @@ use twilight_model::{
     id::{marker::ApplicationMarker, Id},
 };
 
-use crate::{command::kick::KickCommand, embed};
-
 use super::{
     command::{help::HelpCommand, profile::ProfileCommand},
     component::post_in_chat::PostInChat,
     context::InteractionContext,
     response::{InteractionResponder, IntoResponse},
 };
+use crate::{command::kick::KickCommand, embed};
 
 /// Handle incoming [`ApplicationCommand`]
 ///

@@ -8,7 +8,6 @@ mod handle;
 pub mod parser;
 
 pub use handle::handle_message;
-
 use twilight_model::channel::message::MessageType;
 
 /// Messages types processed by the bot.

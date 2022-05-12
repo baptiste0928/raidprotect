@@ -4,9 +4,8 @@ use raidprotect_translations::Lang;
 use raidprotect_util::text::TextProcessExt;
 use twilight_util::builder::embed::EmbedBuilder;
 
-use crate::response::InteractionResponse;
-
 use super::COLOR_RED;
+use crate::response::InteractionResponse;
 
 /// User is not a server member.
 pub fn not_member(user: String) -> InteractionResponse {
