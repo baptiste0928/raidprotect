@@ -1099,11 +1099,12 @@ dependencies = [
  "raidprotect-interaction",
  "raidprotect-model",
  "raidprotect-state",
- "raidprotect-util",
  "serde",
  "thiserror",
  "tokio",
  "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
  "twilight-gateway",
  "twilight-http",
  "twilight-model",
@@ -1117,7 +1118,6 @@ dependencies = [
  "bb8",
  "bb8-redis",
  "raidprotect-model",
- "raidprotect-util",
  "redis",
  "rmp-serde",
  "serde",
@@ -1168,7 +1168,6 @@ name = "raidprotect-model"
 version = "0.1.0"
 dependencies = [
  "mongodb",
- "raidprotect-util",
  "serde",
  "serde_test",
  "serde_with",
@@ -1197,13 +1196,6 @@ dependencies = [
 name = "raidprotect-util"
 version = "0.1.0"
 dependencies = [
- "serde",
- "serde_test",
- "serde_with",
- "tokio",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
  "twilight-model",
 ]
 

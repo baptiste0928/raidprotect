@@ -5,3 +5,4 @@
 
 pub mod collection;
 pub mod mongodb;
+pub mod serde;

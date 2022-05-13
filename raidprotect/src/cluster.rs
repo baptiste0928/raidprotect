@@ -7,7 +7,6 @@ use raidprotect_cache::redis::{RedisClient, RedisClientError};
 use raidprotect_interaction::register_commands;
 use raidprotect_model::mongodb::{MongoDbClient, MongoDbError};
 use raidprotect_state::ClusterState;
-use raidprotect_util::shutdown::ShutdownSubscriber;
 use thiserror::Error;
 use tracing::{info, info_span, instrument, trace};
 use twilight_gateway::{
@@ -20,7 +19,7 @@ use twilight_model::gateway::{
     presence::{ActivityType, MinimalActivity, Status},
 };
 
-use crate::{config::Config, event::ProcessEvent};
+use crate::{config::Config, event::ProcessEvent, shutdown::ShutdownSubscriber};
 
 /// Discord shards cluster.
 ///

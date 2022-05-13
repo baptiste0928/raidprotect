@@ -143,11 +143,6 @@ pub struct ShutdownSubscriber {
 }
 
 impl ShutdownSubscriber {
-    /// Returns `true` if the shutdown signal has been received.
-    pub fn is_shutdown(&self) -> bool {
-        self.shutdown
-    }
-
     /// Wait until a shutdown signal is received.
     pub async fn wait_shutdown(&mut self) {
         if self.shutdown {

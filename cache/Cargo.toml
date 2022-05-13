@@ -9,7 +9,6 @@ publish = false
 
 [dependencies]
 raidprotect-model = { path = "../model" }
-raidprotect-util = { path = "../util" }
 
 async-trait = "0.1"
 bb8 = "0.8"
@@ -24,4 +23,3 @@ twilight-model = "0.10"
 twilight-util = { version = "0.10", features = ["permission-calculator"] }
 url = { version = "2", features = ["serde"] }
 zstd = "0.11"
-

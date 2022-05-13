@@ -13,7 +13,6 @@ raidprotect-event = { path = "../event" }
 raidprotect-interaction = { path = "../interaction" }
 raidprotect-model = { path = "../model" }
 raidprotect-state = { path = "../state" }
-raidprotect-util = { path = "../util" }
 
 anyhow = "1"
 async-trait = "0.1"
@@ -22,8 +21,10 @@ envy = "0.4"
 futures = "0.3"
 serde = { version = "1", features = ["derive"] }
 thiserror = "1"
-tokio = { version = "1.17", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.17", features = ["macros", "rt-multi-thread", "sync", "time", "signal"] }
 tracing = { version = "0.1" }
+tracing-appender = "0.2"
+tracing-subscriber = { version = "0.3", features = ["std", "fmt", "ansi"], default-features = false }
 
 twilight-model = "0.10"
 twilight-gateway = "0.10"

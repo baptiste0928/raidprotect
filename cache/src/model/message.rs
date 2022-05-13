@@ -1,6 +1,6 @@
 //! Messages cache models.
 
-use raidprotect_util::serde::{IdAsU64, TimestampAsI64};
+use raidprotect_model::serde::{IdAsU64, TimestampAsI64};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use twilight_model::{

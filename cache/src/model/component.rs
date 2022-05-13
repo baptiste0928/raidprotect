@@ -1,6 +1,6 @@
 //! State for message component interactions (buttons, select menus).
 
-use raidprotect_util::serde::IdAsU64;
+use raidprotect_model::serde::IdAsU64;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use twilight_model::{
