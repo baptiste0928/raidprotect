@@ -26,7 +26,7 @@ github:
 
 vscode:
   extensions:
-    - matklad.rust-analyzer
+    - rust-lang.rust-analyzer
     - editorconfig.editorconfig
     - tamasfe.even-better-toml
     - serayuzgur.crates
