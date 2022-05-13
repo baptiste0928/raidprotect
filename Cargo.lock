@@ -1104,6 +1104,8 @@ dependencies = [
  "thiserror",
  "tokio",
  "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
  "twilight-gateway",
  "twilight-http",
  "twilight-model",
@@ -1197,13 +1199,6 @@ dependencies = [
 name = "raidprotect-util"
 version = "0.1.0"
 dependencies = [
- "serde",
- "serde_test",
- "serde_with",
- "tokio",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
  "twilight-model",
 ]
 

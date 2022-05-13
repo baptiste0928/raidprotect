@@ -1,10 +1,11 @@
-use raidprotect_util::serde::IdAsI64;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none};
 use twilight_model::id::{
     marker::{ChannelMarker, GuildMarker, RoleMarker},
     Id,
 };
+
+use crate::serde::IdAsI64;
 
 /// Name of the `guilds` collection
 pub const GUILDS_COLLECTION: &str = "guilds";

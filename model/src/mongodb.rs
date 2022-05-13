@@ -11,12 +11,14 @@ use mongodb::{
     bson::{doc, to_bson, to_document},
     options, Client, Database,
 };
-use raidprotect_util::serde::IdAsI64;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use twilight_model::id::{marker::GuildMarker, Id};
 
-use crate::collection::{Guild, GUILDS_COLLECTION};
+use crate::{
+    collection::{Guild, GUILDS_COLLECTION},
+    serde::IdAsI64,
+};
 
 /// Wrapper around a MongoDB [`Client`].
 ///

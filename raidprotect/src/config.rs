@@ -4,8 +4,9 @@
 //! `RAIDPROTECT_`. If variables are defined in a `.env` file, they will take
 //! precedence over other variables.
 
-use raidprotect_util::logging::LogConfig;
 use serde::Deserialize;
+
+use crate::logging::LogConfig;
 
 /// Parse configuration from environment variables.
 pub fn parse_config() -> Result<Config, envy::Error> {
