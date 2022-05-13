@@ -98,7 +98,7 @@ impl KickCommand {
         // Send reason modal.
         match parsed.reason {
             Some(_reason) => Ok(InteractionResponse::EphemeralDeferredMessage),
-            None => KickCommand::reason_modal(user.name),
+            None => KickCommand::reason_modal(user.name, guild.config().enforce_reason),
         }
     }
 
@@ -106,7 +106,10 @@ impl KickCommand {
     ///
     /// This modal is only shown if the user has not specified a reason in the
     /// initial command.
-    fn reason_modal(username: String) -> Result<InteractionResponse, KickCommandError> {
+    fn reason_modal(
+        username: String,
+        enforce_reason: bool,
+    ) -> Result<InteractionResponse, KickCommandError> {
         let components = vec![
             Component::ActionRow(ActionRow {
                 components: vec![Component::TextInput(TextInput {
@@ -115,7 +118,7 @@ impl KickCommand {
                     max_length: Some(100),
                     min_length: None,
                     placeholder: Some(Lang::Fr.modal_reason_placeholder().to_string()),
-                    required: Some(false),
+                    required: Some(enforce_reason),
                     style: TextInputStyle::Short,
                     value: None,
                 })],

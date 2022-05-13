@@ -49,8 +49,7 @@ pub struct Config {
     /// has not yet be done.
     #[serde_as(as = "Option<IdAsI64>")]
     pub logs_chan: Option<Id<ChannelMarker>>,
-    /// The moderator roles, allowed to access to guild modlogs
-    /// and to perform some sanction (mute and warn).
+    /// The moderator roles, allowed to access to guild modlogs.
     #[serde_as(as = "Vec<IdAsI64>")]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub moderator_roles: Vec<Id<RoleMarker>>,
