@@ -45,17 +45,6 @@ pub struct InteractionContext<D> {
     pub locale: String,
 }
 
-/// Additional context for commands triggered in a guild.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct GuildContext {
-    /// ID of the guild.
-    pub id: Id<GuildMarker>,
-    /// The guild configuration from database.
-    pub guild: collection::Guild,
-    /// The member that triggered the command.
-    pub member: PartialMember,
-}
-
 impl<D> InteractionContext<D> {
     /// Get the [`InteractionClient`] associated with the current context.
     pub fn interaction<'state>(&self, state: &'state ClusterState) -> InteractionClient<'state> {
@@ -186,6 +175,26 @@ impl InteractionContext<MessageComponentInteractionData> {
             user,
             locale: component.locale,
         })
+    }
+}
+
+/// Additional context for commands triggered in a guild.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GuildContext {
+    /// ID of the guild.
+    pub id: Id<GuildMarker>,
+    /// The guild configuration from database.
+    pub guild: collection::Guild,
+    /// The member that triggered the command.
+    pub member: PartialMember,
+}
+
+impl GuildContext {
+    /// Get the [`Config`] of the guild.
+    ///
+    /// [`Config`]: collection::Config
+    pub fn config(&self) -> &collection::Config {
+        &self.guild.config
     }
 }
 
