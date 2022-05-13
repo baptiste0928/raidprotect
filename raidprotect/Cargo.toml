@@ -13,7 +13,6 @@ raidprotect-event = { path = "../event" }
 raidprotect-interaction = { path = "../interaction" }
 raidprotect-model = { path = "../model" }
 raidprotect-state = { path = "../state" }
-raidprotect-util = { path = "../util" }
 
 anyhow = "1"
 async-trait = "0.1"

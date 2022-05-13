@@ -9,7 +9,6 @@ publish = false
 
 [dependencies]
 raidprotect-model = { path = "../model" }
-raidprotect-util = { path = "../util" }
 
 async-trait = "0.1"
 bb8 = "0.8"

@@ -1099,7 +1099,6 @@ dependencies = [
  "raidprotect-interaction",
  "raidprotect-model",
  "raidprotect-state",
- "raidprotect-util",
  "serde",
  "thiserror",
  "tokio",
@@ -1119,7 +1118,6 @@ dependencies = [
  "bb8",
  "bb8-redis",
  "raidprotect-model",
- "raidprotect-util",
  "redis",
  "rmp-serde",
  "serde",
@@ -1170,7 +1168,6 @@ name = "raidprotect-model"
 version = "0.1.0"
 dependencies = [
  "mongodb",
- "raidprotect-util",
  "serde",
  "serde_test",
  "serde_with",
