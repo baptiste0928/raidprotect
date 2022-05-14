@@ -37,12 +37,37 @@ impl CachedChannel {
         }
     }
 
-    /// Get the [`Id`] of the channel guild.
+    /// Get the [`Id`] of the channel.
     pub fn guild_id(&self) -> Id<GuildMarker> {
         match self {
             CachedChannel::Text(channel) => channel.guild_id,
             CachedChannel::Category(channel) => channel.guild_id,
             CachedChannel::Thread(channel) => channel.guild_id,
+        }
+    }
+
+    /// Get the [`ChannelType`] of the channel.
+    ///
+    /// This always return [`GuildPublicThread`] for threads, even if it is a
+    /// private thread, because the exact thread type is not currently stored.
+    ///
+    /// [`GuildPublicThread`]: ChannelType::GuildPublicThread
+    pub fn kind(&self) -> ChannelType {
+        match self {
+            CachedChannel::Text(_) => ChannelType::GuildText,
+            CachedChannel::Category(_) => ChannelType::GuildCategory,
+            CachedChannel::Thread(_) => ChannelType::GuildPublicThread,
+        }
+    }
+
+    /// Get the [`PermissionOverwrite`]s of the channel.
+    ///
+    /// Note that no permissions are returned for thread channels.
+    pub fn permissions(&self) -> &[PermissionOverwrite] {
+        match self {
+            CachedChannel::Text(channel) => &channel.permission_overwrites,
+            CachedChannel::Category(channel) => &channel.permission_overwrites,
+            CachedChannel::Thread(_) => &[],
         }
     }
 
@@ -146,11 +171,8 @@ pub struct CachedThread {
     /// Whether the thread is private.
     pub private: bool,
     /// Parent channel of the thread.
-    ///
-    /// This field can be [`None`] if the parent channel has been
-    /// deleted.
-    #[serde_as(as = "Option<IdAsU64>")]
-    pub parent_id: Option<Id<ChannelMarker>>,
+    #[serde_as(as = "IdAsU64")]
+    pub parent_id: Id<ChannelMarker>,
     /// Amount of seconds a user has to wait between two message.
     pub rate_limit_per_user: Option<u64>,
 }

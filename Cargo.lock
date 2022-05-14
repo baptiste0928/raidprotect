@@ -1124,6 +1124,7 @@ dependencies = [
  "serde_with",
  "thiserror",
  "tracing",
+ "twilight-http",
  "twilight-model",
  "twilight-util",
  "url",
@@ -1196,6 +1197,7 @@ dependencies = [
 name = "raidprotect-util"
 version = "0.1.0"
 dependencies = [
+ "raidprotect-state",
  "twilight-model",
 ]
 

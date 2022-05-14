@@ -10,9 +10,11 @@ use bb8_redis::RedisConnectionManager;
 use redis::{AsyncCommands, RedisError};
 use serde::{de::DeserializeOwned, Serialize};
 use thiserror::Error;
+use twilight_http::Client as HttpClient;
 use twilight_model::id::{marker::GuildMarker, Id};
 
 use crate::{
+    http::CacheHttp,
     model::{CachedChannel, CachedGuild, CachedRole},
     permission::{GuildPermissions, PermissionError},
 };
@@ -135,6 +137,11 @@ impl RedisClient {
         guild_id: Id<GuildMarker>,
     ) -> Result<GuildPermissions<'_>, PermissionError> {
         GuildPermissions::new(self, guild_id).await
+    }
+
+    /// Get the [`HttpClient`] got a given guild.
+    pub async fn http<'a>(&'a self, http: &'a HttpClient, guild_id: Id<GuildMarker>) -> CacheHttp<'a> {
+        CacheHttp::new(self, http, guild_id)
     }
 }
 

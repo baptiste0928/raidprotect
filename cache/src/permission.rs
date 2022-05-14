@@ -8,16 +8,17 @@ use std::cmp::Ordering;
 use redis::RedisError;
 use thiserror::Error;
 use twilight_model::{
+    channel::ChannelType,
     guild::Permissions,
     id::{
-        marker::{GuildMarker, RoleMarker, UserMarker},
+        marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker},
         Id,
     },
 };
 use twilight_util::permission_calculator::PermissionCalculator;
 
 use crate::{
-    model::{CachedGuild, CachedRole},
+    model::{CachedChannel, CachedGuild, CachedRole},
     redis::{RedisClient, RedisClientError, RedisModel},
 };
 
@@ -45,33 +46,34 @@ impl<'a> GuildPermissions<'a> {
         &self,
         member_id: Id<UserMarker>,
         member_roles: &[Id<RoleMarker>],
-    ) -> Result<CachePermissions, PermissionError> {
+    ) -> Result<CachePermissions<'a>, PermissionError> {
         CachePermissions::new(self, member_id, member_roles).await
     }
 
     /// Compute permissions for the current bot member.
-    pub async fn current_member(&self) -> Result<CachePermissions, PermissionError> {
+    pub async fn current_member(&self) -> Result<CachePermissions<'a>, PermissionError> {
         CachePermissions::current_member(self).await
     }
 }
 
 /// Calculate the permissions of a member with information from the cache.
-pub struct CachePermissions {
+pub struct CachePermissions<'a> {
+    redis: &'a RedisClient,
     guild_id: Id<GuildMarker>,
     member_id: Id<UserMarker>,
     member_roles: MemberRoles,
     is_owner: bool,
 }
 
-impl CachePermissions {
+impl<'a> CachePermissions<'a> {
     /// Initialize [`CachePermissions`] from a redis client.
     ///
     /// If the guild is not found in the cache, [`None`] is returned.
     pub(crate) async fn new(
-        guild_permissions: &GuildPermissions<'_>,
+        guild_permissions: &GuildPermissions<'a>,
         member_id: Id<UserMarker>,
         member_roles: &[Id<RoleMarker>],
-    ) -> Result<Self, PermissionError> {
+    ) -> Result<CachePermissions<'a>, PermissionError> {
         let guild_id = guild_permissions.guild.id;
         let is_owner = member_id == guild_permissions.guild.owner_id;
 
@@ -79,6 +81,7 @@ impl CachePermissions {
             MemberRoles::query(guild_permissions.redis, guild_id, member_roles.iter()).await?;
 
         Ok(Self {
+            redis: guild_permissions.redis,
             guild_id,
             member_id,
             member_roles,
@@ -88,8 +91,8 @@ impl CachePermissions {
 
     /// Initialize [`CachePermissions`] for the bot current member.
     pub(crate) async fn current_member(
-        guild_permissions: &GuildPermissions<'_>,
-    ) -> Result<Self, PermissionError> {
+        guild_permissions: &GuildPermissions<'a>,
+    ) -> Result<CachePermissions<'a>, PermissionError> {
         let member = guild_permissions
             .guild
             .current_member
@@ -103,6 +106,7 @@ impl CachePermissions {
             MemberRoles::query(guild_permissions.redis, guild_id, member.roles.iter()).await?;
 
         Ok(Self {
+            redis: guild_permissions.redis,
             guild_id,
             member_id: member.id,
             member_roles,
@@ -139,6 +143,7 @@ impl CachePermissions {
             return Permissions::all();
         }
 
+        // TODO: extract this into a function
         let everyone_role = self.member_roles.everyone.permissions;
         let member_roles = self
             .member_roles
@@ -147,14 +152,51 @@ impl CachePermissions {
             .map(|role| (role.id, role.permissions))
             .collect::<Vec<_>>();
 
-        let calculator = PermissionCalculator::new(
-            self.guild_id,
-            self.member_id,
-            everyone_role,
-            member_roles.as_slice(),
-        );
+        let calculator =
+            PermissionCalculator::new(self.guild_id, self.member_id, everyone_role, &member_roles);
 
         calculator.root()
+    }
+
+    /// Calculate the permissions of the user in a given channel.
+    ///
+    /// This method also return the [`ChannelType`] of the requested channel
+    /// to handle the case where the channel is a thread.
+    pub async fn channel(
+        &self,
+        channel: Id<ChannelMarker>,
+    ) -> Result<(Permissions, ChannelType), PermissionError> {
+        let mut channel = self
+            .redis
+            .get::<CachedChannel>(&channel)
+            .await?
+            .ok_or(PermissionError::MissingChannel)?;
+
+        // If the channel is a thread, get the parent channel.
+        if let CachedChannel::Thread(thread) = channel {
+            channel = self
+                .redis
+                .get::<CachedChannel>(&thread.parent_id)
+                .await?
+                .ok_or(PermissionError::MissingChannel)?;
+        }
+
+        // TODO: extract this into a function
+        let everyone_role = self.member_roles.everyone.permissions;
+        let member_roles = self
+            .member_roles
+            .roles
+            .iter()
+            .map(|role| (role.id, role.permissions))
+            .collect::<Vec<_>>();
+
+        let calculator =
+            PermissionCalculator::new(self.guild_id, self.member_id, everyone_role, &member_roles);
+
+        let kind = channel.kind();
+        let permissions = calculator.in_channel(kind, channel.permissions());
+
+        Ok((permissions, kind))
     }
 }
 
@@ -217,6 +259,8 @@ pub enum PermissionError {
     MissingEveryone,
     #[error("current member not found in cache")]
     MissingCurrentMember,
+    #[error("channel not found in cache")]
+    MissingChannel,
 }
 
 impl From<RedisError> for PermissionError {

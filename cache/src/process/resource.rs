@@ -154,7 +154,7 @@ pub fn cache_thread(pipe: &mut Pipeline, thread: &Channel) -> Result<(), CacheEr
         guild_id: thread.guild_id.ok_or(CacheError::GuildId)?,
         name: thread.name.as_ref().ok_or(CacheError::Name)?.clone(),
         private: false,
-        parent_id: thread.parent_id,
+        parent_id: thread.parent_id.ok_or(CacheError::ParentId)?,
         rate_limit_per_user: thread.rate_limit_per_user,
     });
 
@@ -176,4 +176,6 @@ pub enum CacheError {
     Position,
     #[error("missing channel permission overwrites")]
     PermissionOverwrites,
+    #[error("missing thread parent id")]
+    ParentId,
 }

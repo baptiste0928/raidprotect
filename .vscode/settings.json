@@ -2,9 +2,7 @@
     "search.exclude": {
         "**/target": true
     },
-
-    "rust-analyzer.cargo.loadOutDirsFromCheck": true,
-
+    "rust-analyzer.cargo.buildScripts.enable": true,
     "i18n-ally.localesPaths": [
         "translations/locales"
     ],
