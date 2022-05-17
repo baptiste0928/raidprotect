@@ -12,13 +12,21 @@
 use std::collections::HashMap;
 
 use lazy_static::lazy_static;
-use raidprotect_cache::{model::CachedChannel, redis::RedisClientError};
+use raidprotect_cache::{http::CacheHttpError, model::CachedChannel, redis::RedisClientError};
 use raidprotect_state::ClusterState;
 use thiserror::Error;
 use tokio::sync::{broadcast, RwLock};
-use twilight_model::id::{
-    marker::{ChannelMarker, GuildMarker},
-    Id,
+use twilight_http::{error::Error as HttpError, response::DeserializeBodyError};
+use twilight_model::{
+    channel::{
+        permission_overwrite::{PermissionOverwrite, PermissionOverwriteType},
+        ChannelType,
+    },
+    guild::Permissions,
+    id::{
+        marker::{ChannelMarker, GuildMarker},
+        Id,
+    },
 };
 
 /// Default logs channel name.
@@ -82,10 +90,30 @@ async fn create_logs_channel(
         _ => false,
     });
 
+    // Create channel if not exists
     let channel_id = if let Some(channel) = logs_channel {
         channel.id()
     } else {
-        todo!()
+        // Deny everyone role to see the channel
+        let permission_overwrite = PermissionOverwrite {
+            allow: Permissions::empty(),
+            deny: Permissions::VIEW_CHANNEL,
+            id: guild_id.cast(),
+            kind: PermissionOverwriteType::Role,
+        };
+
+        let channel = state
+            .cache_http(guild_id)
+            .create_guild_channel(DEFAULT_LOGS_NAME)
+            .await?
+            .kind(ChannelType::GuildText)
+            .permission_overwrites(&[permission_overwrite])
+            .exec()
+            .await?
+            .model()
+            .await?;
+
+        channel.id
     };
 
     // Update channel in configuration and return channel id
@@ -97,6 +125,12 @@ async fn create_logs_channel(
 pub enum LogsChannelError {
     #[error("redis error: {0}")]
     Redis(#[from] RedisClientError),
+    #[error("http error: {0}")]
+    CacheHttp(#[from] CacheHttpError),
+    #[error("http error: {0}")]
+    HttpError(#[from] HttpError),
+    #[error("http error: {0}")]
+    DeserializeBody(#[from] DeserializeBodyError),
     #[error("pending channel creation failed")]
     PendingFailed,
 }

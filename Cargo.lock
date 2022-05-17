@@ -1127,6 +1127,7 @@ dependencies = [
  "twilight-http",
  "twilight-model",
  "twilight-util",
+ "twilight-validate",
  "url",
  "zstd",
 ]
@@ -1202,6 +1203,7 @@ dependencies = [
  "raidprotect-state",
  "thiserror",
  "tokio",
+ "twilight-http",
  "twilight-model",
 ]
 

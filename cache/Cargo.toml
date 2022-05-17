@@ -22,5 +22,6 @@ tracing = "0.1"
 twilight-http = "0.10"
 twilight-model = "0.10"
 twilight-util = { version = "0.10", features = ["permission-calculator"] }
+twilight-validate = "0.10"
 url = { version = "2", features = ["serde"] }
 zstd = "0.11"

@@ -4,7 +4,10 @@
 //! data to check permissions before making requests.
 
 use thiserror::Error;
-use twilight_http::{request::channel::message::CreateMessage, Client as HttpClient};
+use twilight_http::{
+    request::{channel::message::CreateMessage, guild::CreateGuildChannel},
+    Client as HttpClient,
+};
 use twilight_model::{
     guild::Permissions,
     id::{
@@ -12,6 +15,7 @@ use twilight_model::{
         Id,
     },
 };
+use twilight_validate::channel::ChannelValidationError;
 
 use crate::{permission::PermissionError, redis::RedisClient};
 
@@ -67,6 +71,30 @@ impl<'a> CacheHttp<'a> {
 
         Ok(self.http.create_message(channel))
     }
+
+    /// Create a new guild channel.
+    ///
+    /// This method ensure that the bot has the [`MANAGE_CHANNELS`] permission.
+    ///
+    /// [`MANAGE_CHANNELS`]: Permissions::MANAGE_CHANNELS
+    pub async fn create_guild_channel(
+        &'a self,
+        name: &'a str,
+    ) -> Result<CreateGuildChannel<'a>, CacheHttpError> {
+        let permissions = self
+            .redis
+            .permissions(self.guild_id)
+            .await?
+            .current_member()
+            .await?
+            .guild();
+
+        if !permissions.contains(Permissions::MANAGE_CHANNELS) {
+            return Err(CacheHttpError::CreateGuildChannel);
+        }
+
+        Ok(self.http.create_guild_channel(self.guild_id, name)?)
+    }
 }
 
 #[derive(Debug, Error)]
@@ -75,4 +103,8 @@ pub enum CacheHttpError {
     Permission(#[from] PermissionError),
     #[error("missing permissions to send message")]
     CreateMessage,
+    #[error("missing permissions to create channel")]
+    CreateGuildChannel,
+    #[error(transparent)]
+    ChannelValidationError(#[from] ChannelValidationError),
 }
