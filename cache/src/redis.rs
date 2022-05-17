@@ -140,7 +140,11 @@ impl RedisClient {
     }
 
     /// Get the [`HttpClient`] got a given guild.
-    pub async fn http<'a>(&'a self, http: &'a HttpClient, guild_id: Id<GuildMarker>) -> CacheHttp<'a> {
+    pub async fn http<'a>(
+        &'a self,
+        http: &'a HttpClient,
+        guild_id: Id<GuildMarker>,
+    ) -> CacheHttp<'a> {
         CacheHttp::new(self, http, guild_id)
     }
 }

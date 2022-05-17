@@ -1197,7 +1197,11 @@ dependencies = [
 name = "raidprotect-util"
 version = "0.1.0"
 dependencies = [
+ "lazy_static",
+ "raidprotect-cache",
  "raidprotect-state",
+ "thiserror",
+ "tokio",
  "twilight-model",
 ]
 
