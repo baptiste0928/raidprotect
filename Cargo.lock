@@ -1200,11 +1200,15 @@ version = "0.1.0"
 dependencies = [
  "lazy_static",
  "raidprotect-cache",
+ "raidprotect-model",
  "raidprotect-state",
+ "raidprotect-translations",
  "thiserror",
  "tokio",
  "twilight-http",
  "twilight-model",
+ "twilight-util",
+ "twilight-validate",
 ]
 
 [[package]]

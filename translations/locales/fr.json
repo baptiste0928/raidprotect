@@ -13,6 +13,8 @@
   "kick_missing_permission_description": "Vous n'avez pas la permission d'effectuer cette action. Vous devez avoir la permission d'*expulser des membres* pour utiliser la commande `/kick`.",
   "kick_missing_permission_title": "Vous n'avez pas la permission d'expulser ce membre",
   "kick_not_member": "Impossible d'expulser **{user}**, ce n'est pas un membre de ce serveur.",
+  "logs_creation_description": "RaidProtect vous informera des actions de modération effectuées sur votre serveur en envoyant un message dans ce salon. **Ce salon est actuellement visible uniquement par les administrateurs du serveur**, vous pouvez modifier ses permissions pour permettre à vos modérateurs d'y accéder. \n\nVous pouvez modifier le salon utilisé pour les logs dans les paramètres de RaidProtect.",
+  "logs_creation_title": "Salon créé automatiquement par RaidProtect",
   "modal_kick_reason_label": "Raison de l'expulsion",
   "modal_kick_title": "Expulsion de {username}",
   "modal_notes_label": "Notes",

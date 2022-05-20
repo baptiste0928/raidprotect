@@ -13,7 +13,9 @@ use std::collections::HashMap;
 
 use lazy_static::lazy_static;
 use raidprotect_cache::{http::CacheHttpError, model::CachedChannel, redis::RedisClientError};
+use raidprotect_model::mongodb::MongoDbError;
 use raidprotect_state::ClusterState;
+use raidprotect_translations::Lang;
 use thiserror::Error;
 use tokio::sync::{broadcast, RwLock};
 use twilight_http::{error::Error as HttpError, response::DeserializeBodyError};
@@ -28,6 +30,10 @@ use twilight_model::{
         Id,
     },
 };
+use twilight_util::builder::embed::EmbedBuilder;
+use twilight_validate::message::MessageValidationError;
+
+use crate::COLOR_RED;
 
 /// Default logs channel name.
 const DEFAULT_LOGS_NAME: &str = "raidprotect-logs";
@@ -91,7 +97,7 @@ async fn create_logs_channel(
     });
 
     // Create channel if not exists
-    let channel_id = if let Some(channel) = logs_channel {
+    let logs_channel_id = if let Some(channel) = logs_channel {
         channel.id()
     } else {
         // Deny everyone role to see the channel
@@ -116,21 +122,46 @@ async fn create_logs_channel(
         channel.id
     };
 
-    // Update channel in configuration and return channel id
-    // TODO
-    Ok(channel_id)
+    // Update channel in configuration
+    let mut guild = state.mongodb().get_guild_or_create(guild_id).await?;
+    guild.config.logs_chan = Some(logs_channel_id);
+    state.mongodb().update_guild(&guild).await?;
+
+    tx.send(logs_channel_id).ok();
+
+    // Send message in channel
+    let embed = EmbedBuilder::new()
+        .title(Lang::Fr.logs_creation_title())
+        .color(COLOR_RED)
+        .description(Lang::Fr.logs_creation_description())
+        .build();
+
+    state
+        .cache_http(guild_id)
+        .create_message(logs_channel_id)
+        .await?
+        .embeds(&[embed])?
+        .exec()
+        .await
+        .ok(); // Do not fail if message cannot be sent
+
+    Ok(logs_channel_id)
 }
 
 #[derive(Debug, Error)]
 pub enum LogsChannelError {
     #[error("redis error: {0}")]
     Redis(#[from] RedisClientError),
+    #[error("mongodb error: {0}")]
+    MongoDb(#[from] MongoDbError),
     #[error("http error: {0}")]
     CacheHttp(#[from] CacheHttpError),
     #[error("http error: {0}")]
     HttpError(#[from] HttpError),
     #[error("http error: {0}")]
     DeserializeBody(#[from] DeserializeBodyError),
+    #[error("message validation: {0}")]
+    MessageValidationError(#[from] MessageValidationError),
     #[error("pending channel creation failed")]
     PendingFailed,
 }

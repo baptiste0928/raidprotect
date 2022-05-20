@@ -7,7 +7,10 @@ use std::time::Duration;
 use raidprotect_cache::redis::RedisClientError;
 use raidprotect_state::ClusterState;
 use raidprotect_translations::Lang;
-use raidprotect_util::resource::{avatar_url, ImageFormat, ImageSize, TimestampStyle};
+use raidprotect_util::{
+    resource::{avatar_url, ImageFormat, ImageSize, TimestampStyle},
+    COLOR_TRANSPARENT,
+};
 use thiserror::Error;
 use tracing::instrument;
 use twilight_interactions::{
@@ -33,7 +36,6 @@ use twilight_validate::embed::EmbedValidationError;
 use crate::{
     component::post_in_chat::PostInChat,
     context::InteractionContext,
-    embed::COLOR_TRANSPARENT,
     response::{InteractionError, InteractionErrorKind},
 };
 
