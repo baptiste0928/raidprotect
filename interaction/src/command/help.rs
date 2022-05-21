@@ -17,7 +17,11 @@ use crate::{
 
 /// Help command model.
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
-#[command(name = "help", desc = "Show the list of available commands")]
+#[command(
+    name = "help",
+    desc = "Show the list of available commands",
+    dm_permission = true
+)]
 pub struct HelpCommand {
     /// Displays the help for a specific command.
     pub command: Option<Command>,

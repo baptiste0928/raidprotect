@@ -16,17 +16,6 @@ pub fn not_member(user: String) -> InteractionResponse {
     InteractionResponse::EphemeralEmbed(embed)
 }
 
-/// Author is missing the `KICK_MEMBERS` permission
-pub fn missing_permission() -> InteractionResponse {
-    let embed = EmbedBuilder::new()
-        .color(COLOR_RED)
-        .title(Lang::Fr.kick_missing_permission_title())
-        .description(Lang::Fr.kick_missing_permission_description())
-        .build();
-
-    InteractionResponse::EphemeralEmbed(embed)
-}
-
 /// Bot is missing the `KICK_MEMBERS` permission
 pub fn bot_missing_permission() -> InteractionResponse {
     let embed = EmbedBuilder::new()
@@ -78,11 +67,6 @@ mod tests {
     #[test]
     fn test_not_member() {
         not_member("test".to_string());
-    }
-
-    #[test]
-    fn test_missing_permission() {
-        missing_permission();
     }
 
     #[test]

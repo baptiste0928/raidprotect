@@ -36,7 +36,12 @@ use crate::{
 ///
 /// See the [`module`][self] documentation for more information.
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
-#[command(name = "kick", desc = "Kicks a user from the server")]
+#[command(
+    name = "kick",
+    desc = "Kicks a user from the server",
+    default_permissions = "KickCommand::default_permissions",
+    dm_permission = false
+)]
 pub struct KickCommand {
     /// Member to kick.
     #[command(rename = "member")]
@@ -46,6 +51,10 @@ pub struct KickCommand {
 }
 
 impl KickCommand {
+    fn default_permissions() -> Permissions {
+        Permissions::KICK_MEMBERS
+    }
+
     #[instrument]
     pub async fn handle(
         context: InteractionContext<CommandData>,
@@ -70,13 +79,6 @@ impl KickCommand {
         // Check if the author and the bot have required permissions.
         if member_permissions.is_owner() {
             return Err(KickCommandError::MemberOwner);
-        }
-
-        if !author_permissions
-            .guild()
-            .contains(Permissions::KICK_MEMBERS)
-        {
-            return Err(KickCommandError::MissingKickPermission);
         }
 
         if !bot_permissions.guild().contains(Permissions::KICK_MEMBERS) {
@@ -152,8 +154,6 @@ pub enum KickCommandError {
     GuildOnly,
     #[error("user is not a guild member")]
     MissingMember { user: String },
-    #[error("user has not the kick permission")]
-    MissingKickPermission,
     #[error("bot has not the kick permission")]
     BotMissingKickPermission,
     #[error("member is the owner of the guild")]
@@ -175,9 +175,8 @@ impl InteractionError for KickCommandError {
 
     fn into_error(self) -> InteractionErrorKind {
         match self {
-            KickCommandError::GuildOnly => embed::error::guild_only().into(),
+            KickCommandError::GuildOnly => InteractionErrorKind::internal(self),
             KickCommandError::MissingMember { user } => embed::kick::not_member(user).into(),
-            KickCommandError::MissingKickPermission => embed::kick::missing_permission().into(),
             KickCommandError::BotMissingKickPermission => {
                 embed::kick::bot_missing_permission().into()
             }
