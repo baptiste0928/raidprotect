@@ -12,11 +12,6 @@ unmaintained = "deny"
 yanked = "deny"
 notice = "warn"
 
-ignore = [
-    "RUSTSEC-2020-0071",  # `bson` crate not affected by this vulnerability
-    "RUSTSEC-2020-0159",  # (same)
-]
-
 [licenses]
 unlicensed = "deny"
 allow = ["MIT", "Apache-2.0", "ISC", "BSD-3-Clause"]
