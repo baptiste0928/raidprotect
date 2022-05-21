@@ -5,10 +5,13 @@
 
 use std::sync::Arc;
 
-use raidprotect_cache::redis::RedisClient;
+use raidprotect_cache::{http::CacheHttp, redis::RedisClient};
 use raidprotect_model::mongodb::MongoDbClient;
 use twilight_http::Client as HttpClient;
-use twilight_model::id::{marker::ApplicationMarker, Id};
+use twilight_model::id::{
+    marker::{ApplicationMarker, GuildMarker},
+    Id,
+};
 
 /// Current state of the cluster.
 ///
@@ -55,6 +58,11 @@ impl ClusterState {
     /// Get the cluster [`HttpClient`].
     pub fn http(&self) -> &HttpClient {
         &self.http
+    }
+
+    /// Get the cluster [`CacheHttp`]
+    pub fn cache_http(&self, guild_id: Id<GuildMarker>) -> CacheHttp {
+        self.redis.http(&self.http, guild_id)
     }
 
     /// Get the bot user id

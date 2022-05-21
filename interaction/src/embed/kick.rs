@@ -1,10 +1,9 @@
 //! Embed for the kick command.
 
 use raidprotect_translations::Lang;
-use raidprotect_util::text::TextProcessExt;
+use raidprotect_util::{text::TextProcessExt, COLOR_RED};
 use twilight_util::builder::embed::EmbedBuilder;
 
-use super::COLOR_RED;
 use crate::response::InteractionResponse;
 
 /// User is not a server member.

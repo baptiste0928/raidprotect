@@ -21,6 +21,7 @@
 
 mod process;
 
+pub mod http;
 pub mod model;
 pub mod permission;
 pub mod redis;
