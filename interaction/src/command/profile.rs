@@ -41,7 +41,11 @@ use crate::{
 
 /// Profile command model.
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
-#[command(name = "profile", desc = "Show information about a user profile")]
+#[command(
+    name = "profile",
+    desc = "Show information about a user profile",
+    dm_permission = true
+)]
 pub struct ProfileCommand {
     /// Mention or ID of the user.
     pub user: ResolvedUser,

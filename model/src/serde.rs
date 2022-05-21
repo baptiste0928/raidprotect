@@ -9,7 +9,7 @@ use std::num::NonZeroU64;
 
 use serde::{de, ser, Deserialize, Deserializer, Serializer};
 use serde_with::{DeserializeAs, SerializeAs};
-use twilight_model::{datetime::Timestamp, id::Id};
+use twilight_model::{id::Id, util::Timestamp};
 
 /// Serialize twilight [`Id`] as [`i64`].
 ///
@@ -43,7 +43,7 @@ impl<'de, T> DeserializeAs<'de, Id<T>> for IdAsI64 {
     }
 }
 
-impl<T: Copy> SerializeAs<Id<T>> for IdAsI64 {
+impl<T> SerializeAs<Id<T>> for IdAsI64 {
     fn serialize_as<S>(source: &Id<T>, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -78,7 +78,7 @@ impl<'de, T> DeserializeAs<'de, Id<T>> for IdAsU64 {
     }
 }
 
-impl<T: Copy> SerializeAs<Id<T>> for IdAsU64 {
+impl<T> SerializeAs<Id<T>> for IdAsU64 {
     fn serialize_as<S>(source: &Id<T>, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -124,8 +124,8 @@ mod tests {
     use serde_test::{assert_de_tokens_error, assert_ser_tokens_error, assert_tokens, Token};
     use serde_with::serde_as;
     use twilight_model::{
-        datetime::Timestamp,
         id::{marker::GenericMarker, Id},
+        util::Timestamp,
     };
 
     use super::{IdAsI64, IdAsU64, TimestampAsI64};

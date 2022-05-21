@@ -10,7 +10,7 @@ use raidprotect_state::ClusterState;
 use thiserror::Error;
 use tracing::{info, info_span, instrument, trace};
 use twilight_gateway::{
-    cluster::{ClusterStartError, Events, ShardScheme},
+    cluster::{ClusterStartError, Events},
     Cluster, Intents,
 };
 use twilight_http::{response::DeserializeBodyError, Client as HttpClient, Error as HttpError};
@@ -66,7 +66,6 @@ impl ShardCluster {
 
         let (cluster, events) = Cluster::builder(config.token, intents)
             .http_client(http.clone())
-            .shard_scheme(ShardScheme::Auto)
             .presence(presence())
             .build()
             .await?;

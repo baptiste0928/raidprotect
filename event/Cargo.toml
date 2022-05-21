@@ -12,7 +12,7 @@ raidprotect-cache = { path = "../cache" }
 raidprotect-model = { path = "../model" }
 raidprotect-state = { path = "../state" }
 
-twilight-model = "0.10"
+twilight-model = "0.11"
 
 any_ascii = "0.3"
 linkify = "0.8"

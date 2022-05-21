@@ -4,13 +4,12 @@ use raidprotect_model::serde::{IdAsU64, TimestampAsI64};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use twilight_model::{
-    datetime::Timestamp,
     guild::Permissions,
     id::{
         marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker},
         Id,
     },
-    util::ImageHash,
+    util::{ImageHash, Timestamp},
 };
 
 use crate::{permission::RoleOrdering, redis::RedisModel};

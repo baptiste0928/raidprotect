@@ -17,8 +17,8 @@ raidprotect-util = { path = "../util" }
 nanoid = "0.4"
 thiserror = "1"
 tracing = "0.1"
-twilight-interactions = "0.10"
-twilight-model = "0.10"
-twilight-http = "0.10"
-twilight-util = { version = "0.10.1", features = ["builder", "snowflake"] }
-twilight-validate = "0.10"
+twilight-interactions = "0.11"
+twilight-model = "0.11"
+twilight-http = "0.11"
+twilight-util = { version = "0.11", features = ["builder", "snowflake"] }
+twilight-validate = "0.11"

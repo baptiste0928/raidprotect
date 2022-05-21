@@ -5,11 +5,11 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use twilight_model::{
     channel::Attachment,
-    datetime::Timestamp,
     id::{
         marker::{ChannelMarker, MessageMarker, RoleMarker, UserMarker},
         Id,
     },
+    util::Timestamp,
 };
 use url::Url;
 

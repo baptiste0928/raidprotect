@@ -31,17 +31,6 @@ pub fn unknown_command() -> InteractionResponse {
     InteractionResponse::EphemeralEmbed(embed)
 }
 
-/// Command not available in direct messages
-pub fn guild_only() -> InteractionResponse {
-    let embed = EmbedBuilder::new()
-        .title(Lang::Fr.guild_only_title())
-        .color(COLOR_RED)
-        .description(Lang::Fr.guild_only_description())
-        .build();
-
-    InteractionResponse::EphemeralEmbed(embed)
-}
-
 pub fn expired_component() -> InteractionResponse {
     let embed = EmbedBuilder::new()
         .title(Lang::Fr.expired_component_title())
@@ -64,11 +53,6 @@ mod tests {
     #[test]
     fn test_unknown_command() {
         unknown_command();
-    }
-
-    #[test]
-    fn test_guild_only() {
-        guild_only();
     }
 
     #[test]

@@ -16,7 +16,7 @@ raidprotect-translations = { path = "../translations" }
 lazy_static = "1.4"
 thiserror = "1"
 tokio = { version = "1.17", features = ["sync"] }
-twilight-http = "0.10"
-twilight-model = "0.10"
-twilight-util = { version = "0.10", features = ["builder"] }
-twilight-validate = "0.10"
+twilight-http = "0.11"
+twilight-model = "0.11"
+twilight-util = { version = "0.11", features = ["builder"] }
+twilight-validate = "0.11"
