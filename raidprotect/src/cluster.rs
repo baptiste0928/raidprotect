@@ -3,9 +3,8 @@
 use std::sync::Arc;
 
 use futures::StreamExt;
-use raidprotect_cache::redis::{RedisClient, RedisClientError};
 use raidprotect_interaction::register_commands;
-use raidprotect_model::mongodb::{MongoDbClient, MongoDbError};
+use raidprotect_model::{mongodb::{MongoDbClient, MongoDbError}, cache::{RedisClient, RedisClientError}};
 use raidprotect_state::ClusterState;
 use thiserror::Error;
 use tracing::{info, info_span, instrument, trace};

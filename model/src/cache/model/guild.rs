@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 
-use raidprotect_model::serde::{IdAsU64, TimestampAsI64};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use twilight_model::{
@@ -12,7 +11,10 @@ use twilight_model::{
     util::{ImageHash, Timestamp},
 };
 
-use crate::{permission::RoleOrdering, redis::RedisModel};
+use crate::{
+    cache::{permission::RoleOrdering, RedisModel},
+    serde::{IdAsU64, TimestampAsI64},
+};
 
 /// Cached model of a [`Guild`].
 ///

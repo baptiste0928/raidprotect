@@ -5,7 +5,7 @@
 
 use any_ascii::any_ascii;
 use linkify::{LinkFinder, LinkKind};
-use raidprotect_cache::model::message::{CachedMessage, MessageLink};
+use raidprotect_model::cache::model::message::{CachedMessage, MessageLink};
 use twilight_model::channel::Message;
 use unicode_segmentation::UnicodeSegmentation;
 use url::Url;

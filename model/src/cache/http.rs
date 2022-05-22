@@ -17,8 +17,9 @@ use twilight_model::{
 };
 use twilight_validate::channel::ChannelValidationError;
 
-use crate::{permission::PermissionError, redis::RedisClient};
+use super::{permission::PermissionError, redis::RedisClient};
 
+/// HTTP client with permission checks.
 #[derive(Debug)]
 pub struct CacheHttp<'a> {
     redis: &'a RedisClient,
@@ -97,6 +98,7 @@ impl<'a> CacheHttp<'a> {
     }
 }
 
+/// Error type returned by [`CacheHttp`].
 #[derive(Debug, Error)]
 pub enum CacheHttpError {
     #[error("permission computing failed: {0}")]

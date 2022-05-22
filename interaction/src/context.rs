@@ -2,7 +2,7 @@
 //!
 //! This module contains types used to parse context from received interaction.
 
-use raidprotect_model::{collection, mongodb::MongoDbError};
+use raidprotect_model::mongodb::{MongoDbError, Guild, Config};
 use raidprotect_state::ClusterState;
 use thiserror::Error;
 use twilight_http::client::InteractionClient;
@@ -184,16 +184,14 @@ pub struct GuildContext {
     /// ID of the guild.
     pub id: Id<GuildMarker>,
     /// The guild configuration from database.
-    pub guild: collection::Guild,
+    pub guild: Guild,
     /// The member that triggered the command.
     pub member: PartialMember,
 }
 
 impl GuildContext {
     /// Get the [`Config`] of the guild.
-    ///
-    /// [`Config`]: collection::Config
-    pub fn config(&self) -> &collection::Config {
+    pub fn config(&self) -> &Config {
         &self.guild.config
     }
 }

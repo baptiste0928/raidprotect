@@ -17,12 +17,12 @@ use twilight_model::{
     },
 };
 
-use crate::{
+use crate::cache::{
     model::{
         CachedCategoryChannel, CachedChannel, CachedGuild, CachedRole, CachedTextChannel,
         CachedThread, CurrentMember,
     },
-    redis::{RedisClientError, RedisModel, RedisResult},
+    RedisClientError, RedisModel, RedisResult,
 };
 
 pub fn cache_guild(

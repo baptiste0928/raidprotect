@@ -8,7 +8,7 @@
 //! sent in the guild's logs channel. The kicked user receives a pm with the
 //! reason of the kick.
 
-use raidprotect_cache::{permission::PermissionError, redis::RedisClientError};
+use raidprotect_model::cache::{RedisClientError, permission::PermissionError};
 use raidprotect_state::ClusterState;
 use raidprotect_translations::Lang;
 use raidprotect_util::text::TextProcessExt;

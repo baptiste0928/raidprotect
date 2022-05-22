@@ -12,8 +12,7 @@
 use std::collections::HashMap;
 
 use lazy_static::lazy_static;
-use raidprotect_cache::{http::CacheHttpError, model::CachedChannel, redis::RedisClientError};
-use raidprotect_model::mongodb::MongoDbError;
+use raidprotect_model::{mongodb::MongoDbError, cache::{model::CachedChannel, RedisClientError, http::CacheHttpError}};
 use raidprotect_state::ClusterState;
 use raidprotect_translations::Lang;
 use thiserror::Error;

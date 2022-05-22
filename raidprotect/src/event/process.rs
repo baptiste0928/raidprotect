@@ -1,8 +1,8 @@
 use std::{fmt::Debug, sync::Arc};
 
 use async_trait::async_trait;
-use raidprotect_cache::UpdateCache;
 use raidprotect_event::message::ALLOWED_MESSAGES_TYPES;
+use raidprotect_model::cache::UpdateCache;
 use raidprotect_state::ClusterState;
 use tracing::{debug, error, trace};
 use twilight_model::{

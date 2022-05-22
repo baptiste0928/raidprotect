@@ -4,10 +4,7 @@
 //! in the channel an ephemeral response.
 
 use nanoid::nanoid;
-use raidprotect_cache::{
-    model::component::{PendingComponent, PostInChatButton},
-    redis::RedisClientError,
-};
+use raidprotect_model::cache::{RedisClientError, model::component::{PostInChatButton, PendingComponent}};
 use raidprotect_state::ClusterState;
 use raidprotect_translations::Lang;
 use twilight_model::{

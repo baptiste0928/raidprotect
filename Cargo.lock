@@ -1094,7 +1094,6 @@ dependencies = [
  "dotenv",
  "envy",
  "futures",
- "raidprotect-cache",
  "raidprotect-event",
  "raidprotect-interaction",
  "raidprotect-model",
@@ -1111,34 +1110,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "raidprotect-cache"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "bb8",
- "bb8-redis",
- "raidprotect-model",
- "redis",
- "rmp-serde",
- "serde",
- "serde_with",
- "thiserror",
- "tracing",
- "twilight-http",
- "twilight-model",
- "twilight-util",
- "twilight-validate",
- "url",
- "zstd",
-]
-
-[[package]]
 name = "raidprotect-event"
 version = "0.1.0"
 dependencies = [
  "any_ascii",
  "linkify",
- "raidprotect-cache",
  "raidprotect-model",
  "raidprotect-state",
  "twilight-model",
@@ -1151,7 +1127,6 @@ name = "raidprotect-interaction"
 version = "0.1.0"
 dependencies = [
  "nanoid",
- "raidprotect-cache",
  "raidprotect-model",
  "raidprotect-state",
  "raidprotect-translations",
@@ -1169,18 +1144,29 @@ dependencies = [
 name = "raidprotect-model"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "bb8",
+ "bb8-redis",
  "mongodb",
+ "redis",
+ "rmp-serde",
  "serde",
  "serde_test",
  "serde_with",
+ "thiserror",
+ "tracing",
+ "twilight-http",
  "twilight-model",
+ "twilight-util",
+ "twilight-validate",
+ "url",
+ "zstd",
 ]
 
 [[package]]
 name = "raidprotect-state"
 version = "0.1.0"
 dependencies = [
- "raidprotect-cache",
  "raidprotect-model",
  "twilight-http",
  "twilight-model",
@@ -1199,7 +1185,6 @@ name = "raidprotect-util"
 version = "0.1.0"
 dependencies = [
  "lazy_static",
- "raidprotect-cache",
  "raidprotect-model",
  "raidprotect-state",
  "raidprotect-translations",
@@ -1255,7 +1240,6 @@ dependencies = [
  "itoa 0.4.8",
  "percent-encoding",
  "pin-project-lite",
- "sha1",
  "tokio",
  "tokio-util 0.6.10",
  "url",
@@ -1595,21 +1579,6 @@ dependencies = [
  "cpufeatures",
  "digest",
 ]
-
-[[package]]
-name = "sha1"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1da05c97445caa12d05e848c4a4fcbbea29e748ac28f7e80e9b010392063770"
-dependencies = [
- "sha1_smol",
-]
-
-[[package]]
-name = "sha1_smol"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae1a47186c03a32177042e55dbc5fd5aee900b8e0069a8d70fba96a9375cd012"
 
 [[package]]
 name = "sha2"

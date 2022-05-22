@@ -1,6 +1,5 @@
 //! State for message component interactions (buttons, select menus).
 
-use raidprotect_model::serde::IdAsU64;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use twilight_model::{
@@ -8,7 +7,7 @@ use twilight_model::{
     id::{marker::UserMarker, Id},
 };
 
-use crate::redis::RedisModel;
+use crate::{cache::RedisModel, serde::IdAsU64};
 
 /// State of a component waiting for user interaction.
 #[derive(Debug, Clone, Serialize, Deserialize)]

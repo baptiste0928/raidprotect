@@ -5,8 +5,7 @@
 
 use std::sync::Arc;
 
-use raidprotect_cache::{http::CacheHttp, redis::RedisClient};
-use raidprotect_model::mongodb::MongoDbClient;
+use raidprotect_model::{mongodb::MongoDbClient, cache::{RedisClient, http::CacheHttp}};
 use twilight_http::Client as HttpClient;
 use twilight_model::id::{
     marker::{ApplicationMarker, GuildMarker},

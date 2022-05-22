@@ -1,10 +1,14 @@
-//! # raidprotect-cache
-//!
-//! Implementation of the custom cache used to store Discord objects.
+//! Custom cache used to store Discord objects.
 //!
 //! This cache is based on Redis and store Discord objects used by the bot
 //! including guilds, channels and roles. The cache is built to use as little
 //! memory as possible, and such only store useful fields.
+//!
+//! ## Access the cache data
+//! The cache can be queried using [`RedisClient`]. Higher-level interfaces are
+//! also provided to use the cache data: the [`permission`] allow to compute
+//! permissions for a user using cached data, and [`http`] allow to perform
+//! permission checks before http requests.
 //!
 //! ## Event processing
 //! Incoming Discord events that implement [`UpdateCache`] are processed to
@@ -24,6 +28,9 @@ mod process;
 pub mod http;
 pub mod model;
 pub mod permission;
-pub mod redis;
+mod redis;
 
-pub use process::UpdateCache;
+pub use self::{
+    process::UpdateCache,
+    redis::{RedisClient, RedisClientError, RedisConnection, RedisModel, RedisResult},
+};

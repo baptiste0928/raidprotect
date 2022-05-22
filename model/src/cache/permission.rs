@@ -17,7 +17,7 @@ use twilight_model::{
 };
 use twilight_util::permission_calculator::PermissionCalculator;
 
-use crate::{
+use super::{
     model::{CachedChannel, CachedGuild, CachedRole},
     redis::{RedisClient, RedisClientError, RedisModel},
 };

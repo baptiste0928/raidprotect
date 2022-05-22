@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "cache",
     "event",
     "interaction",
     "model",

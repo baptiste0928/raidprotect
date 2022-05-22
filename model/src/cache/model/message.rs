@@ -1,6 +1,5 @@
 //! Messages cache models.
 
-use raidprotect_model::serde::{IdAsU64, TimestampAsI64};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use twilight_model::{
@@ -13,7 +12,10 @@ use twilight_model::{
 };
 use url::Url;
 
-use crate::redis::RedisModel;
+use crate::{
+    cache::RedisModel,
+    serde::{IdAsU64, TimestampAsI64},
+};
 
 /// Cached model of a [`Message`].
 ///

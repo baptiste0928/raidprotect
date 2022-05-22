@@ -11,9 +11,9 @@ use twilight_model::{
     id::{marker::ApplicationMarker, Id},
 };
 
-use crate::{
+use crate::cache::{
     model::{CachedChannel, CachedGuild, CachedRole, CurrentMember},
-    redis::{RedisClient, RedisModel, RedisResult},
+    RedisClient, RedisModel, RedisResult,
 };
 
 /// Update the cache based on event data.

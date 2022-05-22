@@ -7,9 +7,6 @@ use twilight_model::id::{
 
 use crate::serde::IdAsI64;
 
-/// Name of the `guilds` collection
-pub const GUILDS_COLLECTION: &str = "guilds";
-
 /// Guild data and configuration.
 ///
 /// This struct correspond to documents stored in the `guilds` collection.
@@ -26,6 +23,9 @@ pub struct Guild {
 }
 
 impl Guild {
+    /// Name of the MongoDB collection.
+    pub const COLLECTION: &'static str = "guilds";
+
     /// Initialize a new [`Guild`] with default configuration.
     pub fn new(id: Id<GuildMarker>) -> Self {
         Self {

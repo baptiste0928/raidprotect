@@ -1,12 +1,5 @@
-//! MongoDB client.
-//!
-//! This module provides a [`MongoDbClient`] type that wraps an underlying
-//! MongoDB connection pool and exposes high-level methods to access data
-//! stored in the database.
-
 use std::time::Duration;
 
-pub use mongodb::error::Error as MongoDbError;
 use mongodb::{
     bson::{doc, to_bson, to_document},
     options, Client, Database,
@@ -15,17 +8,19 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use twilight_model::id::{marker::GuildMarker, Id};
 
-use crate::{
-    collection::{Guild, GUILDS_COLLECTION},
-    serde::IdAsI64,
-};
+use super::Guild;
+use crate::serde::IdAsI64;
+
+/// Error type returned by [`MongoDbClient`].
+///
+/// This type is a re-export of the error of `mongodb` crate.
+pub type MongoDbError = mongodb::error::Error;
 
 /// Wrapper around a MongoDB [`Client`].
 ///
-/// The the [module documentation] to learn more. This type can be safely cloned
+/// This type wraps an underlying MongoDB connection pool and exposes high-level
+/// methods to access data stored in the database.This type can be safely cloned
 /// because the underlying [`Client`] uses `Arc`.
-///
-/// [module documentation]: super
 #[derive(Debug, Clone)]
 pub struct MongoDbClient {
     client: Client,
@@ -74,7 +69,7 @@ impl MongoDbClient {
 
         let guild = self
             .db()
-            .collection::<Guild>(GUILDS_COLLECTION)
+            .collection::<Guild>(Guild::COLLECTION)
             .find_one(to_document(&query)?, None)
             .await?;
 
@@ -95,7 +90,7 @@ impl MongoDbClient {
 
         let guild = self
             .db()
-            .collection::<Guild>(GUILDS_COLLECTION)
+            .collection::<Guild>(Guild::COLLECTION)
             .find_one_and_update(
                 to_document(&query)?,
                 doc! { "$setOnInsert": to_bson(&default_guild)? },
@@ -112,7 +107,7 @@ impl MongoDbClient {
         let options = options::ReplaceOptions::builder().upsert(true).build();
 
         self.db()
-            .collection::<Guild>(GUILDS_COLLECTION)
+            .collection::<Guild>(Guild::COLLECTION)
             .replace_one(doc! { "_id": to_document(&query)? }, guild, options)
             .await?;
 

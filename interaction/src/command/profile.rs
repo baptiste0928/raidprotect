@@ -4,7 +4,7 @@
 
 use std::time::Duration;
 
-use raidprotect_cache::redis::RedisClientError;
+use raidprotect_model::cache::RedisClientError;
 use raidprotect_state::ClusterState;
 use raidprotect_translations::Lang;
 use raidprotect_util::{
