@@ -2,7 +2,7 @@
 //!
 //! This module contains types used to parse context from received interaction.
 
-use raidprotect_model::mongodb::{MongoDbError, Guild, Config};
+use raidprotect_model::mongodb::{Config, Guild, MongoDbError};
 use raidprotect_state::ClusterState;
 use thiserror::Error;
 use twilight_http::client::InteractionClient;
