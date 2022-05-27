@@ -1,10 +1,10 @@
 //! Error embeds.
 
 use raidprotect_translations::Lang;
-use raidprotect_util::COLOR_RED;
 use twilight_util::builder::embed::{EmbedBuilder, EmbedFooterBuilder};
 
-use crate::response::InteractionResponse;
+use super::COLOR_RED;
+use crate::interaction::response::InteractionResponse;
 
 /// Internal error embed
 pub fn internal_error() -> InteractionResponse {

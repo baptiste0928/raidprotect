@@ -1,14 +1,15 @@
 use std::{fmt::Debug, sync::Arc};
 
 use async_trait::async_trait;
-use raidprotect_event::message::ALLOWED_MESSAGES_TYPES;
 use raidprotect_model::cache::UpdateCache;
-use raidprotect_state::ClusterState;
 use tracing::{debug, error, trace};
 use twilight_model::{
     application::interaction::Interaction,
     gateway::{event::Event as GatewayEvent, payload::incoming},
 };
+
+use super::message::ALLOWED_MESSAGES_TYPES;
+use crate::cluster::ClusterState;
 
 /// Process incoming events.
 #[async_trait]
@@ -98,10 +99,10 @@ impl ProcessEvent for incoming::InteractionCreate {
     async fn process(self, state: Arc<ClusterState>) {
         match self.0 {
             Interaction::ApplicationCommand(command) => {
-                raidprotect_interaction::handle_command(*command, state).await;
+                crate::interaction::handle_command(*command, state).await;
             }
             Interaction::MessageComponent(component) => {
-                raidprotect_interaction::handle_component(*component, state).await;
+                crate::interaction::handle_component(*component, state).await;
             }
             _ => {
                 trace!("unprocessed interaction type");
@@ -114,7 +115,7 @@ impl ProcessEvent for incoming::InteractionCreate {
 impl ProcessEvent for incoming::MessageCreate {
     async fn process(self, state: Arc<ClusterState>) {
         if self.guild_id.is_some() && ALLOWED_MESSAGES_TYPES.contains(&self.kind) {
-            tokio::spawn(raidprotect_event::message::handle_message(self.0, state));
+            super::message::handle_message(self.0, state).await;
         }
     }
 }

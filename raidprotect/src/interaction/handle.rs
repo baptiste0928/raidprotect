@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use raidprotect_model::cache::model::component::PendingComponent;
-use raidprotect_state::ClusterState;
 use tracing::{error, warn};
 use twilight_interactions::command::CreateCommand;
 use twilight_model::{
@@ -18,7 +17,10 @@ use super::{
     context::InteractionContext,
     response::{InteractionResponder, IntoResponse},
 };
-use crate::{command::kick::KickCommand, embed};
+use crate::{
+    cluster::ClusterState,
+    interaction::{command::kick::KickCommand, embed},
+};
 
 /// Handle incoming [`ApplicationCommand`]
 ///

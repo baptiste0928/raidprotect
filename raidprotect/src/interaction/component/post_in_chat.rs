@@ -8,7 +8,6 @@ use raidprotect_model::cache::{
     model::component::{PendingComponent, PostInChatButton},
     RedisClientError,
 };
-use raidprotect_state::ClusterState;
 use raidprotect_translations::Lang;
 use twilight_model::{
     application::component::{button::ButtonStyle, ActionRow, Button, Component},
@@ -20,7 +19,7 @@ use twilight_model::{
     id::{marker::UserMarker, Id},
 };
 
-use crate::response::IntoResponse;
+use crate::{cluster::ClusterState, interaction::response::IntoResponse};
 
 pub struct PostInChat {
     /// The message to post.

@@ -4,7 +4,6 @@
 
 use std::error::Error;
 
-use raidprotect_state::ClusterState;
 use tracing::error;
 use twilight_http::error::ErrorType;
 use twilight_model::{
@@ -13,10 +12,7 @@ use twilight_model::{
         interaction::{ApplicationCommand, MessageComponentInteraction},
     },
     channel::{embed::Embed, message::MessageFlags},
-    http::interaction::{
-        InteractionResponse as HttpInteractionResponse, InteractionResponseData,
-        InteractionResponseType,
-    },
+    http::interaction::{InteractionResponse as HttpInteractionResponse, InteractionResponseType},
     id::{
         marker::{ApplicationMarker, InteractionMarker},
         Id,
@@ -24,7 +20,8 @@ use twilight_model::{
 };
 use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::embed;
+use crate::{cluster::ClusterState, interaction::embed};
+
 /// Credentials used to respond to an interaction.
 #[derive(Debug)]
 pub struct InteractionResponder {
@@ -91,20 +88,10 @@ pub enum InteractionResponse {
         title: String,
         components: Vec<Component>,
     },
-    /// Respond with a [`DeferredChannelMessageWithSource`] interaction type.
-    ///
-    /// [`DeferredChannelMessageWithSource`]: InteractionResponseType::DeferredChannelMessageWithSource
-    DeferredMessage,
     /// Respond with an ephemeral [`DeferredChannelMessageWithSource`] interaction type.
     ///
     /// [`DeferredChannelMessageWithSource`]: InteractionResponseType::DeferredChannelMessageWithSource
     EphemeralDeferredMessage,
-    /// Respond with a custom [`InteractionResponseData`].
-    ///
-    /// This will respond with a [`ChannelMessageWithSource`] interaction type.
-    ///
-    /// [`ChannelMessageWithSource`]: InteractionResponseType::ChannelMessageWithSource
-    Custom(InteractionResponseData),
 }
 
 /// Convert a type into [`InteractionResponseData`]..
@@ -117,7 +104,7 @@ impl IntoResponse for InteractionResponse {
     fn into_response(self) -> HttpInteractionResponse {
         let kind = match self {
             Self::Modal { .. } => InteractionResponseType::Modal,
-            Self::DeferredMessage | Self::EphemeralDeferredMessage => {
+            Self::EphemeralDeferredMessage => {
                 InteractionResponseType::DeferredChannelMessageWithSource
             }
             _ => InteractionResponseType::ChannelMessageWithSource,
@@ -146,13 +133,11 @@ impl IntoResponse for InteractionResponse {
                     .components(components)
                     .build(),
             ),
-            Self::DeferredMessage => None,
             Self::EphemeralDeferredMessage => Some(
                 InteractionResponseDataBuilder::new()
                     .flags(MessageFlags::EPHEMERAL)
                     .build(),
             ),
-            Self::Custom(response) => Some(response),
         };
 
         HttpInteractionResponse { kind, data }

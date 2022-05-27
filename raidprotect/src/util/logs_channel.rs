@@ -9,14 +9,15 @@
 //! A simple locking mechanism is used to prevent multiple channels to be created
 //! at the same time.
 
+#![allow(unused)]
+
 use std::collections::HashMap;
 
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use raidprotect_model::{
     cache::{http::CacheHttpError, model::CachedChannel, RedisClientError},
     mongodb::MongoDbError,
 };
-use raidprotect_state::ClusterState;
 use raidprotect_translations::Lang;
 use thiserror::Error;
 use tokio::sync::{broadcast, RwLock};
@@ -35,19 +36,19 @@ use twilight_model::{
 use twilight_util::builder::embed::EmbedBuilder;
 use twilight_validate::message::MessageValidationError;
 
-use crate::COLOR_RED;
+use crate::{cluster::ClusterState, interaction::embed::COLOR_RED};
 
 /// Default logs channel name.
 const DEFAULT_LOGS_NAME: &str = "raidprotect-logs";
 
-lazy_static! {
-    /// Logs channel creation queue.
-    ///
-    /// This hold a list of pending logs channels being created. A [`broadcast::Sender`]
-    /// is hold to notify when the channel has been created.
-    static ref PENDING_CHANNELS: RwLock<HashMap<Id<GuildMarker>, broadcast::Sender<Id<ChannelMarker>>>> =
-        RwLock::new(HashMap::new());
-}
+type PendingChannelsMap = HashMap<Id<GuildMarker>, broadcast::Sender<Id<ChannelMarker>>>;
+
+/// Logs channel creation queue.
+///
+/// This hold a list of pending logs channels being created. A [`broadcast::Sender`]
+/// is hold to notify when the channel has been created.
+static PENDING_CHANNELS: Lazy<RwLock<PendingChannelsMap>> =
+    Lazy::new(|| RwLock::new(HashMap::new()));
 
 /// Get the logs channel of a guild.
 ///

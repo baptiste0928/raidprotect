@@ -9,9 +9,7 @@
 //! reason of the kick.
 
 use raidprotect_model::cache::{permission::PermissionError, RedisClientError};
-use raidprotect_state::ClusterState;
 use raidprotect_translations::Lang;
-use raidprotect_util::text::TextProcessExt;
 use thiserror::Error;
 use tracing::instrument;
 use twilight_interactions::{
@@ -27,9 +25,13 @@ use twilight_model::{
 };
 
 use crate::{
-    context::InteractionContext,
-    embed,
-    response::{InteractionError, InteractionErrorKind, InteractionResponse},
+    cluster::ClusterState,
+    interaction::{
+        context::InteractionContext,
+        embed,
+        response::{InteractionError, InteractionErrorKind, InteractionResponse},
+    },
+    util::TextProcessExt,
 };
 
 /// Kick command model.

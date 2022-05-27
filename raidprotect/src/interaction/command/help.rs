@@ -10,7 +10,7 @@ use twilight_model::application::interaction::application_command::CommandData;
 use twilight_util::builder::embed::EmbedBuilder;
 use twilight_validate::embed::EmbedValidationError;
 
-use crate::{
+use crate::interaction::{
     context::InteractionContext,
     response::{InteractionError, InteractionErrorKind, InteractionResponse},
 };

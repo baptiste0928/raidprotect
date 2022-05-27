@@ -964,9 +964,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.11.0"
+version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b10983b38c53aebdf33f542c6275b0f58a238129d00c4ae0e6fb59738d783ca"
+checksum = "7709cef83f0c1f58f666e746a08b21e0085f7440fa6a29cc194d68aac97a4225"
 
 [[package]]
 name = "openssl-probe"
@@ -1089,15 +1089,17 @@ dependencies = [
 name = "raidprotect"
 version = "0.1.0"
 dependencies = [
+ "any_ascii",
  "anyhow",
  "async-trait",
  "dotenv",
  "envy",
  "futures",
- "raidprotect-event",
- "raidprotect-interaction",
+ "linkify",
+ "nanoid",
+ "once_cell",
  "raidprotect-model",
- "raidprotect-state",
+ "raidprotect-translations",
  "serde",
  "thiserror",
  "tokio",
@@ -1106,38 +1108,13 @@ dependencies = [
  "tracing-subscriber",
  "twilight-gateway",
  "twilight-http",
- "twilight-model",
-]
-
-[[package]]
-name = "raidprotect-event"
-version = "0.1.0"
-dependencies = [
- "any_ascii",
- "linkify",
- "raidprotect-model",
- "raidprotect-state",
- "twilight-model",
- "unicode-segmentation",
- "url",
-]
-
-[[package]]
-name = "raidprotect-interaction"
-version = "0.1.0"
-dependencies = [
- "nanoid",
- "raidprotect-model",
- "raidprotect-state",
- "raidprotect-translations",
- "raidprotect-util",
- "thiserror",
- "tracing",
- "twilight-http",
  "twilight-interactions",
+ "twilight-mention",
  "twilight-model",
  "twilight-util",
  "twilight-validate",
+ "unicode-segmentation",
+ "url",
 ]
 
 [[package]]
@@ -1164,36 +1141,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "raidprotect-state"
-version = "0.1.0"
-dependencies = [
- "raidprotect-model",
- "twilight-http",
- "twilight-model",
-]
-
-[[package]]
 name = "raidprotect-translations"
 version = "0.1.0"
 dependencies = [
  "rosetta-build",
  "rosetta-i18n",
-]
-
-[[package]]
-name = "raidprotect-util"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "raidprotect-model",
- "raidprotect-state",
- "raidprotect-translations",
- "thiserror",
- "tokio",
- "twilight-http",
- "twilight-model",
- "twilight-util",
- "twilight-validate",
 ]
 
 [[package]]
@@ -2052,6 +2004,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "twilight-mention"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "538a66387d06ad56f05e21934d81dd1ca794b26f3eef919ba6ebd903d5118c6d"
+dependencies = [
+ "twilight-model",
 ]
 
 [[package]]

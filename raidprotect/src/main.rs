@@ -13,13 +13,13 @@
 mod cluster;
 mod config;
 mod event;
-mod logging;
-mod shutdown;
+mod interaction;
+mod util;
 
 use anyhow::{Context, Result};
 use tracing::{debug, info};
 
-use crate::shutdown::{wait_shutdown, Shutdown};
+use crate::util::shutdown::{wait_shutdown, Shutdown};
 
 #[tokio::main]
 async fn main() -> Result<()> {

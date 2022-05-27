@@ -3,9 +3,7 @@
 //! This module contains types used to parse context from received interaction.
 
 use raidprotect_model::mongodb::{Config, Guild, MongoDbError};
-use raidprotect_state::ClusterState;
 use thiserror::Error;
-use twilight_http::client::InteractionClient;
 use twilight_model::{
     application::interaction::{
         application_command::CommandData, message_component::MessageComponentInteractionData,
@@ -20,6 +18,7 @@ use twilight_model::{
 };
 
 use super::response::{InteractionError, InteractionErrorKind};
+use crate::cluster::ClusterState;
 
 /// Context of an [`ApplicationCommand`] or [`MessageComponentInteraction`].
 ///
@@ -43,13 +42,6 @@ pub struct InteractionContext<D> {
     pub user: User,
     /// The user locale.
     pub locale: String,
-}
-
-impl<D> InteractionContext<D> {
-    /// Get the [`InteractionClient`] associated with the current context.
-    pub fn interaction<'state>(&self, state: &'state ClusterState) -> InteractionClient<'state> {
-        state.http().interaction(self.application_id)
-    }
 }
 
 impl InteractionContext<CommandData> {

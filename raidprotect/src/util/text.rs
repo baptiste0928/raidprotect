@@ -1,7 +1,4 @@
-//! Text transformation utilities.
-//!
-//! This module exposes text transformation utilities as an extension trait for
-//! the [`String`] type.
+//! Text processing utilities.
 
 /// Extension trait for [`String`] with text processing utilities.
 pub trait TextProcessExt {

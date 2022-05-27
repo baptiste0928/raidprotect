@@ -5,17 +5,16 @@
 use std::time::Duration;
 
 use raidprotect_model::cache::RedisClientError;
-use raidprotect_state::ClusterState;
 use raidprotect_translations::Lang;
-use raidprotect_util::{
-    resource::{avatar_url, ImageFormat, ImageSize, TimestampStyle},
-    COLOR_TRANSPARENT,
-};
 use thiserror::Error;
 use tracing::instrument;
 use twilight_interactions::{
     command::{CommandModel, CreateCommand, ResolvedUser},
     error::ParseError,
+};
+use twilight_mention::{
+    timestamp::{Timestamp, TimestampStyle},
+    Mention,
 };
 use twilight_model::application::{
     component::{button::ButtonStyle, ActionRow, Button, Component},
@@ -34,9 +33,14 @@ use twilight_util::{
 use twilight_validate::embed::EmbedValidationError;
 
 use crate::{
-    component::post_in_chat::PostInChat,
-    context::InteractionContext,
-    response::{InteractionError, InteractionErrorKind},
+    cluster::ClusterState,
+    interaction::{
+        component::post_in_chat::PostInChat,
+        context::InteractionContext,
+        embed::COLOR_TRANSPARENT,
+        response::{InteractionError, InteractionErrorKind},
+    },
+    util::resource::avatar_url,
 };
 
 /// Profile command model.
@@ -61,7 +65,7 @@ impl ProfileCommand {
         let parsed = ProfileCommand::from_interaction(context.data.into())?;
         let user = parsed.user.resolved;
 
-        let avatar = avatar_url(&user, ImageFormat::Jpeg, ImageSize::Size1024);
+        let avatar = avatar_url(&user, "jpeg", 1024);
         let mut embed = EmbedBuilder::new()
             .color(COLOR_TRANSPARENT)
             .title(Lang::Fr.profile_title(user.discriminator(), &user.name))
@@ -70,8 +74,9 @@ impl ProfileCommand {
 
         // User profile creation time.
         let created_at = Duration::from_millis(user.id.timestamp() as u64).as_secs();
-        let timestamp_long = TimestampStyle::LongDate.format(created_at);
-        let timestamp_relative = TimestampStyle::RelativeTime.format(created_at);
+        let timestamp_long = Timestamp::new(created_at, Some(TimestampStyle::LongDate)).mention();
+        let timestamp_relative =
+            Timestamp::new(created_at, Some(TimestampStyle::RelativeTime)).mention();
 
         embed = embed.field(EmbedFieldBuilder::new(
             Lang::Fr.profile_created_at(),
@@ -81,8 +86,10 @@ impl ProfileCommand {
         // Member join date.
         if let Some(member) = parsed.user.member {
             let joined_at = member.joined_at.as_secs();
-            let timestamp_long = TimestampStyle::LongDate.format(joined_at as u64);
-            let timestamp_relative = TimestampStyle::RelativeTime.format(joined_at as u64);
+            let timestamp_long =
+                Timestamp::new(joined_at as u64, Some(TimestampStyle::LongDate)).mention();
+            let timestamp_relative =
+                Timestamp::new(joined_at as u64, Some(TimestampStyle::RelativeTime)).mention();
 
             embed = embed.field(EmbedFieldBuilder::new(
                 Lang::Fr.profile_joined_at(),
