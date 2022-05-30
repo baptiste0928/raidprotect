@@ -19,7 +19,6 @@
   "modal_reason_placeholder": "Raison envoyée à l'utilisateur sanctionné",
   "post_in_chat_author": "*Commande effectuée par <@{user_id}>*",
   "post_in_chat_button": "Envoyer dans le salon",
-  "profile_button": "Afficher le profil complet",
   "profile_created_at": "Création du compte",
   "profile_joined_at": "Membre de ce serveur",
   "profile_title": "Profil de {username}#{discriminator}",

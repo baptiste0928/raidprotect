@@ -48,3 +48,11 @@ async fn main() -> Result<()> {
 
     Ok(())
 }
+
+mod translations {
+    //! Generated translations.
+    //!
+    //! This module contains translations generated with [`rosetta-i18n`].
+
+    rosetta_i18n::include_translations!();
+}

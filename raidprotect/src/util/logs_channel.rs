@@ -18,7 +18,6 @@ use raidprotect_model::{
     cache::{http::CacheHttpError, model::CachedChannel, RedisClientError},
     mongodb::MongoDbError,
 };
-use raidprotect_translations::Lang;
 use thiserror::Error;
 use tokio::sync::{broadcast, RwLock};
 use twilight_http::{error::Error as HttpError, response::DeserializeBodyError};
@@ -36,7 +35,7 @@ use twilight_model::{
 use twilight_util::builder::embed::EmbedBuilder;
 use twilight_validate::message::MessageValidationError;
 
-use crate::{cluster::ClusterState, interaction::embed::COLOR_RED};
+use crate::{cluster::ClusterState, interaction::embed::COLOR_RED, translations::Lang};
 
 /// Default logs channel name.
 const DEFAULT_LOGS_NAME: &str = "raidprotect-logs";

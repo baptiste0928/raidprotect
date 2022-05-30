@@ -73,9 +73,7 @@ impl InteractionResponder {
 
 /// Response to an interaction.
 ///
-/// This enum contains types that can be used to respond to an interaction. The
-/// [`InteractionResponse::Custom`] variant can be used to respond with a custom
-/// [`InteractionResponseData`].
+/// This enum contains types that can be used to respond to an interaction.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InteractionResponse {
     /// Respond with an embed.
@@ -94,9 +92,9 @@ pub enum InteractionResponse {
     EphemeralDeferredMessage,
 }
 
-/// Convert a type into [`InteractionResponseData`]..
+/// Convert a type into [`HttpInteractionResponse`]..
 pub trait IntoResponse {
-    /// Convert this type into [`InteractionResponseData`].
+    /// Convert this type into [`HttpInteractionResponse`].
     fn into_response(self) -> HttpInteractionResponse;
 }
 

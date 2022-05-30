@@ -9,7 +9,6 @@
 //! reason of the kick.
 
 use raidprotect_model::cache::{permission::PermissionError, RedisClientError};
-use raidprotect_translations::Lang;
 use thiserror::Error;
 use tracing::instrument;
 use twilight_interactions::{
@@ -31,6 +30,7 @@ use crate::{
         embed,
         response::{InteractionError, InteractionErrorKind, InteractionResponse},
     },
+    translations::Lang,
     util::TextProcessExt,
 };
 

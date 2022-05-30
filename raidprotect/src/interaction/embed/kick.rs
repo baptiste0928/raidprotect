@@ -1,10 +1,9 @@
 //! Embed for the kick command.
 
-use raidprotect_translations::Lang;
 use twilight_util::builder::embed::EmbedBuilder;
 
 use super::COLOR_RED;
-use crate::{interaction::response::InteractionResponse, util::TextProcessExt};
+use crate::{interaction::response::InteractionResponse, translations::Lang, util::TextProcessExt};
 
 /// User is not a server member.
 pub fn not_member(user: String) -> InteractionResponse {

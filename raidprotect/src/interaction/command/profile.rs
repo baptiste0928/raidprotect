@@ -5,7 +5,6 @@
 use std::time::Duration;
 
 use raidprotect_model::cache::RedisClientError;
-use raidprotect_translations::Lang;
 use thiserror::Error;
 use tracing::instrument;
 use twilight_interactions::{
@@ -40,6 +39,7 @@ use crate::{
         embed::COLOR_TRANSPARENT,
         response::{InteractionError, InteractionErrorKind},
     },
+    translations::Lang,
     util::resource::avatar_url,
 };
 
