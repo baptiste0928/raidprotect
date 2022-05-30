@@ -394,13 +394,11 @@ dependencies = [
 
 [[package]]
 name = "flate2"
-version = "1.0.23"
+version = "1.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b39522e96686d38f4bc984b9198e3a0613264abaebaff2c5c918bfa6b6da09af"
+checksum = "f82b0f4c27ad9f8bfd1f3208d882da2b09c301bc1c828fd3a00d0216d2fbbff6"
 dependencies = [
- "cfg-if",
  "crc32fast",
- "libc",
  "libz-sys",
  "miniz_oxide",
 ]
@@ -633,9 +631,9 @@ checksum = "c4a1e36c821dbe04574f602848a19f742f4fb3c98d40449f11bcad18d6b17421"
 
 [[package]]
 name = "hyper"
-version = "0.14.18"
+version = "0.14.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b26ae0a80afebe130861d90abf98e3814a4f28a4c6ffeb5ab8ebb2be311e0ef2"
+checksum = "42dc3c131584288d375f2d07f822b0cb012d8c6fb899a5b9fdb3cb7eb9b6004f"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -688,9 +686,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "1.8.1"
+version = "1.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f647032dfaa1f8b6dc29bd3edb7bbef4861b8b8007ebb118d6db284fd59f6ee"
+checksum = "e6012d540c5baa3589337a98ce73408de9b5a25ec9fc2c6fd6be8f0d39e0ca5a"
 dependencies = [
  "autocfg",
  "hashbrown",
@@ -767,9 +765,9 @@ checksum = "349d5a591cd28b49e1d1037471617a32ddcda5731b99419008085f72d5a53836"
 
 [[package]]
 name = "libz-sys"
-version = "1.1.6"
+version = "1.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92e7e15d7610cce1d9752e137625f14e61a28cd45929b6e12e47b50fe154ee2e"
+checksum = "9702761c3935f8cc2f101793272e202c72b99da8f4224a19ddcf1279a6450bbf"
 dependencies = [
  "cc",
  "pkg-config",
@@ -964,9 +962,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.11.0"
+version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b10983b38c53aebdf33f542c6275b0f58a238129d00c4ae0e6fb59738d783ca"
+checksum = "7709cef83f0c1f58f666e746a08b21e0085f7440fa6a29cc194d68aac97a4225"
 
 [[package]]
 name = "openssl-probe"
@@ -985,9 +983,9 @@ dependencies = [
 
 [[package]]
 name = "os_info"
-version = "3.3.0"
+version = "3.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04304d855bb5385d4b595edf0147b8e281871766b75dd4c87b2bdf3c9e5c2d19"
+checksum = "0eca3ecae1481e12c3d9379ec541b238a16f0b75c9a409942daa8ec20dbfdb62"
 dependencies = [
  "log",
  "winapi",
@@ -1089,16 +1087,18 @@ dependencies = [
 name = "raidprotect"
 version = "0.1.0"
 dependencies = [
+ "any_ascii",
  "anyhow",
  "async-trait",
  "dotenv",
  "envy",
  "futures",
- "raidprotect-cache",
- "raidprotect-event",
- "raidprotect-interaction",
+ "linkify",
+ "nanoid",
+ "once_cell",
  "raidprotect-model",
- "raidprotect-state",
+ "rosetta-build",
+ "rosetta-i18n",
  "serde",
  "thiserror",
  "tokio",
@@ -1107,20 +1107,27 @@ dependencies = [
  "tracing-subscriber",
  "twilight-gateway",
  "twilight-http",
+ "twilight-interactions",
+ "twilight-mention",
  "twilight-model",
+ "twilight-util",
+ "twilight-validate",
+ "unicode-segmentation",
+ "url",
 ]
 
 [[package]]
-name = "raidprotect-cache"
+name = "raidprotect-model"
 version = "0.1.0"
 dependencies = [
  "async-trait",
  "bb8",
  "bb8-redis",
- "raidprotect-model",
+ "mongodb",
  "redis",
  "rmp-serde",
  "serde",
+ "serde_test",
  "serde_with",
  "thiserror",
  "tracing",
@@ -1130,85 +1137,6 @@ dependencies = [
  "twilight-validate",
  "url",
  "zstd",
-]
-
-[[package]]
-name = "raidprotect-event"
-version = "0.1.0"
-dependencies = [
- "any_ascii",
- "linkify",
- "raidprotect-cache",
- "raidprotect-model",
- "raidprotect-state",
- "twilight-model",
- "unicode-segmentation",
- "url",
-]
-
-[[package]]
-name = "raidprotect-interaction"
-version = "0.1.0"
-dependencies = [
- "nanoid",
- "raidprotect-cache",
- "raidprotect-model",
- "raidprotect-state",
- "raidprotect-translations",
- "raidprotect-util",
- "thiserror",
- "tracing",
- "twilight-http",
- "twilight-interactions",
- "twilight-model",
- "twilight-util",
- "twilight-validate",
-]
-
-[[package]]
-name = "raidprotect-model"
-version = "0.1.0"
-dependencies = [
- "mongodb",
- "serde",
- "serde_test",
- "serde_with",
- "twilight-model",
-]
-
-[[package]]
-name = "raidprotect-state"
-version = "0.1.0"
-dependencies = [
- "raidprotect-cache",
- "raidprotect-model",
- "twilight-http",
- "twilight-model",
-]
-
-[[package]]
-name = "raidprotect-translations"
-version = "0.1.0"
-dependencies = [
- "rosetta-build",
- "rosetta-i18n",
-]
-
-[[package]]
-name = "raidprotect-util"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "raidprotect-cache",
- "raidprotect-model",
- "raidprotect-state",
- "raidprotect-translations",
- "thiserror",
- "tokio",
- "twilight-http",
- "twilight-model",
- "twilight-util",
- "twilight-validate",
 ]
 
 [[package]]
@@ -1255,7 +1183,6 @@ dependencies = [
  "itoa 0.4.8",
  "percent-encoding",
  "pin-project-lite",
- "sha1",
  "tokio",
  "tokio-util 0.6.10",
  "url",
@@ -1416,12 +1343,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rustversion"
-version = "1.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2cc38e8fa666e2de3c4aba7edeb5ffc5246c1c2ed0e3d17e560aeeba736b23f"
-
-[[package]]
 name = "ryu"
 version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1564,11 +1485,10 @@ dependencies = [
 
 [[package]]
 name = "serde_with"
-version = "1.13.0"
+version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b827f2113224f3f19a665136f006709194bdfdcb1fdc1e4b2b5cbac8e0cced54"
+checksum = "678b5a069e50bf00ecd22d0cd8ddf7c236f68581b03db652061ed5eb13a312ff"
 dependencies = [
- "rustversion",
  "serde",
  "serde_with_macros",
 ]
@@ -1595,21 +1515,6 @@ dependencies = [
  "cpufeatures",
  "digest",
 ]
-
-[[package]]
-name = "sha1"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1da05c97445caa12d05e848c4a4fcbbea29e748ac28f7e80e9b010392063770"
-dependencies = [
- "sha1_smol",
-]
-
-[[package]]
-name = "sha1_smol"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae1a47186c03a32177042e55dbc5fd5aee900b8e0069a8d70fba96a9375cd012"
 
 [[package]]
 name = "sha2"
@@ -2083,6 +1988,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "twilight-mention"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "538a66387d06ad56f05e21934d81dd1ca794b26f3eef919ba6ebd903d5118c6d"
+dependencies = [
+ "twilight-model",
 ]
 
 [[package]]

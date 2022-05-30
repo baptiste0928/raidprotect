@@ -1,50 +1,37 @@
 version: v1
 
 labels:
-  - label: c-all
-    matcher:
-      files:
-        all: ["*", "!Cargo.lock"]
-
   - label: c-cache
     sync: true
     matcher:
-      files: "cache/**/*"
+      files: "model/src/cache/**/*"
 
-  - label: c-event
-    sync: true
-    matcher:
-      files: "event/**/*"
-
-  - label: c-interaction
-    sync: true
-    matcher:
-      files: "interaction/**/*"
-
-  - label: c-model
-    sync: true
-    matcher:
-      files: "model/**/*"
-
-  - label: c-raidprotect
-    sync: true
-    matcher:
-      files: "raidprotect/**/*"
-
-  - label: c-util
-    sync: true
-    matcher:
-      files: "util/**/*"
-
-  - label: t-dependencies
+  - label: c-dependencies
     matcher:
       files: "Cargo.lock"
       title: "^deps(\\(.+\\))?!?: .*"
 
-  - label: t-translations
+  - label: c-event
     sync: true
     matcher:
-      files: "translations/**/*"
+      files: "raidprotect/src/event/**/*"
+
+  - label: c-interaction
+    sync: true
+    matcher:
+      files: "raidprotect/src/interaction/**/*"
+
+  - label: c-model
+    sync: true
+    matcher:
+      files:
+        all: ["model/**/*", "!model/src/cache/**/*"]
+
+
+  - label: c-translations
+    sync: true
+    matcher:
+      files: "raidprotect/locales/**/*"
 
   - label: t-fix
     matcher:

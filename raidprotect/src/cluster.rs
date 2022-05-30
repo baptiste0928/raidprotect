@@ -3,10 +3,10 @@
 use std::sync::Arc;
 
 use futures::StreamExt;
-use raidprotect_cache::redis::{RedisClient, RedisClientError};
-use raidprotect_interaction::register_commands;
-use raidprotect_model::mongodb::{MongoDbClient, MongoDbError};
-use raidprotect_state::ClusterState;
+use raidprotect_model::{
+    cache::{http::CacheHttp, RedisClient, RedisClientError},
+    mongodb::{MongoDbClient, MongoDbError},
+};
 use thiserror::Error;
 use tracing::{info, info_span, instrument, trace};
 use twilight_gateway::{
@@ -14,12 +14,21 @@ use twilight_gateway::{
     Cluster, Intents,
 };
 use twilight_http::{response::DeserializeBodyError, Client as HttpClient, Error as HttpError};
-use twilight_model::gateway::{
-    payload::outgoing::update_presence::UpdatePresencePayload,
-    presence::{ActivityType, MinimalActivity, Status},
+use twilight_model::{
+    gateway::{
+        payload::outgoing::update_presence::UpdatePresencePayload,
+        presence::{ActivityType, MinimalActivity, Status},
+    },
+    id::{
+        marker::{ApplicationMarker, GuildMarker},
+        Id,
+    },
 };
 
-use crate::{config::Config, event::ProcessEvent, shutdown::ShutdownSubscriber};
+use crate::{
+    config::Config, event::ProcessEvent, interaction::register_commands,
+    util::shutdown::ShutdownSubscriber,
+};
 
 /// Discord shards cluster.
 ///
@@ -131,6 +140,64 @@ fn presence() -> UpdatePresencePayload {
         afk: false,
         since: None,
         status: Status::Online,
+    }
+}
+
+/// Current state of the cluster.
+///
+/// This type hold shared types such as the cache or the http client. It does
+/// not implement [`Clone`] and is intended to be wrapped inside a [`Arc`].
+#[derive(Debug)]
+pub struct ClusterState {
+    /// In-memory cache
+    redis: RedisClient,
+    /// MongoDB client
+    mongodb: MongoDbClient,
+    /// Http client
+    http: Arc<HttpClient>,
+    /// Bot user id
+    current_user: Id<ApplicationMarker>,
+}
+
+impl ClusterState {
+    /// Initialize a new [`ClusterState`].
+    pub fn new(
+        redis: RedisClient,
+        mongodb: MongoDbClient,
+        http: Arc<HttpClient>,
+        current_user: Id<ApplicationMarker>,
+    ) -> Self {
+        Self {
+            redis,
+            mongodb,
+            http,
+            current_user,
+        }
+    }
+
+    /// Get the cluster [`RedisClient`].
+    pub fn redis(&self) -> &RedisClient {
+        &self.redis
+    }
+
+    /// Get the cluster [`MongoDbClient`].
+    pub fn mongodb(&self) -> &MongoDbClient {
+        &self.mongodb
+    }
+
+    /// Get the cluster [`HttpClient`].
+    pub fn http(&self) -> &HttpClient {
+        &self.http
+    }
+
+    /// Get the cluster [`CacheHttp`]
+    pub fn cache_http(&self, guild_id: Id<GuildMarker>) -> CacheHttp {
+        self.redis.http(&self.http, guild_id)
+    }
+
+    /// Get the bot user id
+    pub fn current_user(&self) -> Id<ApplicationMarker> {
+        self.current_user
     }
 }
 

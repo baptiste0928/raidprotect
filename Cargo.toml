@@ -1,11 +1,5 @@
 [workspace]
 members = [
-    "cache",
-    "event",
-    "interaction",
     "model",
     "raidprotect",
-    "state",
-    "translations",
-    "util",
 ]

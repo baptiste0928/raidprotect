@@ -13,13 +13,13 @@
 mod cluster;
 mod config;
 mod event;
-mod logging;
-mod shutdown;
+mod interaction;
+mod util;
 
 use anyhow::{Context, Result};
 use tracing::{debug, info};
 
-use crate::shutdown::{wait_shutdown, Shutdown};
+use crate::util::shutdown::{wait_shutdown, Shutdown};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -47,4 +47,12 @@ async fn main() -> Result<()> {
     shutdown.shutdown(5).await;
 
     Ok(())
+}
+
+mod translations {
+    //! Generated translations.
+    //!
+    //! This module contains translations generated with [`rosetta-i18n`].
+
+    rosetta_i18n::include_translations!();
 }
