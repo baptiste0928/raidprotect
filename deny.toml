@@ -12,6 +12,10 @@ unmaintained = "deny"
 yanked = "deny"
 notice = "warn"
 
+ignore = [
+    "RUSTSEC-2020-0071",  # `mongodb` crate not affected by this vulnerability
+]
+
 [licenses]
 unlicensed = "deny"
 allow = ["MIT", "Apache-2.0", "ISC", "BSD-3-Clause"]
