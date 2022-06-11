@@ -85,8 +85,11 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v1
 
-      - name: Audit dependencies
+      - name: Check dependencies
         run: cargo deny check
+
+      - name: Review dependencies
+        uses: actions/dependency-review-action@v1
 
   rustfmt:
     name: Format
