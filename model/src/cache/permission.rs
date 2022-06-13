@@ -3,10 +3,12 @@
 //! This module allows to compute in-channel or guild permissions for a given
 //! member using [`twilight_util::permission_calculator`].
 
-use std::cmp::Ordering;
+use std::{
+    cmp::Ordering,
+    fmt::{self},
+};
 
-use redis::RedisError;
-use thiserror::Error;
+use error_stack::{Context, IntoReport, Report, ResultExt};
 use twilight_model::{
     channel::ChannelType,
     guild::Permissions,
@@ -19,7 +21,7 @@ use twilight_util::permission_calculator::PermissionCalculator;
 
 use super::{
     model::{CachedChannel, CachedGuild, CachedRole},
-    redis::{RedisClient, RedisClientError, RedisModel},
+    redis::{RedisClient, RedisModel},
 };
 
 /// Calculate the permissions for a given guild.
@@ -33,11 +35,15 @@ impl<'a> GuildPermissions<'a> {
     pub(crate) async fn new(
         redis: &'a RedisClient,
         guild_id: Id<GuildMarker>,
-    ) -> Result<GuildPermissions<'a>, PermissionError> {
-        if let Some(guild) = redis.get::<CachedGuild>(&guild_id).await? {
+    ) -> Result<GuildPermissions<'a>, Report<PermissionError>> {
+        if let Some(guild) = redis
+            .get::<CachedGuild>(&guild_id)
+            .await
+            .change_context(PermissionError)?
+        {
             Ok(Self { redis, guild })
         } else {
-            Err(PermissionError::MissingGuild)
+            Err(Report::new(PermissionError).attach_printable("guild not found in cache"))
         }
     }
 
@@ -46,12 +52,12 @@ impl<'a> GuildPermissions<'a> {
         &self,
         member_id: Id<UserMarker>,
         member_roles: &[Id<RoleMarker>],
-    ) -> Result<CachePermissions<'a>, PermissionError> {
+    ) -> Result<CachePermissions<'a>, Report<PermissionError>> {
         CachePermissions::new(self, member_id, member_roles).await
     }
 
     /// Compute permissions for the current bot member.
-    pub async fn current_member(&self) -> Result<CachePermissions<'a>, PermissionError> {
+    pub async fn current_member(&self) -> Result<CachePermissions<'a>, Report<PermissionError>> {
         CachePermissions::current_member(self).await
     }
 }
@@ -73,7 +79,7 @@ impl<'a> CachePermissions<'a> {
         guild_permissions: &GuildPermissions<'a>,
         member_id: Id<UserMarker>,
         member_roles: &[Id<RoleMarker>],
-    ) -> Result<CachePermissions<'a>, PermissionError> {
+    ) -> Result<CachePermissions<'a>, Report<PermissionError>> {
         let guild_id = guild_permissions.guild.id;
         let is_owner = member_id == guild_permissions.guild.owner_id;
 
@@ -92,12 +98,10 @@ impl<'a> CachePermissions<'a> {
     /// Initialize [`CachePermissions`] for the bot current member.
     pub(crate) async fn current_member(
         guild_permissions: &GuildPermissions<'a>,
-    ) -> Result<CachePermissions<'a>, PermissionError> {
-        let member = guild_permissions
-            .guild
-            .current_member
-            .as_ref()
-            .ok_or(PermissionError::MissingCurrentMember)?;
+    ) -> Result<CachePermissions<'a>, Report<PermissionError>> {
+        let member = guild_permissions.guild.current_member.as_ref().ok_or(
+            Report::new(PermissionError).attach_printable("current member not found in cache"),
+        )?;
 
         let guild_id = guild_permissions.guild.id;
         let is_owner = member.id == guild_permissions.guild.owner_id;
@@ -165,20 +169,25 @@ impl<'a> CachePermissions<'a> {
     pub async fn channel(
         &self,
         channel: Id<ChannelMarker>,
-    ) -> Result<(Permissions, ChannelType), PermissionError> {
+    ) -> Result<(Permissions, ChannelType), Report<PermissionError>> {
         let mut channel = self
             .redis
             .get::<CachedChannel>(&channel)
-            .await?
-            .ok_or(PermissionError::MissingChannel)?;
+            .await
+            .change_context(PermissionError)?
+            .ok_or(Report::new(PermissionError).attach_printable("channel not found in cache"))?;
 
         // If the channel is a thread, get the parent channel.
         if let CachedChannel::Thread(thread) = channel {
             channel = self
                 .redis
                 .get::<CachedChannel>(&thread.parent_id)
-                .await?
-                .ok_or(PermissionError::MissingChannel)?;
+                .await
+                .change_context(PermissionError)?
+                .ok_or(
+                    Report::new(PermissionError)
+                        .attach_printable("parent channel not found in cache"),
+                )?;
         }
 
         // TODO: extract this into a function
@@ -214,7 +223,7 @@ impl MemberRoles {
         redis: &RedisClient,
         guild_id: Id<GuildMarker>,
         member_roles: impl Iterator<Item = &Id<RoleMarker>>,
-    ) -> Result<MemberRoles, PermissionError> {
+    ) -> Result<MemberRoles, Report<PermissionError>> {
         let everyone_id = guild_id.cast();
 
         // Get user roles
@@ -223,15 +232,20 @@ impl MemberRoles {
             pipe.get(CachedRole::key_from(&role));
         }
 
-        let mut conn = redis.conn().await?;
-        let result: Vec<_> = pipe.query_async(&mut *conn).await?;
+        let mut conn = redis.conn().await.change_context(PermissionError)?;
+        let result: Vec<_> = pipe
+            .query_async(&mut *conn)
+            .await
+            .report()
+            .change_context(PermissionError)
+            .attach_printable("failed to query user roles")?;
 
         // Filter everyone role and other roles
         let mut everyone_role = None;
         let mut roles = Vec::new();
 
         for value in result {
-            let role = CachedRole::deserialize_model(value)?;
+            let role = CachedRole::deserialize_model(value).change_context(PermissionError)?;
 
             if role.id == everyone_id {
                 everyone_role = Some(role);
@@ -243,31 +257,22 @@ impl MemberRoles {
         if let Some(everyone) = everyone_role {
             Ok(MemberRoles { everyone, roles })
         } else {
-            Err(PermissionError::MissingEveryone)
+            Err(Report::new(PermissionError).attach_printable("everyone role not found in cache"))
         }
     }
 }
 
 /// Error occurred while computing permissions.
-#[derive(Debug, Error)]
-pub enum PermissionError {
-    #[error(transparent)]
-    Redis(#[from] RedisClientError),
-    #[error("guild not found in cache")]
-    MissingGuild,
-    #[error("everyone role not found in cache")]
-    MissingEveryone,
-    #[error("current member not found in cache")]
-    MissingCurrentMember,
-    #[error("channel not found in cache")]
-    MissingChannel,
-}
+#[derive(Debug)]
+pub struct PermissionError;
 
-impl From<RedisError> for PermissionError {
-    fn from(error: RedisError) -> Self {
-        Self::Redis(RedisClientError::from(error))
+impl fmt::Display for PermissionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("failed to compute permissions")
     }
 }
+
+impl Context for PermissionError {}
 
 /// Compares the position of two roles.
 ///
