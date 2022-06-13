@@ -89,6 +89,7 @@ jobs:
         run: cargo deny check
 
       - name: Review dependencies
+        if: ${{ github.event_name == 'pull_request' }}  # Does not work on 'push'
         uses: actions/dependency-review-action@v1
 
   rustfmt:
