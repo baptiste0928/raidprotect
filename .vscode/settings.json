@@ -4,7 +4,7 @@
     },
     "rust-analyzer.cargo.buildScripts.enable": true,
     "i18n-ally.localesPaths": [
-        "translations/locales"
+        "raidprotect/locales"
     ],
     "i18n-ally.keystyle": "flat",
     "i18n-ally.sourceLanguage": "fr"
