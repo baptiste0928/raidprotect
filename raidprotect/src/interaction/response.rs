@@ -2,17 +2,17 @@
 //!
 //! This module exports types and traits used to respond to an interaction.
 
-use std::error::Error;
-
 use tracing::error;
-use twilight_http::error::ErrorType;
 use twilight_model::{
     application::{
         component::Component,
         interaction::{ApplicationCommand, MessageComponentInteraction},
     },
     channel::{embed::Embed, message::MessageFlags},
-    http::interaction::{InteractionResponse as HttpInteractionResponse, InteractionResponseType},
+    http::interaction::{
+        InteractionResponse as HttpInteractionResponse, InteractionResponseData,
+        InteractionResponseType,
+    },
     id::{
         marker::{ApplicationMarker, InteractionMarker},
         Id,
@@ -20,7 +20,7 @@ use twilight_model::{
 };
 use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::{cluster::ClusterState, interaction::embed};
+use crate::cluster::ClusterState;
 
 /// Credentials used to respond to an interaction.
 #[derive(Debug)]
@@ -53,20 +53,15 @@ impl InteractionResponder {
     }
 
     /// Send a response to an interaction.
-    pub async fn respond(&self, state: &ClusterState, response: HttpInteractionResponse) {
+    pub async fn respond(&self, state: &ClusterState, response: InteractionResponse) {
         let client = state.http().interaction(self.application_id);
 
         if let Err(error) = client
-            .create_response(self.id, &self.token, &response)
+            .create_response(self.id, &self.token, &response.into_http())
             .exec()
             .await
         {
-            let body = match error.kind() {
-                ErrorType::Response { body, .. } => std::str::from_utf8(body).ok(),
-                _ => None,
-            };
-
-            error!(error = %error, body, "failed to respond to interaction");
+            error!(error = ?error, "failed to respond to interaction");
         }
     }
 }
@@ -90,21 +85,22 @@ pub enum InteractionResponse {
     ///
     /// [`DeferredChannelMessageWithSource`]: InteractionResponseType::DeferredChannelMessageWithSource
     EphemeralDeferredMessage,
+    /// Respond with a raw [`HttpInteractionResponse`].
+    Raw {
+        kind: InteractionResponseType,
+        data: Option<InteractionResponseData>,
+    },
 }
 
-/// Convert a type into [`HttpInteractionResponse`]..
-pub trait IntoResponse {
-    /// Convert this type into [`HttpInteractionResponse`].
-    fn into_response(self) -> HttpInteractionResponse;
-}
-
-impl IntoResponse for InteractionResponse {
-    fn into_response(self) -> HttpInteractionResponse {
+impl InteractionResponse {
+    /// Convert the response into a [`HttpInteractionResponse`].
+    fn into_http(self) -> HttpInteractionResponse {
         let kind = match self {
             Self::Modal { .. } => InteractionResponseType::Modal,
             Self::EphemeralDeferredMessage => {
                 InteractionResponseType::DeferredChannelMessageWithSource
             }
+            Self::Raw { kind, .. } => kind,
             _ => InteractionResponseType::ChannelMessageWithSource,
         };
 
@@ -136,71 +132,9 @@ impl IntoResponse for InteractionResponse {
                     .flags(MessageFlags::EPHEMERAL)
                     .build(),
             ),
+            Self::Raw { data, .. } => data,
         };
 
         HttpInteractionResponse { kind, data }
-    }
-}
-
-impl<T, E> IntoResponse for Result<T, E>
-where
-    T: IntoResponse,
-    E: InteractionError,
-{
-    fn into_response(self) -> HttpInteractionResponse {
-        match self {
-            Ok(response) => response.into_response(),
-            Err(error) => match error.into_error() {
-                InteractionErrorKind::Response(response) => response.into_response(),
-                InteractionErrorKind::Internal(error) => {
-                    tracing::error!(error = %error, "error occurred when processing interaction `{}`", E::INTERACTION_NAME);
-
-                    embed::error::internal_error().into_response()
-                }
-            },
-        }
-    }
-}
-
-/// Error returned by interactions.
-///
-/// This trait represent an error returned by an interaction. Two kind of errors
-/// are possible:
-/// - [`InteractionErrorKind::Response`] represent a recoverable error that
-///   display a custom user-friendly error message.
-/// - [`InteractionErrorKind::Internal`] represent a non-recoverable internal
-///   error that display a generic error message and is logged.
-pub trait InteractionError {
-    /// Name of the interaction.
-    const INTERACTION_NAME: &'static str;
-
-    /// Convert this type into [`InteractionErrorKind`].
-    fn into_error(self) -> InteractionErrorKind;
-}
-
-/// Interaction error data.
-///
-/// See the [`InteractionError`] trait for more information.
-#[derive(Debug)]
-pub enum InteractionErrorKind {
-    Response(Box<InteractionResponse>),
-    Internal(Box<dyn Error + Send + Sync>),
-}
-
-impl InteractionErrorKind {
-    /// Initialize a new [`InteractionErrorKind::Response`].
-    pub fn response(response: InteractionResponse) -> Self {
-        Self::Response(Box::new(response))
-    }
-
-    /// Initialize a new [`InteractionErrorKind::Internal`].
-    pub fn internal(error: impl Error + Send + Sync + 'static) -> Self {
-        Self::Internal(Box::new(error))
-    }
-}
-
-impl From<InteractionResponse> for InteractionErrorKind {
-    fn from(response: InteractionResponse) -> Self {
-        Self::response(response)
     }
 }

@@ -2,8 +2,8 @@
 //!
 //! This module contains types used to parse context from received interaction.
 
-use raidprotect_model::mongodb::{Config, Guild, MongoDbError};
-use thiserror::Error;
+use anyhow::anyhow;
+use raidprotect_model::mongodb::{Config, Guild};
 use twilight_model::{
     application::interaction::{
         application_command::CommandData, message_component::MessageComponentInteractionData,
@@ -17,7 +17,6 @@ use twilight_model::{
     user::User,
 };
 
-use super::response::{InteractionError, InteractionErrorKind};
 use crate::cluster::ClusterState;
 
 /// Context of an [`ApplicationCommand`] or [`MessageComponentInteraction`].
@@ -49,7 +48,7 @@ impl InteractionContext<CommandData> {
     pub async fn from_command(
         command: ApplicationCommand,
         state: &ClusterState,
-    ) -> Result<Self, InteractionContextError> {
+    ) -> Result<Self, anyhow::Error> {
         match command.guild_id {
             Some(guild_id) => Self::from_guild_command(command, state, guild_id).await,
             None => Self::from_private_command(command),
@@ -61,14 +60,14 @@ impl InteractionContext<CommandData> {
         command: ApplicationCommand,
         state: &ClusterState,
         guild_id: Id<GuildMarker>,
-    ) -> Result<Self, InteractionContextError> {
+    ) -> Result<Self, anyhow::Error> {
         let member = command
             .member
-            .ok_or(InteractionContextError::MissingMember)?;
+            .ok_or_else(|| anyhow!("missing member data"))?;
         let user = member
             .user
             .clone()
-            .ok_or(InteractionContextError::MissingUser)?;
+            .ok_or_else(|| anyhow!("missing user data"))?;
 
         let guild = state.mongodb().get_guild_or_create(guild_id).await?;
 
@@ -89,8 +88,8 @@ impl InteractionContext<CommandData> {
     }
 
     /// Initialize context from a command that occurred in private messages.
-    fn from_private_command(command: ApplicationCommand) -> Result<Self, InteractionContextError> {
-        let user = command.user.ok_or(InteractionContextError::MissingUser)?;
+    fn from_private_command(command: ApplicationCommand) -> Result<Self, anyhow::Error> {
+        let user = command.user.ok_or_else(|| anyhow!("missing user data"))?;
 
         Ok(Self {
             id: command.id,
@@ -110,7 +109,7 @@ impl InteractionContext<MessageComponentInteractionData> {
     pub async fn from_component(
         component: MessageComponentInteraction,
         state: &ClusterState,
-    ) -> Result<Self, InteractionContextError> {
+    ) -> Result<Self, anyhow::Error> {
         match component.guild_id {
             Some(guild_id) => Self::from_guild_component(component, state, guild_id).await,
             None => Self::from_private_component(component),
@@ -124,14 +123,14 @@ impl InteractionContext<MessageComponentInteractionData> {
         component: MessageComponentInteraction,
         state: &ClusterState,
         guild_id: Id<GuildMarker>,
-    ) -> Result<Self, InteractionContextError> {
+    ) -> Result<Self, anyhow::Error> {
         let member = component
             .member
-            .ok_or(InteractionContextError::MissingMember)?;
+            .ok_or_else(|| anyhow!("missing member data"))?;
         let user = member
             .user
             .clone()
-            .ok_or(InteractionContextError::MissingUser)?;
+            .ok_or_else(|| anyhow!("missing user data"))?;
 
         let guild = state.mongodb().get_guild_or_create(guild_id).await?;
 
@@ -154,8 +153,8 @@ impl InteractionContext<MessageComponentInteractionData> {
     /// Initialize context from a component triggered in private messages.
     fn from_private_component(
         component: MessageComponentInteraction,
-    ) -> Result<Self, InteractionContextError> {
-        let user = component.user.ok_or(InteractionContextError::MissingUser)?;
+    ) -> Result<Self, anyhow::Error> {
+        let user = component.user.ok_or_else(|| anyhow!("missing user data"))?;
 
         Ok(Self {
             id: component.id,
@@ -185,24 +184,5 @@ impl GuildContext {
     /// Get the [`Config`] of the guild.
     pub fn config(&self) -> &Config {
         &self.guild.config
-    }
-}
-
-/// Error occurred when initializing a [`InteractionContext`].
-#[derive(Debug, Error)]
-pub enum InteractionContextError {
-    #[error("missing user data")]
-    MissingUser,
-    #[error("missing member data")]
-    MissingMember,
-    #[error(transparent)]
-    MongoDb(#[from] MongoDbError),
-}
-
-impl InteractionError for InteractionContextError {
-    const INTERACTION_NAME: &'static str = "context";
-
-    fn into_error(self) -> InteractionErrorKind {
-        InteractionErrorKind::internal(self)
     }
 }

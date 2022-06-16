@@ -4,35 +4,29 @@
 //! in the channel an ephemeral response.
 
 use nanoid::nanoid;
-use raidprotect_model::cache::{
-    model::component::{PendingComponent, PostInChatButton},
-    RedisClientError,
-};
+use raidprotect_model::cache::model::component::{PendingComponent, PostInChatButton};
 use twilight_model::{
     application::component::{button::ButtonStyle, ActionRow, Button, Component},
     channel::{message::MessageFlags, ReactionType},
-    http::interaction::{
-        InteractionResponse as HttpInteractionResponse, InteractionResponseData,
-        InteractionResponseType,
-    },
+    http::interaction::{InteractionResponseData, InteractionResponseType},
     id::{marker::UserMarker, Id},
 };
 
-use crate::{cluster::ClusterState, interaction::response::IntoResponse, translations::Lang};
+use crate::{
+    cluster::ClusterState, interaction::response::InteractionResponse, translations::Lang,
+};
 
-pub struct PostInChat {
-    /// The message to post.
-    response: InteractionResponseData,
-    /// Button custom id.
-    custom_id: String,
-}
+/// Adds a button to post in a channel an ephemeral response.
+pub struct PostInChat;
 
 impl PostInChat {
-    pub async fn new(
-        response: InteractionResponseData,
+    /// Create a new [`PostInChat`] component.
+    pub async fn create(
+        mut response: InteractionResponseData,
         author_id: Id<UserMarker>,
         state: &ClusterState,
-    ) -> Result<Self, RedisClientError> {
+    ) -> Result<InteractionResponse, anyhow::Error> {
+        // Store button state in redis
         let custom_id = nanoid!();
         let component = PendingComponent::PostInChatButton(PostInChatButton {
             id: custom_id.clone(),
@@ -42,39 +36,15 @@ impl PostInChat {
 
         state.redis().set(&component).await?;
 
-        Ok(Self {
-            response,
-            custom_id,
-        })
-    }
-
-    pub fn handle(mut component: PostInChatButton) -> HttpInteractionResponse {
-        // Remove ephemeral flag
-        if let Some(flags) = component.response.flags.as_mut() {
-            flags.set(MessageFlags::EPHEMERAL, false);
-        }
-
-        component.response.content = Some(Lang::Fr.post_in_chat_author(component.author_id));
-
-        HttpInteractionResponse {
-            kind: InteractionResponseType::ChannelMessageWithSource,
-            data: Some(component.response),
-        }
-    }
-}
-
-impl IntoResponse for PostInChat {
-    fn into_response(mut self) -> HttpInteractionResponse {
-        // Add ephemeral flag.
-        self.response.flags = self
-            .response
+        // Add ephemeral flag to the response
+        response.flags = response
             .flags
             .map(|flags| flags | MessageFlags::EPHEMERAL)
             .or(Some(MessageFlags::EPHEMERAL));
 
         // Add post in chat button.
         let button = Component::Button(Button {
-            custom_id: Some(self.custom_id),
+            custom_id: Some(custom_id),
             disabled: false,
             emoji: Some(ReactionType::Unicode {
                 name: "💬".to_string(),
@@ -84,19 +54,34 @@ impl IntoResponse for PostInChat {
             url: None,
         });
 
-        if let Some(components) = self.response.components.as_mut() {
+        if let Some(components) = response.components.as_mut() {
             if let Some(Component::ActionRow(action_row)) = components.first_mut() {
                 action_row.components.insert(0, button);
             }
         } else {
-            self.response.components = Some(vec![Component::ActionRow(ActionRow {
+            response.components = Some(vec![Component::ActionRow(ActionRow {
                 components: vec![button],
             })])
         }
 
-        HttpInteractionResponse {
+        Ok(InteractionResponse::Raw {
             kind: InteractionResponseType::ChannelMessageWithSource,
-            data: Some(self.response),
+            data: Some(response),
+        })
+    }
+
+    /// Handle the button click.
+    pub fn handle(mut component: PostInChatButton) -> InteractionResponse {
+        // Remove ephemeral flag
+        if let Some(flags) = component.response.flags.as_mut() {
+            flags.set(MessageFlags::EPHEMERAL, false);
+        }
+
+        component.response.content = Some(Lang::Fr.post_in_chat_author(component.author_id));
+
+        InteractionResponse::Raw {
+            kind: InteractionResponseType::ChannelMessageWithSource,
+            data: Some(component.response),
         }
     }
 }

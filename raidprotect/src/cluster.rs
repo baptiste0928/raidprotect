@@ -2,18 +2,15 @@
 
 use std::sync::Arc;
 
+use anyhow::Context;
 use futures::StreamExt;
 use raidprotect_model::{
-    cache::{http::CacheHttp, RedisClient, RedisClientError},
-    mongodb::{MongoDbClient, MongoDbError},
+    cache::{http::CacheHttp, RedisClient},
+    mongodb::MongoDbClient,
 };
-use thiserror::Error;
 use tracing::{info, info_span, instrument, trace};
-use twilight_gateway::{
-    cluster::{ClusterStartError, Events},
-    Cluster, Intents,
-};
-use twilight_http::{response::DeserializeBodyError, Client as HttpClient, Error as HttpError};
+use twilight_gateway::{cluster::Events, Cluster, Intents};
+use twilight_http::Client as HttpClient;
 use twilight_model::{
     gateway::{
         payload::outgoing::update_presence::UpdatePresencePayload,
@@ -49,7 +46,7 @@ impl ShardCluster {
     ///
     /// This method also initialize an [`HttpClient`] and a [`RedisClient`],
     /// that can be later retrieved using corresponding methods.
-    pub async fn new(config: Config) -> Result<Self, ClusterError> {
+    pub async fn new(config: Config) -> Result<Self, anyhow::Error> {
         // Initialize HTTP client and get current user.
         let http = Arc::new(HttpClient::new(config.token.clone()));
         let application = http
@@ -63,10 +60,13 @@ impl ShardCluster {
         info!("logged as {} with ID {}", application.name, current_user);
 
         let redis = RedisClient::new(&config.redis_uri).await?;
-        redis.ping().await?; // Ensure redis is reachable
+        redis.ping().await.context("failed to connect to redis")?;
 
         let mongodb = MongoDbClient::connect(&config.mongodb_uri, config.mongodb_database).await?;
-        mongodb.ping().await?; // Ensure database is reachable
+        mongodb
+            .ping()
+            .await
+            .context("failed to connect to mongodb")?;
 
         let intents = Intents::GUILDS
             | Intents::GUILD_MEMBERS
@@ -199,24 +199,4 @@ impl ClusterState {
     pub fn current_user(&self) -> Id<ApplicationMarker> {
         self.current_user
     }
-}
-
-/// Error when initializing a [`ShardCluster`].
-#[derive(Debug, Error)]
-pub enum ClusterError {
-    /// HTTP request failed
-    #[error("http error: {0}")]
-    Http(#[from] HttpError),
-    /// Response body deserialization error
-    #[error("deserialize error: {0}")]
-    Deserialize(#[from] DeserializeBodyError),
-    /// Failed to start cluster
-    #[error("failed to start cluster: {0}")]
-    Start(#[from] ClusterStartError),
-    /// Error while connecting to Redis instance
-    #[error("failed to connect to Redis")]
-    Redis(#[from] RedisClientError),
-    /// Error while connecting to MongoDB database
-    #[error("failed to connect to MongoDB")]
-    MongoDb(#[from] MongoDbError),
 }

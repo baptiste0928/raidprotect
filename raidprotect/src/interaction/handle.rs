@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use anyhow::Context;
 use raidprotect_model::cache::model::component::PendingComponent;
 use tracing::{error, warn};
 use twilight_interactions::command::CreateCommand;
@@ -13,9 +14,9 @@ use twilight_model::{
 
 use super::{
     command::{help::HelpCommand, profile::ProfileCommand},
-    component::post_in_chat::PostInChat,
+    component::PostInChat,
     context::InteractionContext,
-    response::{InteractionResponder, IntoResponse},
+    response::InteractionResponder,
 };
 use crate::{
     cluster::ClusterState,
@@ -28,32 +29,33 @@ use crate::{
 /// on both dms and guilds, or only on guild.
 pub async fn handle_command(command: ApplicationCommand, state: Arc<ClusterState>) {
     let responder = InteractionResponder::from_command(&command);
-    let context = match InteractionContext::from_command(command, &state).await {
-        Ok(context) => context,
+    let context = InteractionContext::from_command(command, &state)
+        .await
+        .context("failed to create command context");
+
+    let response = match context {
+        Ok(context) => match &*context.data.name {
+            "help" => HelpCommand::handle(context).await,
+            "profile" => ProfileCommand::handle(context, &state).await,
+            "kick" => KickCommand::handle(context, &state).await,
+            name => {
+                warn!(name = name, "unknown command received");
+                Ok(embed::error::unknown_command())
+            }
+        },
+        Err(e) => Err(e),
+    };
+
+    match response {
+        Ok(response) => responder.respond(&state, response).await,
         Err(error) => {
-            warn!(error = %error, "failed to create command context");
+            error!(error = ?error, "error while processing command");
+
             responder
-                .respond(&state, embed::error::internal_error().into_response())
+                .respond(&state, embed::error::internal_error())
                 .await;
-
-            return;
         }
     };
-
-    let response = match &*context.data.name {
-        "help" => HelpCommand::handle(context).await.into_response(),
-        "profile" => ProfileCommand::handle(context, &state)
-            .await
-            .into_response(),
-        "kick" => KickCommand::handle(context, &state).await.into_response(),
-        name => {
-            warn!(name = name, "unknown command received");
-
-            embed::error::unknown_command().into_response()
-        }
-    };
-
-    responder.respond(&state, response).await;
 }
 
 /// Register commands to the Discord API.
@@ -67,47 +69,35 @@ pub async fn register_commands(state: &ClusterState, application_id: Id<Applicat
     let client = state.http().interaction(application_id);
 
     if let Err(error) = client.set_global_commands(&commands).exec().await {
-        error!(error = %error, "failed to register commands");
+        error!(error = ?error, "failed to register commands");
     }
 }
 
 /// Handle incoming [`MessageComponentInteraction`].
 pub async fn handle_component(component: MessageComponentInteraction, state: Arc<ClusterState>) {
     let responder = InteractionResponder::from_component(&component);
-    let context = match InteractionContext::from_component(component, &state).await {
-        Ok(context) => context,
-        Err(error) => {
-            warn!(error = %error, "failed to create component context");
-            responder
-                .respond(&state, embed::error::internal_error().into_response())
-                .await;
-
-            return;
-        }
-    };
-
-    let pending_component = match state
-        .redis()
-        .get::<PendingComponent>(&context.data.custom_id)
+    let context = InteractionContext::from_component(component, &state)
         .await
-    {
-        Ok(component) => component,
-        Err(error) => {
-            error!(error = %error, "failed to fetch component state");
-            responder
-                .respond(&state, embed::error::internal_error().into_response())
-                .await;
+        .context("failed to create component context");
 
-            return;
-        }
+    let component = match context {
+        Ok(context) => state
+            .redis()
+            .get::<PendingComponent>(&context.data.custom_id)
+            .await
+            .context("failed to fetch component state"),
+        Err(e) => Err(e),
     };
 
-    let response = if let Some(component) = pending_component {
-        match component {
-            PendingComponent::PostInChatButton(component) => PostInChat::handle(component),
+    let response = match component {
+        Ok(Some(component)) => match component {
+            PendingComponent::PostInChatButton(c) => PostInChat::handle(c),
+        },
+        Ok(None) => embed::error::expired_component(),
+        Err(error) => {
+            error!(error = ?error, "error while processing component");
+            embed::error::internal_error()
         }
-    } else {
-        embed::error::expired_component().into_response()
     };
 
     responder.respond(&state, response).await;

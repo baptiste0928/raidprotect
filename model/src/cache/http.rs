@@ -3,9 +3,7 @@
 //! This module exports wrapper around twilight's HTTP client that use the cache
 //! data to check permissions before making requests.
 
-use std::fmt;
-
-use error_stack::{Context, IntoReport, Report, ResultExt};
+use anyhow::anyhow;
 use twilight_http::{
     request::{channel::message::CreateMessage, guild::CreateGuildChannel},
     Client as HttpClient,
@@ -55,19 +53,9 @@ impl<'a> CacheHttp<'a> {
     pub async fn create_message(
         &self,
         channel: Id<ChannelMarker>,
-    ) -> Result<CreateMessage<'a>, Report<CacheHttpError>> {
-        let permissions = self
-            .redis
-            .permissions(self.guild_id)
-            .await
-            .change_context(CacheHttpError)?;
-        let (permissions, kind) = permissions
-            .current_member()
-            .await
-            .change_context(CacheHttpError)?
-            .channel(channel)
-            .await
-            .change_context(CacheHttpError)?;
+    ) -> Result<CreateMessage<'a>, anyhow::Error> {
+        let permissions = self.redis.permissions(self.guild_id).await?;
+        let (permissions, kind) = permissions.current_member().await?.channel(channel).await?;
 
         let send_messages = if kind.is_thread() {
             Permissions::SEND_MESSAGES
@@ -78,9 +66,7 @@ impl<'a> CacheHttp<'a> {
         if !permissions
             .contains(send_messages | Permissions::USE_EXTERNAL_EMOJIS | Permissions::EMBED_LINKS)
         {
-            return Err(
-                Report::new(CacheHttpError).attach_printable("missing permissions to send message")
-            );
+            return Err(anyhow!("missing permissions to send message"));
         }
 
         Ok(self.http.create_message(channel))
@@ -94,49 +80,19 @@ impl<'a> CacheHttp<'a> {
     pub async fn create_guild_channel(
         &'a self,
         name: &'a str,
-    ) -> Result<CreateGuildChannel<'a>, Report<CacheHttpError>> {
+    ) -> Result<CreateGuildChannel<'a>, anyhow::Error> {
         let permissions = self
             .redis
             .permissions(self.guild_id)
-            .await
-            .change_context(CacheHttpError)?
+            .await?
             .current_member()
-            .await
-            .change_context(CacheHttpError)?
+            .await?
             .guild();
 
         if !permissions.contains(Permissions::MANAGE_CHANNELS) {
-            return Err(Report::new(CacheHttpError)
-                .attach_printable("missing permissions to create channel"));
+            return Err(anyhow!("missing permissions to create channel"));
         }
 
-        self.http
-            .create_guild_channel(self.guild_id, name)
-            .report()
-            .change_context(CacheHttpError)
+        Ok(self.http.create_guild_channel(self.guild_id, name)?)
     }
 }
-
-// /// Error type returned by [`CacheHttp`].
-// #[derive(Debug, Error)]
-// pub enum CacheHttpError {
-//     #[error("permission computing failed: {0}")]
-//     Permission(#[from] PermissionError),
-//     #[error("missing permissions to send message")]
-//     CreateMessage,
-//     #[error("missing permissions to create channel")]
-//     CreateGuildChannel,
-//     #[error(transparent)]
-//     ChannelValidationError(#[from] ChannelValidationError),
-// }
-
-#[derive(Debug)]
-pub struct CacheHttpError;
-
-impl fmt::Display for CacheHttpError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "failed to prepare request")
-    }
-}
-
-impl Context for CacheHttpError {}

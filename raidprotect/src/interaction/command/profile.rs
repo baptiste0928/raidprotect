@@ -4,13 +4,8 @@
 
 use std::time::Duration;
 
-use raidprotect_model::cache::RedisClientError;
-use thiserror::Error;
 use tracing::instrument;
-use twilight_interactions::{
-    command::{CommandModel, CreateCommand, ResolvedUser},
-    error::ParseError,
-};
+use twilight_interactions::command::{CommandModel, CreateCommand, ResolvedUser};
 use twilight_mention::{
     timestamp::{Timestamp, TimestampStyle},
     Mention,
@@ -21,23 +16,17 @@ use twilight_model::application::{
 };
 use twilight_util::{
     builder::{
-        embed::{
-            image_source::ImageSourceUrlError, EmbedBuilder, EmbedFieldBuilder, EmbedFooterBuilder,
-            ImageSource,
-        },
+        embed::{EmbedBuilder, EmbedFieldBuilder, EmbedFooterBuilder, ImageSource},
         InteractionResponseDataBuilder,
     },
     snowflake::Snowflake,
 };
-use twilight_validate::embed::EmbedValidationError;
 
 use crate::{
     cluster::ClusterState,
     interaction::{
-        component::post_in_chat::PostInChat,
-        context::InteractionContext,
-        embed::COLOR_TRANSPARENT,
-        response::{InteractionError, InteractionErrorKind},
+        component::PostInChat, context::InteractionContext, embed::COLOR_TRANSPARENT,
+        response::InteractionResponse,
     },
     translations::Lang,
     util::resource::avatar_url,
@@ -61,11 +50,11 @@ impl ProfileCommand {
     pub async fn handle(
         context: InteractionContext<CommandData>,
         state: &ClusterState,
-    ) -> Result<PostInChat, ProfileCommandError> {
+    ) -> Result<InteractionResponse, anyhow::Error> {
         let parsed = ProfileCommand::from_interaction(context.data.into())?;
         let user = parsed.user.resolved;
 
-        let avatar = avatar_url(&user, "jpeg", 1024);
+        let avatar = avatar_url(&user, "jpg", 1024);
         let mut embed = EmbedBuilder::new()
             .color(COLOR_TRANSPARENT)
             .title(Lang::Fr.profile_title(user.discriminator(), &user.name))
@@ -113,32 +102,6 @@ impl ProfileCommand {
             .components([components])
             .build();
 
-        Ok(PostInChat::new(response, context.user.id, state).await?)
-    }
-}
-
-/// Error when executing [`ProfileCommand`]
-#[derive(Debug, Error)]
-pub enum ProfileCommandError {
-    #[error("failed to parse command: {0}")]
-    Parse(#[from] ParseError),
-    #[error("failed to build embed: {0}")]
-    Embed(#[from] EmbedValidationError),
-    #[error("failed to build image url: {0}")]
-    ImageUrl(#[from] ImageSourceUrlError),
-    #[error(transparent)]
-    Redis(#[from] RedisClientError),
-}
-
-impl InteractionError for ProfileCommandError {
-    const INTERACTION_NAME: &'static str = "profile";
-
-    fn into_error(self) -> InteractionErrorKind {
-        match self {
-            ProfileCommandError::Parse(error) => InteractionErrorKind::internal(error),
-            ProfileCommandError::Embed(error) => InteractionErrorKind::internal(error),
-            ProfileCommandError::ImageUrl(error) => InteractionErrorKind::internal(error),
-            ProfileCommandError::Redis(error) => InteractionErrorKind::internal(error),
-        }
+        PostInChat::create(response, context.user.id, state).await
     }
 }

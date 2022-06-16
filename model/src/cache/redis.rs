@@ -3,25 +3,25 @@
 //! This module expose the [`RedisClient] type used to access the cache stored
 //! in Redis.
 
-use core::fmt;
-use std::time::Duration;
+use std::{
+    fmt::{Debug, Display},
+    time::Duration,
+};
 
+use anyhow::Context;
 use bb8::{Pool, PooledConnection};
 use bb8_redis::RedisConnectionManager;
-use error_stack::{Context, IntoReport, Report, ResultExt};
 use redis::AsyncCommands;
 use serde::{de::DeserializeOwned, Serialize};
+use tracing::{instrument, trace};
 use twilight_http::Client as HttpClient;
 use twilight_model::id::{marker::GuildMarker, Id};
 
 use super::{
     http::CacheHttp,
     model::{CachedChannel, CachedGuild, CachedRole},
-    permission::{GuildPermissions, PermissionError},
+    permission::GuildPermissions,
 };
-
-/// Alias for a [`Result`] with [`RedisClientError`] as error type.
-pub type RedisResult<T> = Result<T, Report<RedisClientError>>;
 
 /// Alias for Redis connection type.
 pub type RedisConnection<'a> = PooledConnection<'a, RedisConnectionManager>;
@@ -37,83 +37,57 @@ pub struct RedisClient {
 
 impl RedisClient {
     /// Initialize a new [`RedisClient`].
-    pub async fn new(uri: &str) -> RedisResult<Self> {
-        let manager = RedisConnectionManager::new(uri)
-            .report()
-            .change_context(RedisClientError)
-            .attach_printable("failed to initialize connection manager")?;
+    pub async fn new(uri: &str) -> Result<Self, anyhow::Error> {
+        let manager =
+            RedisConnectionManager::new(uri).context("failed to initialize connection manager")?;
 
         let pool = Pool::builder()
             .connection_timeout(Duration::from_secs(2))
             .build(manager)
             .await
-            .report()
-            .change_context(RedisClientError)
-            .attach_printable("failed to initialize connection pool")?;
+            .context("failed to initialize connection pool")?;
 
         Ok(Self { pool })
     }
 
     /// Get a new connection from the connection pool
-    pub async fn conn(&self) -> RedisResult<RedisConnection<'_>> {
-        let conn = self
-            .pool
-            .get()
-            .await
-            .report()
-            .change_context(RedisClientError)
-            .attach_printable("failed to get connection from pool")?;
-
-        Ok(conn)
+    pub async fn conn(&self) -> Result<RedisConnection<'_>, anyhow::Error> {
+        Ok(self.pool.get().await?)
     }
 
     /// Get a value from Redis.
-    pub async fn get<T: RedisModel>(&self, id: &T::Id) -> RedisResult<Option<T>> {
+    #[instrument(skip(self))]
+    pub async fn get<T: RedisModel>(&self, id: &T::Id) -> Result<Option<T>, anyhow::Error> {
         let mut conn = self.conn().await?;
-        let value: Option<_> = conn
-            .get(T::key_from(id))
-            .await
-            .report()
-            .change_context(RedisClientError)
-            .attach_printable_lazy(|| {
-                format!("error while getting value for key {}", T::key_from(id))
-            })?;
+        let key = T::key_from(id);
+
+        trace!("getting value for key {}", key);
+        let value: Option<_> = conn.get(&key).await?;
 
         value.map(RedisModel::deserialize_model).transpose()
     }
 
     /// Set a value in Redis.
-    pub async fn set<T: RedisModel>(&self, value: &T) -> RedisResult<()> {
+    #[instrument(skip(self))]
+    pub async fn set<T: RedisModel>(&self, value: &T) -> Result<(), anyhow::Error> {
         let mut conn = self.conn().await?;
+        let key = value.key();
 
+        trace!(value = ?value, "setting value for key {}", key);
         if let Some(expires_after) = T::EXPIRES_AFTER {
             conn.set_ex(value.key(), value.serialize_model()?, expires_after)
-                .await
-                .report()
-                .change_context(RedisClientError)
-                .attach_printable_lazy(|| {
-                    format!("failed to set expiration for key {}", value.key())
-                })?;
+                .await?;
         } else {
-            conn.set(value.key(), value.serialize_model()?)
-                .await
-                .report()
-                .change_context(RedisClientError)
-                .attach_printable_lazy(|| format!("failed to set value for key {}", value.key()))?;
+            conn.set(value.key(), value.serialize_model()?).await?;
         }
 
         Ok(())
     }
 
     /// Run a `PING` command to check if Redis is connected.
-    pub async fn ping(&self) -> RedisResult<()> {
+    pub async fn ping(&self) -> Result<(), anyhow::Error> {
         let mut conn = self.conn().await?;
-        redis::cmd("PING")
-            .query_async(&mut *conn)
-            .await
-            .report()
-            .change_context(RedisClientError)
-            .attach_printable("failed to run PING command")?;
+        redis::cmd("PING").query_async(&mut *conn).await?;
 
         Ok(())
     }
@@ -121,26 +95,27 @@ impl RedisClient {
     /// Get all the [`CachedChannel`] of a guild.
     ///
     /// If the guild is not cached, an empty [`Vec`] is returned.
-    pub async fn guild_channels(&self, id: Id<GuildMarker>) -> RedisResult<Vec<CachedChannel>> {
+    #[instrument(skip(self))]
+    pub async fn guild_channels(
+        &self,
+        id: Id<GuildMarker>,
+    ) -> Result<Vec<CachedChannel>, anyhow::Error> {
         let guild = self.get::<CachedGuild>(&id).await?;
 
         if let Some(guild) = guild {
             let mut conn = self.conn().await?;
             let mut pipe = redis::pipe();
 
+            trace!(
+                channels = ?guild.channels,
+                "querying channels for guild {}",
+                id
+            );
             for channel in &guild.channels {
                 pipe.get(CachedChannel::key_from(channel));
             }
 
-            let value: Vec<_> = pipe
-                .query_async(&mut *conn)
-                .await
-                .report()
-                .change_context(RedisClientError)
-                .attach_printable_lazy(|| {
-                    format!("failed to query channels for guild {}", guild.id)
-                })
-                .attach_printable_lazy(|| format!("queried channels: {:?}", &guild.channels))?;
+            let value: Vec<_> = pipe.query_async(&mut *conn).await?;
 
             value
                 .into_iter()
@@ -154,24 +129,20 @@ impl RedisClient {
     /// Get all the [`CachedRole`] of a guild.
     ///
     /// If the guild is not cached, an empty [`Vec`] is returned.
-    pub async fn guild_roles(&self, id: Id<GuildMarker>) -> RedisResult<Vec<CachedRole>> {
+    #[instrument(skip(self))]
+    pub async fn guild_roles(&self, id: Id<GuildMarker>) -> Result<Vec<CachedRole>, anyhow::Error> {
         let guild = self.get::<CachedGuild>(&id).await?;
 
         if let Some(guild) = guild {
             let mut conn = self.conn().await?;
             let mut pipe = redis::pipe();
 
+            trace!(roles = ?guild.roles, "querying roles for guild {}", id);
             for role in &guild.roles {
-                pipe.get(CachedRole::key_from(&role));
+                pipe.get(CachedRole::key_from(role));
             }
 
-            let value: Vec<_> = pipe
-                .query_async(&mut *conn)
-                .await
-                .report()
-                .change_context(RedisClientError)
-                .attach_printable_lazy(|| format!("failed to query roles for guild {}", guild.id))
-                .attach_printable_lazy(|| format!("queried roles: {:?}", &guild.roles))?;
+            let value: Vec<_> = pipe.query_async(&mut *conn).await?;
 
             value
                 .into_iter()
@@ -185,10 +156,11 @@ impl RedisClient {
     /// Get a [`GuildPermissions`] for a given guild.
     ///
     /// If the guild is not found in the cache, [`None`] is returned.
+    #[instrument(skip(self))]
     pub async fn permissions(
         &self,
         guild_id: Id<GuildMarker>,
-    ) -> Result<GuildPermissions<'_>, Report<PermissionError>> {
+    ) -> Result<GuildPermissions<'_>, anyhow::Error> {
         GuildPermissions::new(self, guild_id).await
     }
 
@@ -202,9 +174,9 @@ impl RedisClient {
 ///
 /// It provides methods to get the model key used in Redis, as well as methods
 /// for serialization and deserialization.
-pub trait RedisModel: Serialize + DeserializeOwned {
+pub trait RedisModel: Debug + Serialize + DeserializeOwned {
     /// Type used for the unique model identifier.
-    type Id: ?Sized;
+    type Id: ?Sized + Debug + Display;
 
     /// Default key expiration delay.
     ///
@@ -221,43 +193,21 @@ pub trait RedisModel: Serialize + DeserializeOwned {
     ///
     /// The default implementation serialize the model in MessagePack using
     /// [`rmp_serde`] and compress it with [`zstd`].
-    fn serialize_model(&self) -> RedisResult<Vec<u8>> {
-        let serialized = rmp_serde::to_vec(self)
-            .report()
-            .change_context(RedisClientError)
-            .attach_printable("failed to serialize data")?;
+    fn serialize_model(&self) -> Result<Vec<u8>, anyhow::Error> {
+        trace!(value = ?self, "serializing model");
+        let serialized = rmp_serde::to_vec(self)?;
 
-        zstd::encode_all(&*serialized, 0)
-            .report()
-            .change_context(RedisClientError)
-            .attach_printable("failed to compress data")
+        Ok(zstd::encode_all(&*serialized, 0)?)
     }
 
     /// Deserialize this model.
     ///
     /// The default implementation decompress the model with [`zstd`] and
     /// deserialize it from MessagePack with [`rmp_serde`].
-    fn deserialize_model(value: Vec<u8>) -> RedisResult<Self> {
-        let decoded = zstd::decode_all(&*value)
-            .report()
-            .change_context(RedisClientError)
-            .attach_printable("failed to decompress data")?;
+    fn deserialize_model(value: Vec<u8>) -> Result<Self, anyhow::Error> {
+        let decoded = zstd::decode_all(&*value)?;
+        trace!(value = ?decoded, "deserializing model");
 
-        rmp_serde::from_slice(&decoded)
-            .report()
-            .change_context(RedisClientError)
-            .attach_printable("failed to deserialize data")
+        Ok(rmp_serde::from_slice(&decoded)?)
     }
 }
-
-/// Error occurred in [`RedisClient`] methods.
-#[derive(Debug)]
-pub struct RedisClientError;
-
-impl fmt::Display for RedisClientError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("error while processing Redis request")
-    }
-}
-
-impl Context for RedisClientError {}
