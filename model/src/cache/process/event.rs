@@ -13,7 +13,7 @@ use twilight_model::{
 
 use crate::cache::{
     model::{CachedChannel, CachedGuild, CachedRole, CurrentMember},
-    RedisClient, RedisModel, RedisResult,
+    RedisClient, RedisModel,
 };
 
 /// Update the cache based on event data.
@@ -35,7 +35,7 @@ pub trait UpdateCache {
         &self,
         redis: &RedisClient,
         current_user: Id<ApplicationMarker>,
-    ) -> RedisResult<()>;
+    ) -> Result<(), anyhow::Error>;
 }
 
 #[async_trait]
@@ -46,7 +46,7 @@ impl UpdateCache for GuildCreate {
         &self,
         redis: &RedisClient,
         current_user: Id<ApplicationMarker>,
-    ) -> RedisResult<()> {
+    ) -> Result<(), anyhow::Error> {
         let mut pipe = redis::pipe();
         super::resource::cache_guild(&mut pipe, current_user, &self.0)?;
 
@@ -65,7 +65,7 @@ impl UpdateCache for GuildDelete {
         &self,
         redis: &RedisClient,
         _current_user: Id<ApplicationMarker>,
-    ) -> RedisResult<()> {
+    ) -> Result<(), anyhow::Error> {
         if let Some(guild) = redis.get::<CachedGuild>(&self.id).await? {
             // Remove all channels and roles from the cache.
             let mut conn = redis.conn().await?;
@@ -94,7 +94,7 @@ impl UpdateCache for UnavailableGuild {
         &self,
         redis: &RedisClient,
         _current_user: Id<ApplicationMarker>,
-    ) -> RedisResult<()> {
+    ) -> Result<(), anyhow::Error> {
         if let Some(mut guild) = redis.get::<CachedGuild>(&self.id).await? {
             guild.unavailable = true;
 
@@ -125,7 +125,7 @@ impl UpdateCache for GuildUpdate {
         &self,
         redis: &RedisClient,
         _current_user: Id<ApplicationMarker>,
-    ) -> RedisResult<()> {
+    ) -> Result<(), anyhow::Error> {
         if let Some(mut guild) = redis.get::<CachedGuild>(&self.id).await? {
             guild.name = self.name.clone();
             guild.icon = self.icon;
@@ -145,7 +145,7 @@ impl UpdateCache for ChannelCreate {
         &self,
         redis: &RedisClient,
         _current_user: Id<ApplicationMarker>,
-    ) -> RedisResult<()> {
+    ) -> Result<(), anyhow::Error> {
         if let Some(guild_id) = self.guild_id {
             if let Some(mut guild) = redis.get::<CachedGuild>(&guild_id).await? {
                 let mut pipe = redis::pipe();
@@ -157,7 +157,7 @@ impl UpdateCache for ChannelCreate {
                         pipe.set(guild.key(), guild.serialize_model()?);
                     }
                     Err(error) => {
-                        error!(error = %error, "failed to cache guild channel");
+                        error!(error = ?error, "failed to cache guild channel");
                     }
                 };
 
@@ -177,7 +177,7 @@ impl UpdateCache for ChannelDelete {
         &self,
         redis: &RedisClient,
         _current_user: Id<ApplicationMarker>,
-    ) -> RedisResult<()> {
+    ) -> Result<(), anyhow::Error> {
         let mut pipe = redis::pipe();
 
         // Remove the channel from the guild.
@@ -206,7 +206,7 @@ impl UpdateCache for ChannelUpdate {
         &self,
         redis: &RedisClient,
         _current_user: Id<ApplicationMarker>,
-    ) -> RedisResult<()> {
+    ) -> Result<(), anyhow::Error> {
         if self.guild_id.is_none() {
             return Ok(()); // Ensure the channel is in a guild.
         }
@@ -217,7 +217,7 @@ impl UpdateCache for ChannelUpdate {
         match super::resource::cache_guild_channel(&mut pipe, self) {
             Ok(_) => pipe.query_async(&mut *conn).await?,
             Err(error) => {
-                error!(error = %error, "failed to cache guild channel");
+                error!(error = ?error, "failed to cache guild channel");
             }
         }
 
@@ -233,7 +233,7 @@ impl UpdateCache for ThreadCreate {
         &self,
         redis: &RedisClient,
         _current_user: Id<ApplicationMarker>,
-    ) -> RedisResult<()> {
+    ) -> Result<(), anyhow::Error> {
         if let Some(guild_id) = self.guild_id {
             if let Some(mut guild) = redis.get::<CachedGuild>(&guild_id).await? {
                 let mut pipe = redis::pipe();
@@ -245,7 +245,7 @@ impl UpdateCache for ThreadCreate {
                         pipe.set(guild.key(), guild.serialize_model()?);
                     }
                     Err(error) => {
-                        error!(error = %error, "failed to cache guild channel");
+                        error!(error = ?error, "failed to cache guild channel");
                     }
                 };
 
@@ -265,7 +265,7 @@ impl UpdateCache for ThreadDelete {
         &self,
         redis: &RedisClient,
         _current_user: Id<ApplicationMarker>,
-    ) -> RedisResult<()> {
+    ) -> Result<(), anyhow::Error> {
         let mut pipe = redis::pipe();
 
         // Remove the channel from the guild.
@@ -292,7 +292,7 @@ impl UpdateCache for ThreadUpdate {
         &self,
         redis: &RedisClient,
         _current_user: Id<ApplicationMarker>,
-    ) -> RedisResult<()> {
+    ) -> Result<(), anyhow::Error> {
         if self.guild_id.is_none() {
             return Ok(()); // Ensure the channel is in a guild.
         }
@@ -303,7 +303,7 @@ impl UpdateCache for ThreadUpdate {
         match super::resource::cache_guild_channel(&mut pipe, self) {
             Ok(_) => pipe.query_async(&mut *conn).await?,
             Err(error) => {
-                error!(error = %error, "failed to cache guild channel");
+                error!(error = ?error, "failed to cache guild channel");
             }
         }
 
@@ -319,7 +319,7 @@ impl UpdateCache for RoleCreate {
         &self,
         redis: &RedisClient,
         _current_user: Id<ApplicationMarker>,
-    ) -> RedisResult<()> {
+    ) -> Result<(), anyhow::Error> {
         let mut pipe = redis::pipe();
 
         super::resource::cache_role(&mut pipe, &self.role, self.guild_id)?;
@@ -344,7 +344,7 @@ impl UpdateCache for RoleDelete {
         &self,
         redis: &RedisClient,
         _current_user: Id<ApplicationMarker>,
-    ) -> RedisResult<()> {
+    ) -> Result<(), anyhow::Error> {
         let mut pipe = redis::pipe();
 
         if let Some(mut guild) = redis.get::<CachedGuild>(&self.guild_id).await? {
@@ -369,7 +369,7 @@ impl UpdateCache for RoleUpdate {
         &self,
         redis: &RedisClient,
         _current_user: Id<ApplicationMarker>,
-    ) -> RedisResult<()> {
+    ) -> Result<(), anyhow::Error> {
         let mut pipe = redis::pipe();
         let mut conn = redis.conn().await?;
 
@@ -388,7 +388,7 @@ impl UpdateCache for MemberAdd {
         &self,
         redis: &RedisClient,
         current_user: Id<ApplicationMarker>,
-    ) -> RedisResult<()> {
+    ) -> Result<(), anyhow::Error> {
         if self.user.id != current_user.cast() {
             // Only cache bot user
             return Ok(());
@@ -417,7 +417,7 @@ impl UpdateCache for MemberUpdate {
         &self,
         redis: &RedisClient,
         current_user: Id<ApplicationMarker>,
-    ) -> RedisResult<()> {
+    ) -> Result<(), anyhow::Error> {
         if self.user.id != current_user.cast() {
             // Only cache bot user
             return Ok(());

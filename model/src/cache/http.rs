@@ -3,7 +3,7 @@
 //! This module exports wrapper around twilight's HTTP client that use the cache
 //! data to check permissions before making requests.
 
-use thiserror::Error;
+use anyhow::anyhow;
 use twilight_http::{
     request::{channel::message::CreateMessage, guild::CreateGuildChannel},
     Client as HttpClient,
@@ -15,9 +15,8 @@ use twilight_model::{
         Id,
     },
 };
-use twilight_validate::channel::ChannelValidationError;
 
-use super::{permission::PermissionError, redis::RedisClient};
+use super::redis::RedisClient;
 
 /// HTTP client with permission checks.
 #[derive(Debug)]
@@ -54,7 +53,7 @@ impl<'a> CacheHttp<'a> {
     pub async fn create_message(
         &self,
         channel: Id<ChannelMarker>,
-    ) -> Result<CreateMessage<'a>, CacheHttpError> {
+    ) -> Result<CreateMessage<'a>, anyhow::Error> {
         let permissions = self.redis.permissions(self.guild_id).await?;
         let (permissions, kind) = permissions.current_member().await?.channel(channel).await?;
 
@@ -67,7 +66,7 @@ impl<'a> CacheHttp<'a> {
         if !permissions
             .contains(send_messages | Permissions::USE_EXTERNAL_EMOJIS | Permissions::EMBED_LINKS)
         {
-            return Err(CacheHttpError::CreateMessage);
+            return Err(anyhow!("missing permissions to send message"));
         }
 
         Ok(self.http.create_message(channel))
@@ -81,7 +80,7 @@ impl<'a> CacheHttp<'a> {
     pub async fn create_guild_channel(
         &'a self,
         name: &'a str,
-    ) -> Result<CreateGuildChannel<'a>, CacheHttpError> {
+    ) -> Result<CreateGuildChannel<'a>, anyhow::Error> {
         let permissions = self
             .redis
             .permissions(self.guild_id)
@@ -91,22 +90,9 @@ impl<'a> CacheHttp<'a> {
             .guild();
 
         if !permissions.contains(Permissions::MANAGE_CHANNELS) {
-            return Err(CacheHttpError::CreateGuildChannel);
+            return Err(anyhow!("missing permissions to create channel"));
         }
 
         Ok(self.http.create_guild_channel(self.guild_id, name)?)
     }
-}
-
-/// Error type returned by [`CacheHttp`].
-#[derive(Debug, Error)]
-pub enum CacheHttpError {
-    #[error("permission computing failed: {0}")]
-    Permission(#[from] PermissionError),
-    #[error("missing permissions to send message")]
-    CreateMessage,
-    #[error("missing permissions to create channel")]
-    CreateGuildChannel,
-    #[error(transparent)]
-    ChannelValidationError(#[from] ChannelValidationError),
 }

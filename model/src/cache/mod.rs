@@ -32,5 +32,5 @@ mod redis;
 
 pub use self::{
     process::UpdateCache,
-    redis::{RedisClient, RedisClientError, RedisConnection, RedisModel, RedisResult},
+    redis::{RedisClient, RedisConnection, RedisModel},
 };

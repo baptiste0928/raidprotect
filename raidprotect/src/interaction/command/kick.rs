@@ -8,13 +8,9 @@
 //! sent in the guild's logs channel. The kicked user receives a pm with the
 //! reason of the kick.
 
-use raidprotect_model::cache::{permission::PermissionError, RedisClientError};
-use thiserror::Error;
+use anyhow::anyhow;
 use tracing::instrument;
-use twilight_interactions::{
-    command::{CommandModel, CreateCommand, ResolvedUser},
-    error::ParseError,
-};
+use twilight_interactions::command::{CommandModel, CreateCommand, ResolvedUser};
 use twilight_model::{
     application::{
         component::{text_input::TextInputStyle, ActionRow, Component, TextInput},
@@ -25,11 +21,7 @@ use twilight_model::{
 
 use crate::{
     cluster::ClusterState,
-    interaction::{
-        context::InteractionContext,
-        embed,
-        response::{InteractionError, InteractionErrorKind, InteractionResponse},
-    },
+    interaction::{context::InteractionContext, embed, response::InteractionResponse},
     translations::Lang,
     util::TextProcessExt,
 };
@@ -61,14 +53,17 @@ impl KickCommand {
     pub async fn handle(
         context: InteractionContext<CommandData>,
         state: &ClusterState,
-    ) -> Result<InteractionResponse, KickCommandError> {
+    ) -> Result<InteractionResponse, anyhow::Error> {
         let parsed = KickCommand::from_interaction(context.data.into())?;
-        let guild = &context.guild.ok_or(KickCommandError::GuildOnly)?;
+        let guild = &context
+            .guild
+            .ok_or_else(|| anyhow!("command not executed in a guild"))?;
 
         let user = parsed.user.resolved;
-        let member = parsed.user.member.ok_or(KickCommandError::MissingMember {
-            user: user.name.clone(),
-        })?;
+        let member = match parsed.user.member {
+            Some(member) => member,
+            None => return Ok(embed::kick::not_member(user.name)),
+        };
 
         // Fetch the author and the bot permissions.
         let permissions = state.redis().permissions(guild.guild.id).await?;
@@ -80,11 +75,11 @@ impl KickCommand {
 
         // Check if the author and the bot have required permissions.
         if member_permissions.is_owner() {
-            return Err(KickCommandError::MemberOwner);
+            return Ok(embed::kick::member_owner());
         }
 
         if !bot_permissions.guild().contains(Permissions::KICK_MEMBERS) {
-            return Err(KickCommandError::BotMissingKickPermission);
+            return Ok(embed::kick::bot_missing_permission());
         }
 
         // Check if the role hierarchy allow the author and the bot to perform
@@ -92,11 +87,11 @@ impl KickCommand {
         let member_highest_role = member_permissions.highest_role();
 
         if member_highest_role >= author_permissions.highest_role() {
-            return Err(KickCommandError::UserHierarchy);
+            return Ok(embed::kick::user_hierarchy());
         }
 
         if member_highest_role >= bot_permissions.highest_role() {
-            return Err(KickCommandError::BotHierarchy);
+            return Ok(embed::kick::bot_hierarchy());
         }
 
         // Send reason modal.
@@ -113,7 +108,7 @@ impl KickCommand {
     fn reason_modal(
         username: String,
         enforce_reason: bool,
-    ) -> Result<InteractionResponse, KickCommandError> {
+    ) -> Result<InteractionResponse, anyhow::Error> {
         let components = vec![
             Component::ActionRow(ActionRow {
                 components: vec![Component::TextInput(TextInput {
@@ -146,48 +141,5 @@ impl KickCommand {
             title: Lang::Fr.modal_kick_title(username.truncate(15)),
             components,
         })
-    }
-}
-
-/// Error when executing [`KickCommand`]
-#[derive(Debug, Error)]
-pub enum KickCommandError {
-    #[error("command must be run in a guild")]
-    GuildOnly,
-    #[error("user is not a guild member")]
-    MissingMember { user: String },
-    #[error("bot has not the kick permission")]
-    BotMissingKickPermission,
-    #[error("member is the owner of the guild")]
-    MemberOwner,
-    #[error("member has a role above the author")]
-    UserHierarchy,
-    #[error("member has a role above the bot")]
-    BotHierarchy,
-    #[error("failed to parse command: {0}")]
-    Parse(#[from] ParseError),
-    #[error("unable to get permissions from cache")]
-    Permission(#[from] PermissionError),
-    #[error(transparent)]
-    Redis(#[from] RedisClientError),
-}
-
-impl InteractionError for KickCommandError {
-    const INTERACTION_NAME: &'static str = "kick";
-
-    fn into_error(self) -> InteractionErrorKind {
-        match self {
-            KickCommandError::GuildOnly => InteractionErrorKind::internal(self),
-            KickCommandError::MissingMember { user } => embed::kick::not_member(user).into(),
-            KickCommandError::BotMissingKickPermission => {
-                embed::kick::bot_missing_permission().into()
-            }
-            KickCommandError::MemberOwner => embed::kick::member_owner().into(),
-            KickCommandError::UserHierarchy => embed::kick::user_hierarchy().into(),
-            KickCommandError::BotHierarchy => embed::kick::bot_hierarchy().into(),
-            KickCommandError::Parse(error) => InteractionErrorKind::internal(error),
-            KickCommandError::Permission(error) => InteractionErrorKind::internal(error),
-            KickCommandError::Redis(error) => InteractionErrorKind::internal(error),
-        }
     }
 }

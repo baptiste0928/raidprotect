@@ -3,10 +3,9 @@
 //! This module contains functions to update the cache from Discord models. The
 //! various functions convert the value into the one used in the cache.
 
-use std::collections::HashSet;
+use std::{collections::HashSet, error::Error, fmt};
 
 use redis::Pipeline;
-use thiserror::Error;
 use tracing::error;
 use twilight_model::{
     channel::{Channel, ChannelType},
@@ -22,14 +21,14 @@ use crate::cache::{
         CachedCategoryChannel, CachedChannel, CachedGuild, CachedRole, CachedTextChannel,
         CachedThread, CurrentMember,
     },
-    RedisClientError, RedisModel, RedisResult,
+    RedisModel,
 };
 
 pub fn cache_guild(
     pipe: &mut Pipeline,
     current_user: Id<ApplicationMarker>,
     guild: &Guild,
-) -> RedisResult<()> {
+) -> Result<(), anyhow::Error> {
     // Insert channels and roles into the cache.
     let mut channels = HashSet::with_capacity(guild.channels.len());
     let mut roles = HashSet::with_capacity(guild.roles.len());
@@ -41,7 +40,7 @@ pub fn cache_guild(
                     channels.insert(channel.id);
                 }
                 Err(error) => {
-                    error!(error = %error, "failed to cache guild channel");
+                    error!(error = ?error, "failed to cache guild channel");
                 }
             };
         }
@@ -81,7 +80,11 @@ pub fn cache_guild(
     Ok(())
 }
 
-pub fn cache_role(pipe: &mut Pipeline, role: &Role, guild_id: Id<GuildMarker>) -> RedisResult<()> {
+pub fn cache_role(
+    pipe: &mut Pipeline,
+    role: &Role,
+    guild_id: Id<GuildMarker>,
+) -> Result<(), anyhow::Error> {
     let cached = CachedRole {
         id: role.id,
         guild_id,
@@ -99,7 +102,7 @@ pub fn cache_role(pipe: &mut Pipeline, role: &Role, guild_id: Id<GuildMarker>) -
     Ok(())
 }
 
-pub fn cache_guild_channel(pipe: &mut Pipeline, channel: &Channel) -> Result<(), CacheError> {
+pub fn cache_guild_channel(pipe: &mut Pipeline, channel: &Channel) -> Result<(), anyhow::Error> {
     match channel.kind {
         ChannelType::GuildText | ChannelType::GuildNews => cache_text_channel(pipe, channel),
         ChannelType::GuildCategory => cache_category_channel(pipe, channel),
@@ -110,7 +113,7 @@ pub fn cache_guild_channel(pipe: &mut Pipeline, channel: &Channel) -> Result<(),
     }
 }
 
-pub fn cache_text_channel(pipe: &mut Pipeline, channel: &Channel) -> Result<(), CacheError> {
+pub fn cache_text_channel(pipe: &mut Pipeline, channel: &Channel) -> Result<(), anyhow::Error> {
     let cached = CachedChannel::from(CachedTextChannel {
         id: channel.id,
         guild_id: channel.guild_id.ok_or(CacheError::GuildId)?,
@@ -130,7 +133,7 @@ pub fn cache_text_channel(pipe: &mut Pipeline, channel: &Channel) -> Result<(), 
     Ok(())
 }
 
-pub fn cache_category_channel(pipe: &mut Pipeline, channel: &Channel) -> Result<(), CacheError> {
+pub fn cache_category_channel(pipe: &mut Pipeline, channel: &Channel) -> Result<(), anyhow::Error> {
     let cached = CachedChannel::from(CachedCategoryChannel {
         id: channel.id,
         guild_id: channel.guild_id.ok_or(CacheError::GuildId)?,
@@ -148,7 +151,7 @@ pub fn cache_category_channel(pipe: &mut Pipeline, channel: &Channel) -> Result<
     Ok(())
 }
 
-pub fn cache_thread(pipe: &mut Pipeline, thread: &Channel) -> Result<(), CacheError> {
+pub fn cache_thread(pipe: &mut Pipeline, thread: &Channel) -> Result<(), anyhow::Error> {
     let cached = CachedChannel::from(CachedThread {
         id: thread.id,
         guild_id: thread.guild_id.ok_or(CacheError::GuildId)?,
@@ -164,18 +167,27 @@ pub fn cache_thread(pipe: &mut Pipeline, thread: &Channel) -> Result<(), CacheEr
 }
 
 /// Error occurred when caching resource.
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum CacheError {
-    #[error(transparent)]
-    Redis(#[from] RedisClientError),
-    #[error("missing guild id")]
     GuildId,
-    #[error("missing channel name")]
     Name,
-    #[error("missing channel position")]
     Position,
-    #[error("missing channel permission overwrites")]
     PermissionOverwrites,
-    #[error("missing thread parent id")]
     ParentId,
+}
+
+impl Error for CacheError {}
+
+impl fmt::Display for CacheError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CacheError::GuildId => f.write_str("missing guild id"),
+            CacheError::Name => f.write_str("missing channel name"),
+            CacheError::Position => f.write_str("missing channel position"),
+            CacheError::PermissionOverwrites => {
+                f.write_str("missing channel permission overwrites")
+            }
+            CacheError::ParentId => f.write_str("missing thread parent id"),
+        }
+    }
 }
