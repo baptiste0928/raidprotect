@@ -10,6 +10,8 @@
 
 mod client;
 mod guild;
+mod modlog;
 
 pub use client::{MongoDbClient, MongoDbError};
 pub use guild::{Config, Guild};
+pub use modlog::{Modlog, ModlogKind, ModlogUser};

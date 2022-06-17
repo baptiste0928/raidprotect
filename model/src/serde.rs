@@ -7,8 +7,10 @@
 
 use std::num::NonZeroU64;
 
-use serde::{de, ser, Deserialize, Deserializer, Serializer};
+use mongodb::bson;
+use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use serde_with::{DeserializeAs, SerializeAs};
+use time::OffsetDateTime;
 use twilight_model::{id::Id, util::Timestamp};
 
 /// Serialize twilight [`Id`] as [`i64`].
@@ -118,17 +120,51 @@ impl SerializeAs<Timestamp> for TimestampAsI64 {
     }
 }
 
+/// Serialize [`OffsetDateTime`] as [`bson::DateTime`].
+///
+/// This allow usage of `time` types with MongoDB models.
+///
+/// This type implement [`SerializeAs`] and [`DeserializeAs`] and should be
+/// used with the [`serde_as`] macro.
+///
+/// [`serde_as`]: serde_with::serde_as
+#[derive(Debug)]
+pub struct DateTimeAsBson;
+
+impl<'de> DeserializeAs<'de, OffsetDateTime> for DateTimeAsBson {
+    fn deserialize_as<D>(deserializer: D) -> Result<OffsetDateTime, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let datetime = bson::DateTime::deserialize(deserializer)?;
+
+        OffsetDateTime::from_unix_timestamp(datetime.timestamp_millis()).map_err(de::Error::custom)
+    }
+}
+
+impl SerializeAs<OffsetDateTime> for DateTimeAsBson {
+    fn serialize_as<S>(source: &OffsetDateTime, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let datetime = bson::DateTime::from_millis(source.unix_timestamp());
+
+        datetime.serialize(serializer)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use serde::{Deserialize, Serialize};
     use serde_test::{assert_de_tokens_error, assert_ser_tokens_error, assert_tokens, Token};
     use serde_with::serde_as;
+    use time::OffsetDateTime;
     use twilight_model::{
         id::{marker::GenericMarker, Id},
         util::Timestamp,
     };
 
-    use super::{IdAsI64, IdAsU64, TimestampAsI64};
+    use super::{DateTimeAsBson, IdAsI64, IdAsU64, TimestampAsI64};
 
     #[serde_as]
     #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -237,5 +273,37 @@ mod tests {
                 Token::I64(1_628_594_197_123_456),
             ],
         );
+    }
+
+    #[serde_as]
+    #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+    struct DateTimeWrapper(#[serde_as(as = "DateTimeAsBson")] OffsetDateTime);
+
+    #[test]
+    fn test_datetime() {
+        let datetime =
+            DateTimeWrapper(OffsetDateTime::from_unix_timestamp(1_628_594_197_123).unwrap());
+
+        assert_tokens(
+            &datetime,
+            &[
+                Token::NewtypeStruct {
+                    name: "DateTimeWrapper",
+                },
+                Token::Struct {
+                    name: "$date",
+                    len: 1,
+                },
+                Token::Str("$date"),
+                Token::Struct {
+                    name: "Int64",
+                    len: 1,
+                },
+                Token::Str("$numberLong"),
+                Token::Str("1628594197123"),
+                Token::StructEnd,
+                Token::StructEnd,
+            ],
+        )
     }
 }
