@@ -1,3 +1,5 @@
+//! Models for the `guilds` collection.
+
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none};
 use twilight_model::id::{

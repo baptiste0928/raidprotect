@@ -3,7 +3,7 @@
 //! This module contains types used to parse context from received interaction.
 
 use anyhow::anyhow;
-use raidprotect_model::mongodb::{Config, Guild};
+use raidprotect_model::mongodb::guild::{Config, Guild};
 use twilight_model::{
     application::interaction::{
         application_command::CommandData, message_component::MessageComponentInteractionData,

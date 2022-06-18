@@ -1,14 +1,18 @@
 use std::time::Duration;
 
+use anyhow::anyhow;
 use mongodb::{
-    bson::{doc, to_bson, to_document},
-    options, Client, Database,
+    bson::{doc, oid::ObjectId, to_bson, to_document, Bson},
+    options, Client, Cursor, Database,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-use twilight_model::id::{marker::GuildMarker, Id};
+use twilight_model::id::{
+    marker::{GuildMarker, UserMarker},
+    Id,
+};
 
-use super::Guild;
+use super::{guild::Guild, modlog::Modlog};
 use crate::serde::IdAsI64;
 
 /// Error type returned by [`MongoDbClient`].
@@ -67,20 +71,17 @@ impl MongoDbClient {
     ) -> Result<Option<Guild>, MongoDbError> {
         let query = GuildQuery { id: guild_id };
 
-        let guild = self
-            .db()
+        self.db()
             .collection::<Guild>(Guild::COLLECTION)
             .find_one(to_document(&query)?, None)
-            .await?;
-
-        Ok(guild)
+            .await
     }
 
     /// Get the [`Guild`] for a given guild_id or create it with default configuration.
     pub async fn get_guild_or_create(
         &self,
         guild_id: Id<GuildMarker>,
-    ) -> Result<Guild, MongoDbError> {
+    ) -> Result<Guild, anyhow::Error> {
         let query = GuildQuery { id: guild_id };
         let default_guild = Guild::new(guild_id);
         let options = options::FindOneAndUpdateOptions::builder()
@@ -98,7 +99,7 @@ impl MongoDbClient {
             )
             .await?;
 
-        Ok(guild.unwrap()) // SAFETY: upsert was set to true
+        guild.ok_or_else(|| anyhow!("no guild sent by the database"))
     }
 
     /// Update or insert a [`Guild`] in the database.
@@ -113,6 +114,45 @@ impl MongoDbClient {
 
         Ok(())
     }
+
+    /// Insert a new [`Modlog`] in the database.
+    pub async fn create_modlog(&self, modlog: &Modlog) -> Result<ObjectId, anyhow::Error> {
+        let result = self
+            .db()
+            .collection::<Modlog>(Modlog::COLLECTION)
+            .insert_one(modlog, None)
+            .await?;
+
+        match result.inserted_id {
+            Bson::ObjectId(id) => Ok(id),
+            other => Err(anyhow!("expected object id, got {:?}", other)),
+        }
+    }
+
+    /// Get a [`Modlog`] from the database with its id.
+    pub async fn get_modlog(&self, id: ObjectId) -> Result<Option<Modlog>, MongoDbError> {
+        let query = doc! { "_id": id };
+
+        self.db()
+            .collection::<Modlog>(Modlog::COLLECTION)
+            .find_one(query, None)
+            .await
+    }
+
+    /// Find multiple [`Modlog`]s from the database that match a given guild id
+    /// and optional user id.
+    pub async fn find_modlogs(
+        &self,
+        guild_id: Id<GuildMarker>,
+        user_id: Option<Id<UserMarker>>,
+    ) -> Result<Cursor<Modlog>, MongoDbError> {
+        let query = ModlogQuery { guild_id, user_id };
+
+        self.db()
+            .collection::<Modlog>(Modlog::COLLECTION)
+            .find(to_document(&query)?, None)
+            .await
+    }
 }
 
 /// Query a guild with its guild_id
@@ -122,4 +162,14 @@ struct GuildQuery {
     #[serde_as(as = "IdAsI64")]
     #[serde(rename = "_id")]
     pub id: Id<GuildMarker>,
+}
+
+/// Query modlogs with guild_id and optional user_id
+#[serde_as]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+struct ModlogQuery {
+    #[serde_as(as = "IdAsI64")]
+    pub guild_id: Id<GuildMarker>,
+    #[serde_as(as = "Option<IdAsI64>")]
+    pub user_id: Option<Id<UserMarker>>,
 }

@@ -1,5 +1,6 @@
 use mongodb::bson;
-use raidprotect_model::mongodb::{Config, Guild};
+use pretty_assertions::assert_eq;
+use raidprotect_model::mongodb::guild::{Config, Guild};
 use serde_test::{assert_tokens, Token};
 use twilight_model::id::Id;
 
