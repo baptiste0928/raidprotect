@@ -12,7 +12,7 @@ use twilight_model::id::{
     Id,
 };
 
-use super::{Guild, Modlog};
+use super::{guild::Guild, modlog::Modlog};
 use crate::serde::IdAsI64;
 
 /// Error type returned by [`MongoDbClient`].

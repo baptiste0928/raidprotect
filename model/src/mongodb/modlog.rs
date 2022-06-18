@@ -1,3 +1,5 @@
+//! Models for the `modlogs` collection.
+
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none, DisplayFromStr};

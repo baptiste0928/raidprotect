@@ -5,13 +5,15 @@
 //!
 //! ## MongoDB collections
 //! - `guilds` ([Guild]): configuration for guilds that uses the bot
+//! - `modlogs` ([Modlog]): moderation logs
 //!
 //! Each collection name is exported as an associated constant.
+//!
+//! [Guild]: guild::Guild
+//! [Modlog]: modlog::Modlog
 
 mod client;
-mod guild;
-mod modlog;
+pub mod guild;
+pub mod modlog;
 
 pub use client::{MongoDbClient, MongoDbError};
-pub use guild::{Config, Guild};
-pub use modlog::{Modlog, ModlogKind, ModlogUser};
