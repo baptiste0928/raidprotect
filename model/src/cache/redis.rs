@@ -194,8 +194,8 @@ pub trait RedisModel: Debug + Serialize + DeserializeOwned {
     /// The default implementation serialize the model in MessagePack using
     /// [`rmp_serde`] and compress it with [`zstd`].
     fn serialize_model(&self) -> Result<Vec<u8>, anyhow::Error> {
-        trace!(value = ?self, "serializing model");
-        let serialized = rmp_serde::to_vec(self)?;
+        let serialized = rmp_serde::to_vec_named(self)?;
+        trace!(value = ?self, serialized = ?serialized, "serializing model");
 
         Ok(zstd::encode_all(&*serialized, 0)?)
     }
@@ -205,8 +205,8 @@ pub trait RedisModel: Debug + Serialize + DeserializeOwned {
     /// The default implementation decompress the model with [`zstd`] and
     /// deserialize it from MessagePack with [`rmp_serde`].
     fn deserialize_model(value: Vec<u8>) -> Result<Self, anyhow::Error> {
+        trace!(value = ?value, "deserializing model");
         let decoded = zstd::decode_all(&*value)?;
-        trace!(value = ?decoded, "deserializing model");
 
         Ok(rmp_serde::from_slice(&decoded)?)
     }
