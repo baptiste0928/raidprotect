@@ -5,21 +5,24 @@ use serde_with::serde_as;
 use twilight_model::{
     http::interaction::InteractionResponseData,
     id::{marker::UserMarker, Id},
+    user::User,
 };
 
-use crate::{cache::RedisModel, serde::IdAsU64};
+use crate::{cache::RedisModel, mongodb::modlog::ModlogType, serde::IdAsU64};
 
 /// State of a component waiting for user interaction.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PendingComponent {
     PostInChatButton(PostInChatButton),
+    Sanction(PendingSanction),
 }
 
 impl PendingComponent {
     /// Get the component unique identifier.
     pub fn id(&self) -> &str {
         match self {
-            PendingComponent::PostInChatButton(component) => &component.id,
+            Self::PostInChatButton(component) => &component.id,
+            Self::Sanction(component) => &component.id,
         }
     }
 }
@@ -40,8 +43,6 @@ impl RedisModel for PendingComponent {
 }
 
 /// State for the "post in chat" button.
-///
-/// See the `raidprotect-handler` for more information.
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PostInChatButton {
@@ -52,4 +53,14 @@ pub struct PostInChatButton {
     /// Id of the initial interaction author.
     #[serde_as(as = "IdAsU64")]
     pub author_id: Id<UserMarker>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PendingSanction {
+    /// Component unique identifier.
+    pub id: String,
+    /// Type of the pending modlog.
+    pub kind: ModlogType,
+    /// User targeted by the sanction.
+    pub user: User,
 }
