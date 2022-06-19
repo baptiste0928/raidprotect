@@ -25,7 +25,7 @@ pub struct Modlog {
     #[serde(rename = "_id")]
     pub id: Option<ObjectId>,
     /// Type of moderation log.
-    pub kind: ModlogKind,
+    pub kind: ModlogType,
     /// Guild where the moderation log was issued.
     #[serde_as(as = "IdAsI64")]
     pub guild_id: Id<GuildMarker>,
@@ -50,7 +50,7 @@ impl Modlog {
 /// Type of modlog entry.
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
-pub enum ModlogKind {
+pub enum ModlogType {
     Kick,
 }
 

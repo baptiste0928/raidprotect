@@ -92,6 +92,7 @@ pub async fn handle_component(component: MessageComponentInteraction, state: Arc
     let response = match component {
         Ok(Some(component)) => match component {
             PendingComponent::PostInChatButton(c) => PostInChat::handle(c),
+            PendingComponent::Sanction(_) => unimplemented!(),
         },
         Ok(None) => embed::error::expired_component(),
         Err(error) => {

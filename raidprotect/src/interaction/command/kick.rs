@@ -9,6 +9,11 @@
 //! reason of the kick.
 
 use anyhow::anyhow;
+use nanoid::nanoid;
+use raidprotect_model::{
+    cache::model::component::{PendingComponent, PendingSanction},
+    mongodb::modlog::ModlogType,
+};
 use tracing::instrument;
 use twilight_interactions::command::{CommandModel, CreateCommand, ResolvedUser};
 use twilight_model::{
@@ -17,6 +22,7 @@ use twilight_model::{
         interaction::application_command::CommandData,
     },
     guild::Permissions,
+    user::User,
 };
 
 use crate::{
@@ -97,7 +103,7 @@ impl KickCommand {
         // Send reason modal.
         match parsed.reason {
             Some(_reason) => Ok(InteractionResponse::EphemeralDeferredMessage),
-            None => KickCommand::reason_modal(user.name, guild.config().enforce_reason),
+            None => KickCommand::reason_modal(user, guild.config().enforce_reason, state).await,
         }
     }
 
@@ -105,10 +111,12 @@ impl KickCommand {
     ///
     /// This modal is only shown if the user has not specified a reason in the
     /// initial command.
-    fn reason_modal(
-        username: String,
+    async fn reason_modal(
+        user: User,
         enforce_reason: bool,
+        state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
+        let username = user.name.truncate(15);
         let components = vec![
             Component::ActionRow(ActionRow {
                 components: vec![Component::TextInput(TextInput {
@@ -136,9 +144,19 @@ impl KickCommand {
             }),
         ];
 
+        // Add pending component in Redis
+        let custom_id = nanoid!();
+        let pending = PendingComponent::Sanction(PendingSanction {
+            id: custom_id.clone(),
+            kind: ModlogType::Kick,
+            user,
+        });
+
+        state.redis().set(&pending).await?;
+
         Ok(InteractionResponse::Modal {
-            custom_id: "kick_reason_modal".to_string(),
-            title: Lang::Fr.modal_kick_title(username.truncate(15)),
+            custom_id,
+            title: Lang::Fr.modal_kick_title(username),
             components,
         })
     }

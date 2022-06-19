@@ -1,6 +1,6 @@
 use mongodb::bson::{self, oid::ObjectId, DateTime};
 use pretty_assertions::assert_eq;
-use raidprotect_model::mongodb::modlog::{Modlog, ModlogKind, ModlogUser};
+use raidprotect_model::mongodb::modlog::{Modlog, ModlogType, ModlogUser};
 use serde_test::{assert_tokens, Configure, Token};
 use time::OffsetDateTime;
 use twilight_model::{id::Id, util::ImageHash};
@@ -9,7 +9,7 @@ use twilight_model::{id::Id, util::ImageHash};
 fn test_modlog_full() {
     let modlog = Modlog {
         id: Some(ObjectId::parse_str("62aca55a551e9a0102351bda").unwrap()),
-        kind: ModlogKind::Kick,
+        kind: ModlogType::Kick,
         guild_id: Id::new(1),
         user: ModlogUser {
             id: Id::new(2),
@@ -49,7 +49,7 @@ fn test_modlog_full() {
             Token::StructEnd,
             // kind
             Token::Str("kind"),
-            Token::Enum { name: "ModlogKind" },
+            Token::Enum { name: "ModlogType" },
             Token::Str("kick"),
             Token::Unit,
             // guild_id
@@ -127,7 +127,7 @@ fn test_modlog_full() {
 fn test_modlog_bson() {
     let modlog = Modlog {
         id: Some(ObjectId::parse_str("62aca55a551e9a0102351bda").unwrap()),
-        kind: ModlogKind::Kick,
+        kind: ModlogType::Kick,
         guild_id: Id::new(1),
         user: ModlogUser {
             id: Id::new(2),
