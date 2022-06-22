@@ -4,7 +4,7 @@
 //! in the channel an ephemeral response.
 
 use nanoid::nanoid;
-use raidprotect_model::cache::model::component::{PendingComponent, PostInChatButton};
+use raidprotect_model::cache::model::interaction::{PendingComponent, PostInChatButton};
 use twilight_model::{
     application::component::{button::ButtonStyle, ActionRow, Button, Component},
     channel::{message::MessageFlags, ReactionType},
@@ -28,7 +28,7 @@ impl PostInChat {
     ) -> Result<InteractionResponse, anyhow::Error> {
         // Store button state in redis
         let custom_id = nanoid!();
-        let component = PendingComponent::PostInChatButton(PostInChatButton {
+        let component = PendingComponent::PostInChat(PostInChatButton {
             id: custom_id.clone(),
             response: response.clone(),
             author_id,

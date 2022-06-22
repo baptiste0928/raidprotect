@@ -11,4 +11,4 @@ pub mod context;
 pub mod embed;
 pub mod response;
 
-pub use handle::{handle_command, handle_component, register_commands};
+pub use handle::{handle_command, handle_component, handle_modal, register_commands};

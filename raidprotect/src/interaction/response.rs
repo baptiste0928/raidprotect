@@ -6,7 +6,9 @@ use tracing::error;
 use twilight_model::{
     application::{
         component::Component,
-        interaction::{ApplicationCommand, MessageComponentInteraction},
+        interaction::{
+            modal::ModalSubmitInteraction, ApplicationCommand, MessageComponentInteraction,
+        },
     },
     channel::{embed::Embed, message::MessageFlags},
     http::interaction::{
@@ -49,6 +51,15 @@ impl InteractionResponder {
             id: component.id,
             application_id: component.application_id,
             token: component.token.clone(),
+        }
+    }
+
+    /// Initialize a new [`InteractionResponder`] from an incoming modal data.
+    pub fn from_modal(modal: &ModalSubmitInteraction) -> Self {
+        Self {
+            id: modal.id,
+            application_id: modal.application_id,
+            token: modal.token.clone(),
         }
     }
 

@@ -6,7 +6,9 @@ use anyhow::anyhow;
 use raidprotect_model::mongodb::guild::{Config, Guild};
 use twilight_model::{
     application::interaction::{
-        application_command::CommandData, message_component::MessageComponentInteractionData,
+        application_command::CommandData,
+        message_component::MessageComponentInteractionData,
+        modal::{ModalInteractionData, ModalSubmitInteraction},
         ApplicationCommand, MessageComponentInteraction,
     },
     guild::PartialMember,
@@ -165,6 +167,67 @@ impl InteractionContext<MessageComponentInteractionData> {
             guild: None,
             user,
             locale: component.locale,
+        })
+    }
+}
+
+impl InteractionContext<ModalInteractionData> {
+    /// Initialize a new [`InteractionContext`] from an [`ModalSubmitInteraction`].
+    pub async fn from_modal(
+        modal: ModalSubmitInteraction,
+        state: &ClusterState,
+    ) -> Result<Self, anyhow::Error> {
+        match modal.guild_id {
+            Some(guild_id) => Self::from_guild_modal(modal, state, guild_id).await,
+            None => Self::from_private_modal(modal),
+        }
+    }
+
+    /// Initialize context from a component triggered in a guild.
+    ///
+    /// The implementation is similar to `from_guild_command`.
+    async fn from_guild_modal(
+        modal: ModalSubmitInteraction,
+        state: &ClusterState,
+        guild_id: Id<GuildMarker>,
+    ) -> Result<Self, anyhow::Error> {
+        let member = modal.member.ok_or_else(|| anyhow!("missing member data"))?;
+        let user = member
+            .user
+            .clone()
+            .ok_or_else(|| anyhow!("missing user data"))?;
+
+        let guild = state.mongodb().get_guild_or_create(guild_id).await?;
+
+        Ok(Self {
+            id: modal.id,
+            application_id: modal.application_id,
+            token: modal.token,
+            data: modal.data,
+            channel: modal.channel_id,
+            guild: Some(GuildContext {
+                id: guild_id,
+                guild,
+                member,
+            }),
+            user,
+            locale: modal.locale,
+        })
+    }
+
+    /// Initialize context from a component triggered in private messages.
+    fn from_private_modal(modal: ModalSubmitInteraction) -> Result<Self, anyhow::Error> {
+        let user = modal.user.ok_or_else(|| anyhow!("missing user data"))?;
+
+        Ok(Self {
+            id: modal.id,
+            application_id: modal.application_id,
+            token: modal.token,
+            data: modal.data,
+            channel: modal.channel_id,
+            guild: None,
+            user,
+            locale: modal.locale,
         })
     }
 }

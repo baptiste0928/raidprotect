@@ -104,6 +104,9 @@ impl ProcessEvent for incoming::InteractionCreate {
             Interaction::MessageComponent(component) => {
                 crate::interaction::handle_component(*component, state).await;
             }
+            Interaction::ModalSubmit(modal) => {
+                crate::interaction::handle_modal(*modal, state).await;
+            }
             _ => {
                 trace!("unprocessed interaction type");
             }
