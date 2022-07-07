@@ -10,31 +10,31 @@ publish = false
 [dependencies]
 raidprotect-model = { path = "../model" }
 
-anyhow = { version = "1.0.57", features = ["backtrace"] }
+anyhow = { version = "1.0.58", features = ["backtrace"] }
 async-trait = "0.1.56"
 nanoid = "0.4.0"
-once_cell = "1.12.0"
+once_cell = "1.13.0"
 rosetta-i18n = "0.1.2"
 
 # Tokio ecosystem
 futures = "0.3.21"
-tokio = { version = "1.19.0", features = ["macros", "rt-multi-thread", "sync", "time", "signal"] }
-tracing = "0.1.34"
+tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread", "sync", "time", "signal"] }
+tracing = "0.1.35"
 tracing-appender = "0.2.2"
-tracing-subscriber = { version = "0.3.11", features = ["std", "fmt", "ansi"], default-features = false }
+tracing-subscriber = { version = "0.3.14", features = ["std", "fmt", "ansi"], default-features = false }
 
 # Twilight
-twilight-gateway = "0.11.0"
-twilight-http = "0.11.0"
+twilight-gateway = "0.11.1"
+twilight-http = "0.11.1"
 twilight-interactions = "0.11.0"
-twilight-mention = "0.11.0"
-twilight-model = "0.11.0"
-twilight-util = { version = "0.11.0", features = ["builder", "snowflake"] }
+twilight-mention = "0.11.1"
+twilight-model = "0.11.1"
+twilight-util = { version = "0.11.1", features = ["builder", "snowflake"] }
 
 # Configuration
 envy = "0.4.2"
 dotenv = "0.15.0"
-serde = { version = "1.0.137", features = ["derive"] }
+serde = { version = "1.0.138", features = ["derive"] }
 
 # Message parsing
 any_ascii = "0.3.1"
