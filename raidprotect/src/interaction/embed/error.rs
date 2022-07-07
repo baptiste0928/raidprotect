@@ -30,11 +30,11 @@ pub fn unknown_command() -> InteractionResponse {
     InteractionResponse::EphemeralEmbed(embed)
 }
 
-pub fn expired_component() -> InteractionResponse {
+pub fn expired_interaction() -> InteractionResponse {
     let embed = EmbedBuilder::new()
-        .title(Lang::Fr.expired_component_title())
+        .title(Lang::Fr.expired_interaction_title())
         .color(COLOR_RED)
-        .description(Lang::Fr.expired_component_description())
+        .description(Lang::Fr.expired_interaction_description())
         .build();
 
     InteractionResponse::EphemeralEmbed(embed)
@@ -56,6 +56,6 @@ mod tests {
 
     #[test]
     fn test_expired_component() {
-        expired_component();
+        expired_interaction();
     }
 }

@@ -1,7 +1,7 @@
 {
   "bot_missing_permission": "RaidProtect a besoin de la permission **Administrateur** pour fonctionner correctement. Rendez-vous dans les paramètres des rôles de votre serveur pour lui accorder.",
-  "expired_component_description": "L'action que vous essayez de faire a expirée, car vous avez attendu trop longtemps ou l'avez déjà actionée. Vous pouvez recommencer en renvoyant la commande.",
-  "expired_component_title": "L'interaction a expirée",
+  "expired_interaction_description": "L'action que vous essayez de faire a expirée, car vous avez attendu trop longtemps ou l'avez déjà actionée. Vous pouvez recommencer en renvoyant la commande.",
+  "expired_interaction_title": "L'interaction a expirée",
   "hierarchy_bot": "Ce membre a un rôle au dessus ou équivalent à celui de RaidProtect dans la liste des rôles, ce qui empêche d'effectuer des actions de modération le concernant. Vous pouvez corriger cela en plaçant RaidProtect plus haut dans la liste des rôles.",
   "hierarchy_owner": "Ce membre est le propriétaire de ce serveur. Vous ne pouvez pas effectuer d'actions de modération le concernant.",
   "hierarchy_user": "Ce membre a un rôle au dessus ou équivalent au votre dans la liste des rôles. Vous ne pouvez pas effectuer d'actions de modération le concernant.",

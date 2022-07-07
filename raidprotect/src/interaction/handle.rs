@@ -1,27 +1,27 @@
 use std::sync::Arc;
 
 use anyhow::Context;
-use raidprotect_model::cache::model::component::PendingComponent;
+use raidprotect_model::cache::model::interaction::{PendingComponent, PendingModal};
 use tracing::{error, warn};
 use twilight_interactions::command::CreateCommand;
 use twilight_model::{
     application::{
         command::Command,
-        interaction::{ApplicationCommand, MessageComponentInteraction},
+        interaction::{
+            modal::ModalSubmitInteraction, ApplicationCommand, MessageComponentInteraction,
+        },
     },
     id::{marker::ApplicationMarker, Id},
 };
 
 use super::{
-    command::{help::HelpCommand, profile::ProfileCommand},
+    command::{help::HelpCommand, moderation::KickCommand, profile::ProfileCommand},
     component::PostInChat,
     context::InteractionContext,
+    embed,
     response::InteractionResponder,
 };
-use crate::{
-    cluster::ClusterState,
-    interaction::{command::kick::KickCommand, embed},
-};
+use crate::cluster::ClusterState;
 
 /// Handle incoming [`ApplicationCommand`]
 ///
@@ -91,12 +91,41 @@ pub async fn handle_component(component: MessageComponentInteraction, state: Arc
 
     let response = match component {
         Ok(Some(component)) => match component {
-            PendingComponent::PostInChatButton(c) => PostInChat::handle(c),
-            PendingComponent::Sanction(_) => unimplemented!(),
+            PendingComponent::PostInChat(c) => PostInChat::handle(c),
         },
-        Ok(None) => embed::error::expired_component(),
+        Ok(None) => embed::error::expired_interaction(),
         Err(error) => {
             error!(error = ?error, "error while processing component");
+            embed::error::internal_error()
+        }
+    };
+
+    responder.respond(&state, response).await;
+}
+
+/// Handle incoming [`ModalSubmitInteraction`].
+pub async fn handle_modal(modal: ModalSubmitInteraction, state: Arc<ClusterState>) {
+    let responder = InteractionResponder::from_modal(&modal);
+    let context = InteractionContext::from_modal(modal, &state)
+        .await
+        .context("failed to create modal context");
+
+    let modal = match context {
+        Ok(context) => state
+            .redis()
+            .get::<PendingModal>(&context.data.custom_id)
+            .await
+            .context("failed to fetch modal state"),
+        Err(e) => Err(e),
+    };
+
+    let response = match modal {
+        Ok(Some(modal)) => match modal {
+            PendingModal::Sanction(_) => todo!(),
+        },
+        Ok(None) => embed::error::expired_interaction(),
+        Err(error) => {
+            error!(error = ?error, "error while processing modal");
             embed::error::internal_error()
         }
     };

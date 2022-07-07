@@ -1,4 +1,4 @@
-//! State for message component interactions (buttons, select menus).
+//! State for interactions (buttons, select menus, modals).
 
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
@@ -10,19 +10,17 @@ use twilight_model::{
 
 use crate::{cache::RedisModel, mongodb::modlog::ModlogType, serde::IdAsU64};
 
-/// State of a component waiting for user interaction.
+/// State of a component (button, select modal) waiting for user interaction.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PendingComponent {
-    PostInChatButton(PostInChatButton),
-    Sanction(PendingSanction),
+    PostInChat(PostInChatButton),
 }
 
 impl PendingComponent {
     /// Get the component unique identifier.
     pub fn id(&self) -> &str {
         match self {
-            Self::PostInChatButton(component) => &component.id,
-            Self::Sanction(component) => &component.id,
+            Self::PostInChat(component) => &component.id,
         }
     }
 }
@@ -55,6 +53,37 @@ pub struct PostInChatButton {
     pub author_id: Id<UserMarker>,
 }
 
+// State of a modal waiting for user interaction.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum PendingModal {
+    Sanction(PendingSanction),
+}
+
+impl PendingModal {
+    /// Get the component unique identifier.
+    pub fn id(&self) -> &str {
+        match self {
+            Self::Sanction(component) => &component.id,
+        }
+    }
+}
+
+impl RedisModel for PendingModal {
+    type Id = str;
+
+    // Pending modals expires after 5 minutes
+    const EXPIRES_AFTER: Option<usize> = Some(5 * 60);
+
+    fn key(&self) -> String {
+        Self::key_from(self.id())
+    }
+
+    fn key_from(id: &Self::Id) -> String {
+        format!("pending:modal:{id}")
+    }
+}
+
+/// State for a pending sanction modal.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PendingSanction {
     /// Component unique identifier.

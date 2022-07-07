@@ -11,7 +11,7 @@
 use anyhow::anyhow;
 use nanoid::nanoid;
 use raidprotect_model::{
-    cache::model::component::{PendingComponent, PendingSanction},
+    cache::model::interaction::{PendingModal, PendingSanction},
     mongodb::modlog::ModlogType,
 };
 use tracing::instrument;
@@ -146,7 +146,7 @@ impl KickCommand {
 
         // Add pending component in Redis
         let custom_id = nanoid!();
-        let pending = PendingComponent::Sanction(PendingSanction {
+        let pending = PendingModal::Sanction(PendingSanction {
             id: custom_id.clone(),
             kind: ModlogType::Kick,
             user,

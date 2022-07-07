@@ -9,7 +9,7 @@
 //! [`Serialize`]: serde::Serialize
 //! [`Deserialize`]: serde::Deserialize
 
-pub mod component;
+pub mod interaction;
 pub mod message;
 
 mod channel;
