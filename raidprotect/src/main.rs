@@ -23,7 +23,7 @@ use crate::util::shutdown::{wait_shutdown, Shutdown};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let config = parse_config::<BotConfig>().context("Failed to load configuration")?;
+    let config = parse_config::<BotConfig>().context("failed to load configuration")?;
     let log_config = config.log.clone();
     let _guard = log_config.init("raidprotect");
 
@@ -31,7 +31,7 @@ async fn main() -> Result<()> {
     let shutdown = Shutdown::new();
     let cluster = cluster::ShardCluster::new(config)
         .await
-        .context("Failed to start shard cluster")?;
+        .context("failed to start shard cluster")?;
 
     // Start the shard cluster
     let cluster_run = tokio::spawn(cluster.start(shutdown.subscriber()));

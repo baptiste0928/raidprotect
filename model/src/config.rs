@@ -6,6 +6,8 @@
 //! `RAIDPROTECT_`. If variables are defined in a `.env` file, they will take
 //! precedence over other variables.
 
+use std::net::SocketAddr;
+
 use serde::{de, Deserialize};
 use tracing::Level;
 use tracing_appender::non_blocking::WorkerGuard;
@@ -24,43 +26,65 @@ where
 pub struct BotConfig {
     /// Discord bot token.
     pub token: String,
-    /// Redis connection uri.
-    ///
-    /// The connection uri should use the `redis://` scheme. Defaults to
-    /// `redis://localhost:6379` if missing.
-    #[serde(default = "default_redis_uri")]
-    pub redis_uri: String,
-    /// MongoDB connection uri.
-    ///
-    /// The format of the connection string is described [here]. Defaults to
-    /// `mongodb://localhost:27017` if missing.
-    ///
-    /// [here]: https://www.mongodb.com/docs/manual/reference/connection-string/#connection-string-formats
-    #[serde(default = "default_mongodb_uri")]
-    pub mongodb_uri: String,
-    /// MongoDB database name.
-    ///
-    /// Defaults to `raidprotect` if missing.
-    #[serde(default = "default_database")]
-    pub mongodb_database: String,
+    /// Databases configuration.
+    #[serde(flatten, default)]
+    pub database: DatabaseConfig,
     /// Logging configuration.
     #[serde(flatten, default)]
     pub log: LogConfig,
 }
 
-/// Default Redis connection uri.
-fn default_redis_uri() -> String {
-    "redis://localhost:6379".to_string()
+/// RaidProtect web api configuration model.
+#[derive(Debug, Deserialize, Clone)]
+pub struct WebConfig {
+    /// Server listening address.
+    #[serde(default = "default_address")]
+    pub address: SocketAddr,
+    /// Databases configuration.
+    #[serde(flatten, default)]
+    pub database: DatabaseConfig,
+    /// Logging configuration.
+    #[serde(flatten, default)]
+    pub log: LogConfig,
 }
 
-/// Default MongoDB connection uri.
-fn default_mongodb_uri() -> String {
-    "mongodb://localhost:27017".to_string()
+/// Default server address.
+fn default_address() -> SocketAddr {
+    "127.0.0.1:3000".parse().unwrap()
 }
 
-/// Default database name.
-fn default_database() -> String {
-    "raidprotect".to_string()
+/// Databases configuration model.
+///
+/// This model holds configuration values for Redis and MongoDB database.
+#[derive(Debug, Deserialize, Clone)]
+#[serde(default)]
+pub struct DatabaseConfig {
+    /// Redis connection uri.
+    ///
+    /// The connection uri should use the `redis://` scheme. Defaults to
+    /// `redis://localhost:6379`.
+    pub redis_uri: String,
+    /// MongoDB connection uri.
+    ///
+    /// The format of the connection string is described [here]. Defaults to
+    /// `mongodb://localhost:27017`.
+    ///
+    /// [here]: https://www.mongodb.com/docs/manual/reference/connection-string/#connection-string-formats
+    pub mongodb_uri: String,
+    /// MongoDB database name.
+    ///
+    /// Defaults to `raidprotect`.
+    pub mongodb_database: String,
+}
+
+impl Default for DatabaseConfig {
+    fn default() -> Self {
+        Self {
+            redis_uri: "redis://localhost:6379".to_string(),
+            mongodb_uri: "mongodb://localhost:27017".to_string(),
+            mongodb_database: "raidprotect".to_string(),
+        }
+    }
 }
 
 /// Logging configuration model.

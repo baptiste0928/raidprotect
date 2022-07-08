@@ -1980,6 +1980,7 @@ dependencies = [
  "tower",
  "tower-layer",
  "tower-service",
+ "tracing",
 ]
 
 [[package]]
@@ -2424,7 +2425,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
+ "raidprotect-model",
  "tokio",
+ "tower-http",
+ "tracing",
 ]
 
 [[package]]
