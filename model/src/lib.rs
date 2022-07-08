@@ -6,8 +6,10 @@
 //! a MongoDB database. See [`mongodb`].
 //! - Cache and temporary state (pending components, ...) is stored in a Redis
 //! database. See [`cache`].
+//! - Runtime configuration. See [`config`].
 
 mod serde;
 
 pub mod cache;
+pub mod config;
 pub mod mongodb;

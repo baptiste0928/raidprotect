@@ -6,6 +6,7 @@ use anyhow::Context;
 use futures::StreamExt;
 use raidprotect_model::{
     cache::{http::CacheHttp, RedisClient},
+    config::BotConfig,
     mongodb::MongoDbClient,
 };
 use tracing::{info, info_span, instrument, trace};
@@ -23,8 +24,7 @@ use twilight_model::{
 };
 
 use crate::{
-    config::Config, event::ProcessEvent, interaction::register_commands,
-    util::shutdown::ShutdownSubscriber,
+    event::ProcessEvent, interaction::register_commands, util::shutdown::ShutdownSubscriber,
 };
 
 /// Discord shards cluster.
@@ -46,7 +46,7 @@ impl ShardCluster {
     ///
     /// This method also initialize an [`HttpClient`] and a [`RedisClient`],
     /// that can be later retrieved using corresponding methods.
-    pub async fn new(config: Config) -> Result<Self, anyhow::Error> {
+    pub async fn new(config: BotConfig) -> Result<Self, anyhow::Error> {
         // Initialize HTTP client and get current user.
         let http = Arc::new(HttpClient::new(config.token.clone()));
         let application = http

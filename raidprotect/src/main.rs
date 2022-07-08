@@ -11,19 +11,19 @@
 //! - `util`: contain utilities such as logging and shutdown
 
 mod cluster;
-mod config;
 mod event;
 mod interaction;
 mod util;
 
 use anyhow::{Context, Result};
+use raidprotect_model::config::{parse_config, BotConfig};
 use tracing::{debug, info};
 
 use crate::util::shutdown::{wait_shutdown, Shutdown};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let config = config::parse_config().context("Failed to load configuration")?;
+    let config = parse_config::<BotConfig>().context("Failed to load configuration")?;
     let log_config = config.log.clone();
     let _guard = log_config.init("raidprotect");
 

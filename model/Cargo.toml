@@ -32,6 +32,13 @@ twilight-model = "0.11.1"
 twilight-util = { version = "0.11.1", features = ["permission-calculator"] }
 twilight-validate = "0.11.1"
 
+# Configuration
+dotenv = "0.15.0"
+envy = "0.4.2"
+tracing-appender = "0.2.2"
+tracing-subscriber = { version = "0.3.14", features = ["std", "fmt", "ansi"], default-features = false }
+
+
 [dev-dependencies]
 serde_test = "1.0.138"
 pretty_assertions = "1.2.1"
