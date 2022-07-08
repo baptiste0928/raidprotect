@@ -20,8 +20,6 @@ rosetta-i18n = "0.1.2"
 futures = "0.3.21"
 tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread", "sync", "time", "signal"] }
 tracing = "0.1.35"
-tracing-appender = "0.2.2"
-tracing-subscriber = { version = "0.3.14", features = ["std", "fmt", "ansi"], default-features = false }
 
 # Twilight
 twilight-gateway = "0.11.1"
@@ -30,11 +28,6 @@ twilight-interactions = "0.11.0"
 twilight-mention = "0.11.1"
 twilight-model = "0.11.1"
 twilight-util = { version = "0.11.1", features = ["builder", "snowflake"] }
-
-# Configuration
-envy = "0.4.2"
-dotenv = "0.15.0"
-serde = { version = "1.0.138", features = ["derive"] }
 
 # Message parsing
 any_ascii = "0.3.1"

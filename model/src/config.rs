@@ -1,5 +1,7 @@
 //! Configuration model.
 //!
+//! This module contains configuration models used in binary crates.
+//!
 //! Configuration is loaded at runtime from environment variables prefixed with
 //! `RAIDPROTECT_`. If variables are defined in a `.env` file, they will take
 //! precedence over other variables.
@@ -9,14 +11,17 @@ use tracing::Level;
 use tracing_appender::non_blocking::WorkerGuard;
 
 /// Parse configuration from environment variables.
-pub fn parse_config() -> Result<Config, envy::Error> {
+pub fn parse_config<T>() -> Result<T, envy::Error>
+where
+    T: de::DeserializeOwned,
+{
     dotenv::dotenv().ok();
     envy::prefixed("RAIDPROTECT_").from_env()
 }
 
-/// RaidProtect configuration model.
+/// RaidProtect bot configuration model.
 #[derive(Debug, Deserialize, Clone)]
-pub struct Config {
+pub struct BotConfig {
     /// Discord bot token.
     pub token: String,
     /// Redis connection uri.
