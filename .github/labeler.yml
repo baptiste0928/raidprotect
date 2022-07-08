@@ -27,11 +27,15 @@ labels:
       files:
         all: ["model/**/*", "!model/src/cache/**/*"]
 
-
   - label: c-translations
     sync: true
     matcher:
       files: "raidprotect/locales/**/*"
+
+  - label: c-web
+    sync: true
+    matchers:
+      files: "web/**/*"
 
   - label: t-fix
     matcher:
