@@ -59,10 +59,14 @@ impl ShardCluster {
 
         info!("logged as {} with ID {}", application.name, current_user);
 
-        let redis = RedisClient::new(&config.redis_uri).await?;
+        let redis = RedisClient::new(&config.database.redis_uri).await?;
         redis.ping().await.context("failed to connect to redis")?;
 
-        let mongodb = MongoDbClient::connect(&config.mongodb_uri, config.mongodb_database).await?;
+        let mongodb = MongoDbClient::connect(
+            &config.database.mongodb_uri,
+            config.database.mongodb_database,
+        )
+        .await?;
         mongodb
             .ping()
             .await

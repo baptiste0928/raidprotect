@@ -1,0 +1,21 @@
+[package]
+name = "web"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+raidprotect-model = { path = "../model" }
+
+anyhow = "1.0.58"
+
+# Tokio dependencies
+tokio = { version = "1.19.2", features = ["rt-multi-thread", "macros"] }
+tracing = "0.1.35"
+
+# Axum and http dependencies
+axum = { version = "0.5.11", features = ["http1", "http2"], default-features = false }
+tower-http = { version = "0.3.4", features = ["trace"] }
