@@ -4,12 +4,7 @@
 
 use tracing::error;
 use twilight_model::{
-    application::{
-        component::Component,
-        interaction::{
-            modal::ModalSubmitInteraction, ApplicationCommand, MessageComponentInteraction,
-        },
-    },
+    application::{component::Component, interaction::Interaction},
     channel::{embed::Embed, message::MessageFlags},
     http::interaction::{
         InteractionResponse as HttpInteractionResponse, InteractionResponseData,
@@ -36,30 +31,12 @@ pub struct InteractionResponder {
 }
 
 impl InteractionResponder {
-    /// Initialize a new [`InteractionResponder`] from an incoming command data.
-    pub fn from_command(command: &ApplicationCommand) -> Self {
+    /// Initialize a new [`InteractionResponder`] from an incoming interaction.
+    pub fn from_interaction(interaction: &Interaction) -> Self {
         Self {
-            id: command.id,
-            application_id: command.application_id,
-            token: command.token.clone(),
-        }
-    }
-
-    /// Initialize a new [`InteractionResponder`] from an incoming component data.
-    pub fn from_component(component: &MessageComponentInteraction) -> Self {
-        Self {
-            id: component.id,
-            application_id: component.application_id,
-            token: component.token.clone(),
-        }
-    }
-
-    /// Initialize a new [`InteractionResponder`] from an incoming modal data.
-    pub fn from_modal(modal: &ModalSubmitInteraction) -> Self {
-        Self {
-            id: modal.id,
-            application_id: modal.application_id,
-            token: modal.token.clone(),
+            id: interaction.id,
+            application_id: interaction.application_id,
+            token: interaction.token.clone(),
         }
     }
 
