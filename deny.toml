@@ -39,6 +39,10 @@ multiple-versions = "warn"
 deny = []
 
 [sources]
-# Only crates.io is allowed
 unknown-registry = "deny"
 unknown-git = "deny"
+
+allow-git = [
+    "https://github.com/twilight-rs/twilight",
+    "https://github.com/baptiste0928/twilight-interactions",
+]
