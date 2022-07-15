@@ -7,8 +7,8 @@ mod handle;
 
 pub mod command;
 pub mod component;
-pub mod context;
 pub mod embed;
 pub mod response;
+pub mod util;
 
-pub use handle::{handle_command, handle_component, handle_modal, register_commands};
+pub use handle::{handle_interaction, register_commands};

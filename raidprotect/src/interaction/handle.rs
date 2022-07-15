@@ -1,67 +1,127 @@
 use std::sync::Arc;
 
-use anyhow::Context;
+use anyhow::{bail, Context};
 use raidprotect_model::cache::model::interaction::{PendingComponent, PendingModal};
-use tracing::{error, warn};
+use tracing::{debug, error, warn};
 use twilight_interactions::command::CreateCommand;
 use twilight_model::{
     application::{
         command::Command,
-        interaction::{
-            modal::ModalSubmitInteraction, ApplicationCommand, MessageComponentInteraction,
-        },
+        interaction::{Interaction, InteractionData, InteractionType},
     },
     id::{marker::ApplicationMarker, Id},
 };
 
 use super::{
-    command::{help::HelpCommand, moderation::KickCommand, profile::ProfileCommand},
+    command::{moderation::KickCommand, profile::ProfileCommand},
     component::PostInChat,
-    context::InteractionContext,
     embed,
-    response::InteractionResponder,
+    response::{InteractionResponder, InteractionResponse},
 };
 use crate::cluster::ClusterState;
 
-/// Handle incoming [`ApplicationCommand`]
-///
-/// This method will handle incoming commands depending on whereas they can run
-/// on both dms and guilds, or only on guild.
-pub async fn handle_command(command: ApplicationCommand, state: Arc<ClusterState>) {
-    let responder = InteractionResponder::from_command(&command);
-    let context = InteractionContext::from_command(command, &state)
-        .await
-        .context("failed to create command context");
+/// Handle incoming [`Interaction`].
+pub async fn handle_interaction(interaction: Interaction, state: Arc<ClusterState>) {
+    let responder = InteractionResponder::from_interaction(&interaction);
+    debug!("received {} interaction", interaction.kind.kind());
 
-    let response = match context {
-        Ok(context) => match &*context.data.name {
-            "help" => HelpCommand::handle(context).await,
-            "profile" => ProfileCommand::handle(context, &state).await,
-            "kick" => KickCommand::handle(context, &state).await,
-            name => {
-                warn!(name = name, "unknown command received");
-                Ok(embed::error::unknown_command())
-            }
-        },
-        Err(e) => Err(e),
+    let response = match interaction.kind {
+        InteractionType::ApplicationCommand => handle_command(interaction, &state).await,
+        InteractionType::MessageComponent => handle_component(interaction, &state).await,
+        InteractionType::ModalSubmit => handle_modal(interaction, &state).await,
+        other => {
+            warn!("received unexpected {} interaction", other.kind());
+
+            return;
+        }
     };
 
     match response {
         Ok(response) => responder.respond(&state, response).await,
         Err(error) => {
-            error!(error = ?error, "error while processing command");
+            error!(error = ?error, "error while processing interaction");
 
             responder
                 .respond(&state, embed::error::internal_error())
                 .await;
         }
+    }
+}
+
+/// Handle incoming command interaction.
+async fn handle_command(
+    interaction: Interaction,
+    state: &ClusterState,
+) -> Result<InteractionResponse, anyhow::Error> {
+    let name = match &interaction.data {
+        Some(InteractionData::ApplicationCommand(data)) => &*data.name,
+        _ => bail!("expected application command data"),
     };
+
+    match name {
+        "profile" => ProfileCommand::handle(interaction, state).await,
+        "kick" => KickCommand::handle(interaction, state).await,
+        name => {
+            warn!(name = name, "received unknown command");
+
+            Ok(embed::error::unknown_command())
+        }
+    }
+}
+
+/// Handle incoming component interaction
+async fn handle_component(
+    interaction: Interaction,
+    state: &ClusterState,
+) -> Result<InteractionResponse, anyhow::Error> {
+    let custom_id = match &interaction.data {
+        Some(InteractionData::MessageComponent(data)) => &*data.custom_id,
+        _ => bail!("expected message component data"),
+    };
+
+    let component = match state
+        .redis()
+        .get::<PendingComponent>(custom_id)
+        .await
+        .context("failed to get component state")?
+    {
+        Some(component) => component,
+        None => return Ok(embed::error::expired_interaction()),
+    };
+
+    match component {
+        PendingComponent::PostInChat(component) => Ok(PostInChat::handle(component)),
+    }
+}
+
+/// Handle incoming modal interaction
+async fn handle_modal(
+    interaction: Interaction,
+    state: &ClusterState,
+) -> Result<InteractionResponse, anyhow::Error> {
+    let custom_id = match &interaction.data {
+        Some(InteractionData::ModalSubmit(data)) => &*data.custom_id,
+        _ => bail!("expected modal submit data"),
+    };
+
+    let modal = match state
+        .redis()
+        .get::<PendingModal>(custom_id)
+        .await
+        .context("failed to get modal state")?
+    {
+        Some(modal) => modal,
+        None => return Ok(embed::error::expired_interaction()),
+    };
+
+    match modal {
+        PendingModal::Sanction(_) => bail!("not implemented"),
+    }
 }
 
 /// Register commands to the Discord API.
 pub async fn register_commands(state: &ClusterState, application_id: Id<ApplicationMarker>) {
     let commands: Vec<Command> = vec![
-        HelpCommand::create_command().into(),
         ProfileCommand::create_command().into(),
         KickCommand::create_command().into(),
     ];
@@ -71,64 +131,4 @@ pub async fn register_commands(state: &ClusterState, application_id: Id<Applicat
     if let Err(error) = client.set_global_commands(&commands).exec().await {
         error!(error = ?error, "failed to register commands");
     }
-}
-
-/// Handle incoming [`MessageComponentInteraction`].
-pub async fn handle_component(component: MessageComponentInteraction, state: Arc<ClusterState>) {
-    let responder = InteractionResponder::from_component(&component);
-    let context = InteractionContext::from_component(component, &state)
-        .await
-        .context("failed to create component context");
-
-    let component = match context {
-        Ok(context) => state
-            .redis()
-            .get::<PendingComponent>(&context.data.custom_id)
-            .await
-            .context("failed to fetch component state"),
-        Err(e) => Err(e),
-    };
-
-    let response = match component {
-        Ok(Some(component)) => match component {
-            PendingComponent::PostInChat(c) => PostInChat::handle(c),
-        },
-        Ok(None) => embed::error::expired_interaction(),
-        Err(error) => {
-            error!(error = ?error, "error while processing component");
-            embed::error::internal_error()
-        }
-    };
-
-    responder.respond(&state, response).await;
-}
-
-/// Handle incoming [`ModalSubmitInteraction`].
-pub async fn handle_modal(modal: ModalSubmitInteraction, state: Arc<ClusterState>) {
-    let responder = InteractionResponder::from_modal(&modal);
-    let context = InteractionContext::from_modal(modal, &state)
-        .await
-        .context("failed to create modal context");
-
-    let modal = match context {
-        Ok(context) => state
-            .redis()
-            .get::<PendingModal>(&context.data.custom_id)
-            .await
-            .context("failed to fetch modal state"),
-        Err(e) => Err(e),
-    };
-
-    let response = match modal {
-        Ok(Some(modal)) => match modal {
-            PendingModal::Sanction(_) => todo!(),
-        },
-        Ok(None) => embed::error::expired_interaction(),
-        Err(error) => {
-            error!(error = ?error, "error while processing modal");
-            embed::error::internal_error()
-        }
-    };
-
-    responder.respond(&state, response).await;
 }

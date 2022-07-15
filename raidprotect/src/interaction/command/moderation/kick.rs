@@ -8,18 +8,17 @@
 //! sent in the guild's logs channel. The kicked user receives a pm with the
 //! reason of the kick.
 
-use anyhow::anyhow;
+use anyhow::Context;
 use nanoid::nanoid;
 use raidprotect_model::{
     cache::model::interaction::{PendingModal, PendingSanction},
     mongodb::modlog::ModlogType,
 };
-use tracing::instrument;
 use twilight_interactions::command::{CommandModel, CreateCommand, ResolvedUser};
 use twilight_model::{
     application::{
         component::{text_input::TextInputStyle, ActionRow, Component, TextInput},
-        interaction::application_command::CommandData,
+        interaction::Interaction,
     },
     guild::Permissions,
     user::User,
@@ -27,7 +26,8 @@ use twilight_model::{
 
 use crate::{
     cluster::ClusterState,
-    interaction::{context::InteractionContext, embed, response::InteractionResponse},
+    impl_command_handle,
+    interaction::{embed, response::InteractionResponse, util::InteractionExt},
     translations::Lang,
     util::TextProcessExt,
 };
@@ -50,32 +50,30 @@ pub struct KickCommand {
     pub reason: Option<String>,
 }
 
+impl_command_handle!(KickCommand);
+
 impl KickCommand {
     fn default_permissions() -> Permissions {
         Permissions::KICK_MEMBERS
     }
 
-    #[instrument]
-    pub async fn handle(
-        context: InteractionContext<CommandData>,
+    async fn exec(
+        self,
+        interaction: Interaction,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
-        let parsed = KickCommand::from_interaction(context.data.into())?;
-        let guild = &context
-            .guild
-            .ok_or_else(|| anyhow!("command not executed in a guild"))?;
+        let guild = interaction.guild()?;
+        let author_id = interaction.author_id().context("missing author_id")?;
 
-        let user = parsed.user.resolved;
-        let member = match parsed.user.member {
+        let user = self.user.resolved;
+        let member = match self.user.member {
             Some(member) => member,
             None => return Ok(embed::kick::not_member(user.name)),
         };
 
         // Fetch the author and the bot permissions.
-        let permissions = state.redis().permissions(guild.guild.id).await?;
-        let author_permissions = permissions
-            .member(context.user.id, &guild.member.roles)
-            .await?;
+        let permissions = state.redis().permissions(guild.id).await?;
+        let author_permissions = permissions.member(author_id, &member.roles).await?;
         let member_permissions = permissions.member(user.id, &member.roles).await?;
         let bot_permissions = permissions.current_member().await?;
 
@@ -101,9 +99,16 @@ impl KickCommand {
         }
 
         // Send reason modal.
-        match parsed.reason {
+        let enforce_reason = state
+            .mongodb()
+            .get_guild_or_create(guild.id)
+            .await?
+            .config
+            .enforce_reason;
+
+        match self.reason {
             Some(_reason) => Ok(InteractionResponse::EphemeralDeferredMessage),
-            None => KickCommand::reason_modal(user, guild.config().enforce_reason, state).await,
+            None => KickCommand::reason_modal(user, enforce_reason, state).await,
         }
     }
 

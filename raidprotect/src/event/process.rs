@@ -3,10 +3,7 @@ use std::{fmt::Debug, sync::Arc};
 use async_trait::async_trait;
 use raidprotect_model::cache::UpdateCache;
 use tracing::{debug, error, trace};
-use twilight_model::{
-    application::interaction::Interaction,
-    gateway::{event::Event as GatewayEvent, payload::incoming},
-};
+use twilight_model::gateway::{event::Event as GatewayEvent, payload::incoming};
 
 use super::message::ALLOWED_MESSAGES_TYPES;
 use crate::cluster::ClusterState;
@@ -97,20 +94,7 @@ process_cache_events! {
 #[async_trait]
 impl ProcessEvent for incoming::InteractionCreate {
     async fn process(self, state: Arc<ClusterState>) {
-        match self.0 {
-            Interaction::ApplicationCommand(command) => {
-                crate::interaction::handle_command(*command, state).await;
-            }
-            Interaction::MessageComponent(component) => {
-                crate::interaction::handle_component(*component, state).await;
-            }
-            Interaction::ModalSubmit(modal) => {
-                crate::interaction::handle_modal(*modal, state).await;
-            }
-            _ => {
-                trace!("unprocessed interaction type");
-            }
-        };
+        crate::interaction::handle_interaction(self.0, state).await;
     }
 }
 

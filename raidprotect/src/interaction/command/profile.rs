@@ -4,7 +4,7 @@
 
 use std::time::Duration;
 
-use tracing::instrument;
+use anyhow::Context;
 use twilight_interactions::command::{CommandModel, CreateCommand, ResolvedUser};
 use twilight_mention::{
     timestamp::{Timestamp, TimestampStyle},
@@ -12,7 +12,7 @@ use twilight_mention::{
 };
 use twilight_model::application::{
     component::{button::ButtonStyle, ActionRow, Button, Component},
-    interaction::application_command::CommandData,
+    interaction::Interaction,
 };
 use twilight_util::{
     builder::{
@@ -24,10 +24,8 @@ use twilight_util::{
 
 use crate::{
     cluster::ClusterState,
-    interaction::{
-        component::PostInChat, context::InteractionContext, embed::COLOR_TRANSPARENT,
-        response::InteractionResponse,
-    },
+    impl_command_handle,
+    interaction::{component::PostInChat, embed::COLOR_TRANSPARENT, response::InteractionResponse},
     translations::Lang,
     util::resource::avatar_url,
 };
@@ -44,15 +42,15 @@ pub struct ProfileCommand {
     pub user: ResolvedUser,
 }
 
+impl_command_handle!(ProfileCommand);
+
 impl ProfileCommand {
-    /// Handle interaction for this command.
-    #[instrument]
-    pub async fn handle(
-        context: InteractionContext<CommandData>,
+    async fn exec(
+        self,
+        interaction: Interaction,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
-        let parsed = ProfileCommand::from_interaction(context.data.into())?;
-        let user = parsed.user.resolved;
+        let user = self.user.resolved;
 
         let avatar = avatar_url(&user, "jpg", 1024);
         let mut embed = EmbedBuilder::new()
@@ -73,7 +71,7 @@ impl ProfileCommand {
         ));
 
         // Member join date.
-        if let Some(member) = parsed.user.member {
+        if let Some(member) = self.user.member {
             let joined_at = member.joined_at.as_secs();
             let timestamp_long =
                 Timestamp::new(joined_at as u64, Some(TimestampStyle::LongDate)).mention();
@@ -101,7 +99,8 @@ impl ProfileCommand {
             .embeds([embed.validate()?.build()])
             .components([components])
             .build();
+        let author_id = interaction.author_id().context("missing author id")?;
 
-        PostInChat::create(response, context.user.id, state).await
+        PostInChat::create(response, author_id, state).await
     }
 }
