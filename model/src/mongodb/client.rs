@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use mongodb::{
     bson::{doc, oid::ObjectId, to_bson, to_document, Bson},
     options, Client, Cursor, Database,
@@ -99,7 +99,7 @@ impl MongoDbClient {
             )
             .await?;
 
-        guild.ok_or_else(|| anyhow!("no guild sent by the database"))
+        guild.context("no guild sent by the database")
     }
 
     /// Update or insert a [`Guild`] in the database.

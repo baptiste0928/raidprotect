@@ -101,7 +101,7 @@ impl<'a> CachePermissions<'a> {
             .guild
             .current_member
             .as_ref()
-            .ok_or_else(|| anyhow!("current member not found in cache"))?;
+            .context("current member not found in cache")?;
 
         let guild_id = guild_permissions.guild.id;
         let is_owner = member.id == guild_permissions.guild.owner_id;
@@ -174,7 +174,7 @@ impl<'a> CachePermissions<'a> {
             .redis
             .get::<CachedChannel>(&channel)
             .await?
-            .ok_or_else(|| anyhow!("channel not found in cache"))?;
+            .context("channel not found in cache")?;
 
         // If the channel is a thread, get the parent channel.
         if let CachedChannel::Thread(thread) = channel {
@@ -182,7 +182,7 @@ impl<'a> CachePermissions<'a> {
                 .redis
                 .get::<CachedChannel>(&thread.parent_id)
                 .await?
-                .ok_or_else(|| anyhow!("parent channel not found in cache"))?;
+                .context("parent channel not found in cache")?;
         }
 
         // TODO: extract this into a function
