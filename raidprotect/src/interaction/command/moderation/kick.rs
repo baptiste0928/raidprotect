@@ -14,7 +14,6 @@ use raidprotect_model::{
     cache::model::interaction::{PendingModal, PendingSanction},
     mongodb::modlog::ModlogType,
 };
-use tracing::instrument;
 use twilight_interactions::command::{CommandModel, CreateCommand, ResolvedUser};
 use twilight_model::{
     application::{
@@ -27,11 +26,8 @@ use twilight_model::{
 
 use crate::{
     cluster::ClusterState,
-    interaction::{
-        embed,
-        response::InteractionResponse,
-        util::{parse_command_data, InteractionExt},
-    },
+    impl_command_handle,
+    interaction::{embed, response::InteractionResponse, util::InteractionExt},
     translations::Lang,
     util::TextProcessExt,
 };
@@ -54,22 +50,14 @@ pub struct KickCommand {
     pub reason: Option<String>,
 }
 
+impl_command_handle!(KickCommand);
+
 impl KickCommand {
     fn default_permissions() -> Permissions {
         Permissions::KICK_MEMBERS
     }
 
-    #[instrument]
-    pub async fn handle(
-        mut interaction: Interaction,
-        state: &ClusterState,
-    ) -> Result<InteractionResponse, anyhow::Error> {
-        let parsed = parse_command_data::<Self>(&mut interaction)?;
-
-        parsed.exec(interaction, state).await
-    }
-
-    pub async fn exec(
+    async fn exec(
         self,
         interaction: Interaction,
         state: &ClusterState,

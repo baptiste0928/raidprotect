@@ -5,7 +5,6 @@
 use std::time::Duration;
 
 use anyhow::Context;
-use tracing::instrument;
 use twilight_interactions::command::{CommandModel, CreateCommand, ResolvedUser};
 use twilight_mention::{
     timestamp::{Timestamp, TimestampStyle},
@@ -25,10 +24,8 @@ use twilight_util::{
 
 use crate::{
     cluster::ClusterState,
-    interaction::{
-        component::PostInChat, embed::COLOR_TRANSPARENT, response::InteractionResponse,
-        util::parse_command_data,
-    },
+    impl_command_handle,
+    interaction::{component::PostInChat, embed::COLOR_TRANSPARENT, response::InteractionResponse},
     translations::Lang,
     util::resource::avatar_url,
 };
@@ -45,18 +42,10 @@ pub struct ProfileCommand {
     pub user: ResolvedUser,
 }
 
+impl_command_handle!(ProfileCommand);
+
 impl ProfileCommand {
-    #[instrument]
-    pub async fn handle(
-        mut interaction: Interaction,
-        state: &ClusterState,
-    ) -> Result<InteractionResponse, anyhow::Error> {
-        let parsed = parse_command_data::<Self>(&mut interaction)?;
-
-        parsed.exec(interaction, state).await
-    }
-
-    pub async fn exec(
+    async fn exec(
         self,
         interaction: Interaction,
         state: &ClusterState,

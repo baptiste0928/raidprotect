@@ -60,6 +60,7 @@ impl InteractionResponder {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InteractionResponse {
     /// Respond with an embed.
+    #[allow(unused)]
     Embed(Embed),
     /// Respond with an embed sent as ephemeral message.
     EphemeralEmbed(Embed),

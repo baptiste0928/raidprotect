@@ -7,7 +7,6 @@ use twilight_model::{
     application::interaction::{Interaction, InteractionData},
     guild::PartialMember,
     id::{marker::GuildMarker, Id},
-    user::User,
 };
 
 /// Extension trait adding methods to [`Interaction`].
@@ -54,8 +53,33 @@ where
 {
     let data = match mem::take(&mut interaction.data) {
         Some(InteractionData::ApplicationCommand(data)) => *data,
-        other => bail!("unable to parse command data, received unknown data type"),
+        _ => bail!("unable to parse command data, received unknown data type"),
     };
 
-    Ok(T::from_interaction(data.into()).context("failed to parse command data")?)
+    T::from_interaction(data.into()).context("failed to parse command data")
+}
+
+/// Implement `handle` method for a command type.
+///
+/// The generated method will parse the command from an interaction and execute
+/// it. The command type must implement [`CommandModel`] and have an `exec`
+/// method with the following signature:
+///
+/// `async fn exec(self, interaction: Interaction, state: &ClusterState) -> Result<InteractionResponse, anyhow::Error>`
+#[macro_export]
+macro_rules! impl_command_handle {
+    ($name:path) => {
+        impl $name {
+            #[::tracing::instrument]
+            pub async fn handle(
+                mut interaction: ::twilight_model::application::interaction::Interaction,
+                state: &$crate::cluster::ClusterState,
+            ) -> Result<$crate::interaction::response::InteractionResponse, ::anyhow::Error> {
+                let parsed =
+                    $crate::interaction::util::parse_command_data::<Self>(&mut interaction)?;
+
+                parsed.exec(interaction, state).await
+            }
+        }
+    };
 }
