@@ -27,7 +27,7 @@ rmp-serde = "1.1.0"
 zstd = "0.11.2"
 
 # Twilight
-twilight-http = "0.11.1"
+twilight-http = { version = "0.11.1", features = ["rustls-webpki-roots", "decompression"], default-features = false }
 twilight-model = "0.11.1"
 twilight-util = { version = "0.11.1", features = ["permission-calculator"] }
 twilight-validate = "0.11.1"
