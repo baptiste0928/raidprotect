@@ -14,7 +14,7 @@ mongodb = { version = "2.2.2", features = ["zstd-compression"] }
 tracing = "0.1.35"
 
 # Models
-serde = { version = "1.0.138", features = ["derive"] }
+serde = { version = "1.0.139", features = ["derive"] }
 serde_with = "1.14.0"
 time = "0.3.11"
 url = { version = "2.2.2", features = ["serde"] }
@@ -27,10 +27,10 @@ rmp-serde = "1.1.0"
 zstd = "0.11.2"
 
 # Twilight
-twilight-http = { version = "0.11.1", features = ["rustls-webpki-roots", "decompression"], default-features = false }
-twilight-model = "0.11.1"
-twilight-util = { version = "0.11.1", features = ["permission-calculator"] }
-twilight-validate = "0.11.1"
+twilight-http = { version = "0.12.0", features = ["rustls-webpki-roots", "decompression"], default-features = false }
+twilight-model = "0.12.0"
+twilight-util = { version = "0.12.0", features = ["permission-calculator"] }
+twilight-validate = "0.12.0"
 
 # Configuration
 dotenv = "0.15.0"
@@ -40,5 +40,5 @@ tracing-subscriber = { version = "0.3.14", features = ["std", "fmt", "ansi"], de
 
 
 [dev-dependencies]
-serde_test = "1.0.138"
+serde_test = "1.0.139"
 pretty_assertions = "1.2.1"

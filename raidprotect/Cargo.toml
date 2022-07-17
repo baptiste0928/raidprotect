@@ -18,20 +18,20 @@ rosetta-i18n = "0.1.2"
 
 # Tokio ecosystem
 futures = "0.3.21"
-tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread", "sync", "time", "signal"] }
+tokio = { version = "1.20.0", features = ["macros", "rt-multi-thread", "sync", "time", "signal"] }
 tracing = "0.1.35"
 
 # Twilight
-twilight-gateway = { version = "0.11.1", features = ["rustls-webpki-roots", "zlib-stock"], default-features = false }
-twilight-http = { version = "0.11.1", features = ["rustls-webpki-roots", "decompression"], default-features = false }
-twilight-interactions = "0.11.0"
-twilight-mention = "0.11.1"
-twilight-model = "0.11.1"
-twilight-util = { version = "0.11.1", features = ["builder", "snowflake"] }
+twilight-gateway = { version = "0.12.0", features = ["rustls-webpki-roots", "zlib-stock"], default-features = false }
+twilight-http = { version = "0.12.0", features = ["rustls-webpki-roots", "decompression"], default-features = false }
+twilight-interactions = "0.12.0"
+twilight-mention = "0.12.0"
+twilight-model = "0.12.0"
+twilight-util = { version = "0.12.0", features = ["builder", "snowflake"] }
 
 # Message parsing
 any_ascii = "0.3.1"
-linkify = "0.8.1"
+linkify = "0.9.0"
 unicode-segmentation = "1.9.0"
 url = "2.2.2"
 

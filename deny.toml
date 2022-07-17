@@ -18,7 +18,13 @@ ignore = [
 
 [licenses]
 unlicensed = "deny"
-allow = ["MIT", "Apache-2.0", "ISC", "BSD-3-Clause"]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "ISC",
+    "BSD-3-Clause",
+    "Unicode-DFS-2016",  # unicode-ident
+]
 
 private = { ignore = true }  # Ignore workspace crates
 exceptions = [
@@ -26,8 +32,8 @@ exceptions = [
     { name = "webpki-roots", allow = ["MPL-2.0"] },
 ]
 
-[[licenses.clarify]]  # ring is licensed under multiple MIT-like licenses
-name = "ring"
+[[licenses.clarify]]
+name = "ring" # ring is licensed under multiple MIT-like licenses
 expression = "LicenseRef-ring"
 license-files = [
     { path = "LICENSE", hash = 0xbd0eed23 },
