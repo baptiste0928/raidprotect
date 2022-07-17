@@ -4,13 +4,3 @@ members = [
     "raidprotect",
     "web",
 ]
-
-[patch.crates-io]
-twilight-gateway = { git = "https://github.com/twilight-rs/twilight", rev = "aa28b87a1ddbfffb3daefeb406a2325e0785c891" }
-twilight-http = { git = "https://github.com/twilight-rs/twilight", rev = "aa28b87a1ddbfffb3daefeb406a2325e0785c891" }
-twilight-mention = { git = "https://github.com/twilight-rs/twilight", rev = "aa28b87a1ddbfffb3daefeb406a2325e0785c891" }
-twilight-model = { git = "https://github.com/twilight-rs/twilight", rev = "aa28b87a1ddbfffb3daefeb406a2325e0785c891" }
-twilight-util = { git = "https://github.com/twilight-rs/twilight", rev = "aa28b87a1ddbfffb3daefeb406a2325e0785c891" }
-twilight-validate = { git = "https://github.com/twilight-rs/twilight", rev = "aa28b87a1ddbfffb3daefeb406a2325e0785c891" }
-
-twilight-interactions = { git = "https://github.com/baptiste0928/twilight-interactions", rev = "a7191c125f26bdcc6a9bb0c00e63a8d896bfb017" }
