@@ -1272,7 +1272,6 @@ dependencies = [
  "twilight-util",
  "twilight-validate",
  "url",
- "zstd",
 ]
 
 [[package]]
