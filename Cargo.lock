@@ -1517,7 +1517,9 @@ dependencies = [
  "argh",
  "image",
  "imageproc",
+ "once_cell",
  "rand 0.8.5",
+ "rusttype",
 ]
 
 [[package]]

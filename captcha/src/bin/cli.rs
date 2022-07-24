@@ -37,12 +37,13 @@ fn main() {
     });
 
     let image = generate_captcha(code);
+    let (width, height) = image.dimensions();
 
     if let Some(output) = args.output {
         if let Err(error) = image.save(output) {
             eprintln!("failed to save image: {error}");
         }
     } else {
-        display_image("captcha.png", &image, 400, 150)
+        display_image("captcha.png", &image, width, height)
     }
 }
