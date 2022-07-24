@@ -32,7 +32,7 @@ pub const LETTER_HEIGHT: u32 = 100;
 pub const LETTER_WIDTH: u32 = 100;
 
 /// Generate a new captcha image with the provided code.
-pub fn generate_captcha(code: String) -> GrayAlphaImage {
+pub fn generate_captcha(code: &str) -> GrayAlphaImage {
     let image_width = (code.len() as u32 * LETTER_WIDTH) + 40;
     let mut image = GrayAlphaImage::new(image_width, IMAGE_HEIGHT);
     let mut rng = rand::thread_rng();
@@ -66,14 +66,14 @@ fn generate_letter(letter: char, rng: &mut ThreadRng) -> GrayAlphaImage {
         &letter.to_uppercase().to_string(),
     );
 
-    letter_transform(&image, rng)
+    letter_transform(image, rng)
 }
 
 /// Applies a random transformation on the letter.
 ///
 /// A projection is calculated with a randomization of the found image corners
 /// coordinates.
-fn letter_transform(image: &GrayAlphaImage, rng: &mut ThreadRng) -> GrayAlphaImage {
+fn letter_transform(image: GrayAlphaImage, rng: &mut ThreadRng) -> GrayAlphaImage {
     let (width, height) = (image.dimensions().0 as f32, image.dimensions().1 as f32);
 
     // Choose which corners to transform.
@@ -127,8 +127,8 @@ fn letter_transform(image: &GrayAlphaImage, rng: &mut ThreadRng) -> GrayAlphaIma
 
     // Apply the transformation
     if let Some(projection) = &projection {
-        geometric_transformations::warp(image, projection, Interpolation::Bicubic, LumaA([0, 0]))
+        geometric_transformations::warp(&image, projection, Interpolation::Bicubic, LumaA([0, 0]))
     } else {
-        image.clone()
+        image
     }
 }
