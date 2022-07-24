@@ -36,7 +36,7 @@ fn main() {
         }
     });
 
-    let image = generate_captcha(code);
+    let image = generate_captcha(&code);
     let (width, height) = image.dimensions();
 
     if let Some(output) = args.output {
