@@ -60,7 +60,7 @@ mod tests {
         let code_1 = random_code(6);
         let code_2 = random_code(6);
 
-        assert_eq!(code_1.len(), 5);
+        assert_eq!(code_1.len(), 6);
         assert_ne!(code_1, code_2);
     }
 
@@ -69,7 +69,7 @@ mod tests {
         let code_1 = random_human_code(6);
         let code_2 = random_human_code(6);
 
-        assert_eq!(code_1.len(), 5);
+        assert_eq!(code_1.len(), 6);
         assert_ne!(code_1, code_2);
     }
 }
