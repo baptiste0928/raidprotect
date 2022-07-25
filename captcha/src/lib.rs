@@ -1,7 +1,8 @@
 //! # Captcha generator
 //!
 //! This library contains the captcha image generator used by RaidProtect. The
-//! generated [`RgbImage`] can be converted to any relevant image format.
+//! generated [`GrayImage`] can be converted to any relevant image format. A
+//! [`generate_captcha_png`] function is provided for convenience.
 
 pub mod code;
 
@@ -28,7 +29,7 @@ static FONT: Lazy<Font<'static>> =
 
 const IMAGE_HEIGHT: u32 = 150;
 const LETTER_HEIGHT: u32 = 100;
-const LETTER_WIDTH: u32 = 100;
+const LETTER_WIDTH: u32 = 80;
 
 /// Generate a new captcha image with the provided code.
 pub fn generate_captcha(code: &str) -> GrayImage {

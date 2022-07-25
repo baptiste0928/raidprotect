@@ -16,13 +16,16 @@ use raidprotect_captcha::{
 #[derive(FromArgs, Debug)]
 pub struct CaptchaArgs {
     /// code of the generated captcha (random if missing)
-    #[argh(option)]
+    #[argh(option, short = 'c')]
     code: Option<String>,
+    /// length of the captcha code
+    #[argh(option, default = "6", short = 'l')]
+    length: usize,
     /// generated image output path (the image will be opened in a new window if missing)
-    #[argh(option)]
+    #[argh(option, short = 'o')]
     output: Option<String>,
     /// whether the generated code should be easy to read for a human
-    #[argh(switch)]
+    #[argh(switch, short = 'h')]
     human: bool,
 }
 
@@ -30,9 +33,9 @@ fn main() {
     let args: CaptchaArgs = argh::from_env();
     let code = args.code.unwrap_or_else(|| {
         if args.human {
-            random_human_code()
+            random_human_code(args.length)
         } else {
-            random_code(5)
+            random_code(args.length)
         }
     });
 

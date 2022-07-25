@@ -24,22 +24,23 @@ pub fn random_code(len: usize) -> String {
 
 /// Generates a random human-readable code.
 ///
-/// The generated code is a 5 characters [`String`]. The used algorithm can
-/// produce 2^16 different codes.
+/// The generated code alternates between consonants and vowels.
 ///
 /// Adapted from [Proquints](https://arxiv.org/html/0901.4016).
-pub fn random_human_code() -> String {
+pub fn random_human_code(len: usize) -> String {
     const CONSONANTS: &[u8] = b"bdfghjklmnprstvz";
     const VOWELS: &[u8] = b"aiou";
 
     let mut rng = rand::thread_rng();
     let mut code = String::with_capacity(5);
 
-    code.push(random_char(&mut rng, CONSONANTS));
-    code.push(random_char(&mut rng, VOWELS));
-    code.push(random_char(&mut rng, CONSONANTS));
-    code.push(random_char(&mut rng, VOWELS));
-    code.push(random_char(&mut rng, CONSONANTS));
+    for idx in 0..len {
+        if idx % 2 == 0 {
+            code.push(random_char(&mut rng, CONSONANTS));
+        } else {
+            code.push(random_char(&mut rng, VOWELS));
+        }
+    }
 
     code
 }
@@ -56,8 +57,8 @@ mod tests {
 
     #[test]
     fn test_random_code() {
-        let code_1 = random_code(5);
-        let code_2 = random_code(5);
+        let code_1 = random_code(6);
+        let code_2 = random_code(6);
 
         assert_eq!(code_1.len(), 5);
         assert_ne!(code_1, code_2);
@@ -65,8 +66,8 @@ mod tests {
 
     #[test]
     fn test_random_human_code() {
-        let code_1 = random_human_code();
-        let code_2 = random_human_code();
+        let code_1 = random_human_code(6);
+        let code_2 = random_human_code(6);
 
         assert_eq!(code_1.len(), 5);
         assert_ne!(code_1, code_2);
