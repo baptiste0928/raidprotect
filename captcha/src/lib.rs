@@ -5,11 +5,15 @@
 
 pub mod code;
 
-use image::{imageops::overlay, GrayAlphaImage, LumaA};
+use std::io::Cursor;
+
+use image::{
+    imageops::overlay, DynamicImage, GrayAlphaImage, GrayImage, ImageError, ImageOutputFormat,
+    LumaA, Pixel,
+};
 use imageproc::{
     drawing,
     geometric_transformations::{self, Interpolation, Projection},
-    noise,
 };
 use once_cell::sync::Lazy;
 use rand::{rngs::ThreadRng, seq::SliceRandom, Rng};
@@ -19,25 +23,19 @@ use rusttype::{Font, Scale};
 ///
 /// The font is part of the GNU FreeFont family and licensed under GNU GPL v3.
 /// See <https://www.gnu.org/software/freefont/>.
-pub static FONT: Lazy<Font<'static>> =
+static FONT: Lazy<Font<'static>> =
     Lazy::new(|| Font::try_from_bytes(include_bytes!("../include/FreeMonoBold.ttf")).unwrap());
 
-/// Height of the generated image
-pub const IMAGE_HEIGHT: u32 = 150;
-
-/// Height of a generated letter.
-pub const LETTER_HEIGHT: u32 = 100;
-
-/// Width of a generated letter.
-pub const LETTER_WIDTH: u32 = 100;
+const IMAGE_HEIGHT: u32 = 150;
+const LETTER_HEIGHT: u32 = 100;
+const LETTER_WIDTH: u32 = 100;
 
 /// Generate a new captcha image with the provided code.
-pub fn generate_captcha(code: &str) -> GrayAlphaImage {
+pub fn generate_captcha(code: &str) -> GrayImage {
     let image_width = (code.len() as u32 * LETTER_WIDTH) + 40;
-    let mut image = GrayAlphaImage::new(image_width, IMAGE_HEIGHT);
+    let mut image = GrayAlphaImage::from_pixel(image_width, IMAGE_HEIGHT, LumaA([255, 255]));
     let mut rng = rand::thread_rng();
 
-    // Draw letters
     for (index, letter) in code.char_indices() {
         let x = (index as u32 * LETTER_WIDTH) + 20;
         let y = rng.gen_range(0..70);
@@ -46,10 +44,19 @@ pub fn generate_captcha(code: &str) -> GrayAlphaImage {
         overlay(&mut image, &letter_image, x as i64, y);
     }
 
-    // Add noise to the image
-    noise::gaussian_noise_mut(&mut image, 80.0, 40.0, rng.gen_range(0..u64::MAX));
+    image_noise(&mut image, &mut rng);
 
-    image
+    DynamicImage::ImageLumaA8(image).to_luma8()
+}
+
+/// Generate a new captcha with the provided code and encode it as png.
+pub fn generate_captcha_png(code: &str) -> Result<Vec<u8>, ImageError> {
+    let image = generate_captcha(code);
+    let mut buffer = Cursor::new(Vec::new());
+
+    image.write_to(&mut buffer, ImageOutputFormat::Png)?;
+
+    Ok(buffer.into_inner())
 }
 
 /// Generate a captcha letter.
@@ -130,5 +137,14 @@ fn letter_transform(image: GrayAlphaImage, rng: &mut ThreadRng) -> GrayAlphaImag
         geometric_transformations::warp(&image, projection, Interpolation::Bicubic, LumaA([0, 0]))
     } else {
         image
+    }
+}
+
+/// Add noise to the image.
+fn image_noise(image: &mut GrayAlphaImage, rng: &mut ThreadRng) {
+    for pixel in image.pixels_mut() {
+        let noise = rng.gen_range(0..255);
+
+        pixel.blend(&LumaA([noise, 128]));
     }
 }
