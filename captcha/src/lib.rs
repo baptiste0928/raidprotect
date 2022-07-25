@@ -146,6 +146,6 @@ fn image_noise(image: &mut GrayAlphaImage, rng: &mut ThreadRng) {
     for pixel in image.pixels_mut() {
         let noise = rng.gen_range(0..255);
 
-        pixel.blend(&LumaA([noise, 128]));
+        pixel.blend(&LumaA([noise, 160]));
     }
 }
