@@ -55,4 +55,17 @@ mod translations {
     //! This module contains translations generated with [`rosetta-i18n`].
 
     rosetta_i18n::include_translations!();
+
+    /// Returns the desired language from the given argument.
+    /// Default language is english
+    /// Reffer to https://discord.com/developers/docs/reference#locales for locale names
+    /// Ex: 'fr' gives you the french language
+    impl From<&str> for Lang {
+        fn from(lang: &str) -> Self {
+            match lang {
+                "fr" => Lang::Fr,
+                _ => Lang::Fr, // TODO : Temporary, remember to set the default language to English when the language is written
+            }
+        }
+    }
 }
