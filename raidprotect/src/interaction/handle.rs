@@ -18,7 +18,7 @@ use super::{
     embed,
     response::{InteractionResponder, InteractionResponse},
 };
-use crate::cluster::ClusterState;
+use crate::{cluster::ClusterState, translations::Lang};
 
 /// Handle incoming [`Interaction`].
 pub async fn handle_interaction(interaction: Interaction, state: Arc<ClusterState>) {
@@ -74,6 +74,8 @@ async fn handle_component(
     interaction: Interaction,
     state: &ClusterState,
 ) -> Result<InteractionResponse, anyhow::Error> {
+    let lang = Lang::from(&interaction.clone().locale.unwrap() as &str);
+
     let custom_id = match &interaction.data {
         Some(InteractionData::MessageComponent(data)) => &*data.custom_id,
         _ => bail!("expected message component data"),
@@ -90,7 +92,7 @@ async fn handle_component(
     };
 
     match component {
-        PendingComponent::PostInChat(component) => Ok(PostInChat::handle(component)),
+        PendingComponent::PostInChat(component) => Ok(PostInChat::handle(component, lang)),
     }
 }
 

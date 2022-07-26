@@ -66,9 +66,10 @@ impl KickCommand {
         let author_id = interaction.author_id().context("missing author_id")?;
 
         let user = self.user.resolved;
+        let lang = Lang::from(&interaction.clone().locale.unwrap() as &str);
         let member = match self.user.member {
             Some(member) => member,
-            None => return Ok(embed::kick::not_member(user.name)),
+            None => return Ok(embed::kick::not_member(user.name, lang)),
         };
 
         // Fetch the author and the bot permissions.
@@ -79,11 +80,11 @@ impl KickCommand {
 
         // Check if the author and the bot have required permissions.
         if member_permissions.is_owner() {
-            return Ok(embed::kick::member_owner());
+            return Ok(embed::kick::member_owner(lang));
         }
 
         if !bot_permissions.guild().contains(Permissions::KICK_MEMBERS) {
-            return Ok(embed::kick::bot_missing_permission());
+            return Ok(embed::kick::bot_missing_permission(lang));
         }
 
         // Check if the role hierarchy allow the author and the bot to perform
@@ -91,11 +92,11 @@ impl KickCommand {
         let member_highest_role = member_permissions.highest_role();
 
         if member_highest_role >= author_permissions.highest_role() {
-            return Ok(embed::kick::user_hierarchy());
+            return Ok(embed::kick::user_hierarchy(lang));
         }
 
         if member_highest_role >= bot_permissions.highest_role() {
-            return Ok(embed::kick::bot_hierarchy());
+            return Ok(embed::kick::bot_hierarchy(lang));
         }
 
         // Send reason modal.
@@ -108,7 +109,7 @@ impl KickCommand {
 
         match self.reason {
             Some(_reason) => Ok(InteractionResponse::EphemeralDeferredMessage),
-            None => KickCommand::reason_modal(user, enforce_reason, state).await,
+            None => KickCommand::reason_modal(user, enforce_reason, state, lang).await,
         }
     }
 
@@ -120,9 +121,9 @@ impl KickCommand {
         user: User,
         enforce_reason: bool,
         state: &ClusterState,
+        lang: Lang,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let username = user.name.truncate(15);
-        let lang = Lang::from(&user.clone().locale.unwrap() as &str);
         let components = vec![
             Component::ActionRow(ActionRow {
                 components: vec![Component::TextInput(TextInput {
