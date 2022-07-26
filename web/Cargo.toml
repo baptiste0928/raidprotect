@@ -13,9 +13,9 @@ raidprotect-model = { path = "../model" }
 anyhow = "1.0.58"
 
 # Tokio dependencies
-tokio = { version = "1.20.0", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1.20.1", features = ["rt-multi-thread", "macros"] }
 tracing = "0.1.35"
 
 # Axum and http dependencies
-axum = { version = "0.5.13", features = ["http1", "http2"], default-features = false }
+axum = { version = "0.5.14", features = ["http1", "http2"], default-features = false }
 tower-http = { version = "0.3.4", features = ["trace"] }
