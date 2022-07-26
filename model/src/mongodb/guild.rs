@@ -1,9 +1,9 @@
 //! Models for the `guilds` collection.
 
 use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, skip_serializing_none};
+use serde_with::{serde_as, skip_serializing_none, with_prefix};
 use twilight_model::id::{
-    marker::{ChannelMarker, GuildMarker, RoleMarker},
+    marker::{ChannelMarker, GuildMarker, RoleMarker, MessageMarker},
     Id,
 };
 
@@ -64,6 +64,8 @@ pub struct Config {
     ///
     /// This is enabled by default.
     pub anonymize_moderator: bool,
+    #[serde(flatten, with = "prefix_captcha")]
+    pub captcha: Captcha,
 }
 
 impl Default for Config {
@@ -73,6 +75,41 @@ impl Default for Config {
             moderator_roles: Vec::new(),
             enforce_reason: false,
             anonymize_moderator: true,
+            captcha: Captcha::default(),
         }
     }
 }
+
+/// Configuration for the captcha module.
+#[serde_as]
+#[skip_serializing_none]
+#[derive(Debug, Serialize, Deserialize, Default, Clone, PartialEq, Eq)]
+#[serde(default)]
+pub struct Captcha {
+    /// Whether the captcha is enabled.
+    pub enabled: bool,
+    /// Channel used to send the captcha message.
+    ///
+    /// This is used to disable the captcha if the channel is deleted.
+    #[serde_as(as = "Option<IdAsI64>")]
+    pub verification_channel: Option<Id<ChannelMarker>>,
+    /// The captcha message id.
+    ///
+    /// This is used to recreate the captcha message if it is deleted.
+    #[serde_as(as = "Option<IdAsI64>")]
+    pub verification_message: Option<Id<MessageMarker>>,
+    /// Role given to users that haven't completed the captcha.
+    #[serde_as(as = "Option<IdAsI64>")]
+    pub unverified_role: Option<Id<RoleMarker>>,
+    /// Roles given to users after completing the captcha.
+    #[serde_as(as = "Vec<IdAsI64>")]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub verified_roles: Vec<Id<RoleMarker>>,
+    /// The captcha logs channel.
+    ///
+    /// If set, the captcha will send detailed logs to this channel.
+    #[serde_as(as = "Option<IdAsI64>")]
+    pub logs_channel: Option<Id<ChannelMarker>>,
+}
+
+with_prefix!(prefix_captcha "captcha_");
