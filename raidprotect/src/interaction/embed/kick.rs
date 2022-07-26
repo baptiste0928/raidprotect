@@ -61,30 +61,32 @@ pub fn member_owner(lang: Lang) -> InteractionResponse {
 
 #[cfg(test)]
 mod tests {
+    use rosetta_i18n::Language;
+
     use super::*;
 
     #[test]
     fn test_not_member() {
-        not_member("test".to_string(), Lang::Fr);
+        not_member("test".to_string(), Lang::fallback());
     }
 
     #[test]
     fn test_bot_missing_permission() {
-        bot_missing_permission(Lang::Fr);
+        bot_missing_permission(Lang::fallback());
     }
 
     #[test]
     fn test_user_hierarchy() {
-        user_hierarchy(Lang::Fr);
+        user_hierarchy(Lang::fallback());
     }
 
     #[test]
     fn test_bot_hierarchy() {
-        bot_hierarchy(Lang::Fr);
+        bot_hierarchy(Lang::fallback());
     }
 
     #[test]
     fn test_member_owner() {
-        member_owner(Lang::Fr);
+        member_owner(Lang::fallback());
     }
 }

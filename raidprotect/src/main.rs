@@ -54,23 +54,26 @@ mod translations {
     //!
     //! This module contains translations generated with [`rosetta-i18n`].
     //!
-    //! [ `From<&str>`] is implemented to get the `Lang` corresponding to a
+    //! [`From<&str>`] is implemented to get the `Lang` corresponding to a given
     //! locale code. See [Discord Docs/Locales].
     //!
     //! [Discord Docs/Locales]: https://discord.com/developers/docs/reference#locales
 
+    use rosetta_i18n::Language;
+
     rosetta_i18n::include_translations!();
 
     impl From<&str> for Lang {
-        fn from(lang_code: &str) -> Self {
-            let lang = match lang_code.split_once("-") {
+        fn from(value: &str) -> Self {
+            let lang = match value.split_once('-') {
                 Some((lang, _)) => lang,
-                None => lang_code
+                None => value,
             };
 
             match lang {
                 "fr" => Lang::Fr,
-                _ => Lang::En,
+                "en" | "en-GB" | "en-US" => Lang::En,
+                _ => Lang::fallback(),
             }
         }
     }

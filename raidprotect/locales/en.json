@@ -19,6 +19,7 @@
     "modal_reason_placeholder": "Reason sent to the sanctioned user",
     "post_in_chat_author": "*Command made by <@{user_id}>*",
     "post_in_chat_button": "Send in the channel",
+    "profile_avatar_button": "Profile picture",
     "profile_created_at": "Profile created at",
     "profile_joined_at": "Members of this guild",
     "profile_title": "Profile of {username}#{discriminator}",

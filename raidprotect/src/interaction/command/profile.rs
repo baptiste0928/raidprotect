@@ -25,8 +25,10 @@ use twilight_util::{
 use crate::{
     cluster::ClusterState,
     impl_command_handle,
-    interaction::{component::PostInChat, embed::COLOR_TRANSPARENT, response::InteractionResponse},
-    translations::Lang,
+    interaction::{
+        component::PostInChat, embed::COLOR_TRANSPARENT, response::InteractionResponse,
+        util::InteractionExt,
+    },
     util::resource::avatar_url,
 };
 
@@ -51,7 +53,7 @@ impl ProfileCommand {
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let user = self.user.resolved;
-        let lang = Lang::from(&interaction.clone().locale.context("missing locale")? as &str);
+        let lang = interaction.locale()?;
 
         let avatar = avatar_url(&user, "jpg", 1024);
         let mut embed = EmbedBuilder::new()
@@ -90,7 +92,7 @@ impl ProfileCommand {
                 custom_id: None,
                 disabled: false,
                 emoji: None,
-                label: Some("Photo de profil".into()),
+                label: Some(lang.profile_avatar_button().into()),
                 style: ButtonStyle::Link,
                 url: Some(avatar),
             })],

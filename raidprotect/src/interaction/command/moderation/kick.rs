@@ -66,7 +66,7 @@ impl KickCommand {
         let author_id = interaction.author_id().context("missing author_id")?;
 
         let user = self.user.resolved;
-        let lang = Lang::from(&interaction.clone().locale.context("missing locale")? as &str);
+        let lang = interaction.locale()?;
         let member = match self.user.member {
             Some(member) => member,
             None => return Ok(embed::kick::not_member(user.name, lang)),
