@@ -72,7 +72,7 @@ mod translations {
 
             match lang {
                 "fr" => Lang::Fr,
-                "en" | "en-GB" | "en-US" => Lang::En,
+                "en" => Lang::En,
                 _ => Lang::fallback(),
             }
         }
