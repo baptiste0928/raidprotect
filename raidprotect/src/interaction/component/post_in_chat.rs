@@ -25,6 +25,7 @@ impl PostInChat {
         mut response: InteractionResponseData,
         author_id: Id<UserMarker>,
         state: &ClusterState,
+        lang: Lang,
     ) -> Result<InteractionResponse, anyhow::Error> {
         // Store button state in redis
         let custom_id = nanoid!();
@@ -49,7 +50,7 @@ impl PostInChat {
             emoji: Some(ReactionType::Unicode {
                 name: "💬".to_string(),
             }),
-            label: Some(Lang::Fr.post_in_chat_button().to_string()),
+            label: Some(lang.post_in_chat_button().to_string()),
             style: ButtonStyle::Primary,
             url: None,
         });
@@ -71,13 +72,13 @@ impl PostInChat {
     }
 
     /// Handle the button click.
-    pub fn handle(mut component: PostInChatButton) -> InteractionResponse {
+    pub fn handle(mut component: PostInChatButton, lang: Lang) -> InteractionResponse {
         // Remove ephemeral flag
         if let Some(flags) = component.response.flags.as_mut() {
             flags.set(MessageFlags::EPHEMERAL, false);
         }
 
-        component.response.content = Some(Lang::Fr.post_in_chat_author(component.author_id));
+        component.response.content = Some(lang.post_in_chat_author(component.author_id));
 
         InteractionResponse::Raw {
             kind: InteractionResponseType::ChannelMessageWithSource,

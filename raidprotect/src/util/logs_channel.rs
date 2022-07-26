@@ -52,6 +52,7 @@ pub async fn guild_logs_channel(
     guild_id: Id<GuildMarker>,
     logs_chan: Option<Id<ChannelMarker>>,
     state: &ClusterState,
+    lang: Lang,
 ) -> Result<Id<ChannelMarker>, anyhow::Error> {
     // If a channel is given, ensure the channel exists
     if let Some(logs_chan) = logs_chan {
@@ -74,7 +75,7 @@ pub async fn guild_logs_channel(
             Err(_) => Err(anyhow!("error while waiting for logs channel creation")),
         }
     } else {
-        create_logs_channel(guild_id, state).await
+        create_logs_channel(guild_id, state, lang).await
     }
 }
 
@@ -82,6 +83,7 @@ pub async fn guild_logs_channel(
 async fn create_logs_channel(
     guild_id: Id<GuildMarker>,
     state: &ClusterState,
+    lang: Lang,
 ) -> Result<Id<ChannelMarker>, anyhow::Error> {
     let (tx, _) = broadcast::channel(1);
     PENDING_CHANNELS.write().await.insert(guild_id, tx.clone());
@@ -129,9 +131,9 @@ async fn create_logs_channel(
 
     // Send message in channel
     let embed = EmbedBuilder::new()
-        .title(Lang::Fr.logs_creation_title())
+        .title(lang.logs_creation_title())
         .color(COLOR_RED)
-        .description(Lang::Fr.logs_creation_description())
+        .description(lang.logs_creation_description())
         .build();
 
     state

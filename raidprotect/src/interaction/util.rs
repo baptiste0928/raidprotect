@@ -9,10 +9,15 @@ use twilight_model::{
     id::{marker::GuildMarker, Id},
 };
 
+use crate::translations::Lang;
+
 /// Extension trait adding methods to [`Interaction`].
 pub trait InteractionExt {
     /// Get the guild the interaction was triggered in.
     fn guild(&self) -> Result<GuildInteraction<'_>, anyhow::Error>;
+
+    /// Get the user locale.
+    fn locale(&self) -> Result<Lang, anyhow::Error>;
 }
 
 impl InteractionExt for Interaction {
@@ -26,6 +31,12 @@ impl InteractionExt for Interaction {
             .context("missing interaction member data")?;
 
         Ok(GuildInteraction { id, member })
+    }
+
+    fn locale(&self) -> Result<Lang, anyhow::Error> {
+        let locale = self.locale.as_ref().context("missing locale")?;
+
+        Ok(Lang::from(&**locale))
     }
 }
 

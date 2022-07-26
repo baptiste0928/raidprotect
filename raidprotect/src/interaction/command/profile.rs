@@ -25,8 +25,10 @@ use twilight_util::{
 use crate::{
     cluster::ClusterState,
     impl_command_handle,
-    interaction::{component::PostInChat, embed::COLOR_TRANSPARENT, response::InteractionResponse},
-    translations::Lang,
+    interaction::{
+        component::PostInChat, embed::COLOR_TRANSPARENT, response::InteractionResponse,
+        util::InteractionExt,
+    },
     util::resource::avatar_url,
 };
 
@@ -51,11 +53,12 @@ impl ProfileCommand {
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let user = self.user.resolved;
+        let lang = interaction.locale()?;
 
         let avatar = avatar_url(&user, "jpg", 1024);
         let mut embed = EmbedBuilder::new()
             .color(COLOR_TRANSPARENT)
-            .title(Lang::Fr.profile_title(user.discriminator(), &user.name))
+            .title(lang.profile_title(user.discriminator(), &user.name))
             .footer(EmbedFooterBuilder::new(format!("ID: {}", user.id)).build())
             .thumbnail(ImageSource::url(&avatar)?);
 
@@ -66,7 +69,7 @@ impl ProfileCommand {
             Timestamp::new(created_at, Some(TimestampStyle::RelativeTime)).mention();
 
         embed = embed.field(EmbedFieldBuilder::new(
-            Lang::Fr.profile_created_at(),
+            lang.profile_created_at(),
             format!("{timestamp_long} ({timestamp_relative})"),
         ));
 
@@ -79,7 +82,7 @@ impl ProfileCommand {
                 Timestamp::new(joined_at as u64, Some(TimestampStyle::RelativeTime)).mention();
 
             embed = embed.field(EmbedFieldBuilder::new(
-                Lang::Fr.profile_joined_at(),
+                lang.profile_joined_at(),
                 format!("{timestamp_long} ({timestamp_relative})"),
             ));
         }
@@ -89,7 +92,7 @@ impl ProfileCommand {
                 custom_id: None,
                 disabled: false,
                 emoji: None,
-                label: Some("Photo de profil".into()),
+                label: Some(lang.profile_avatar_button().into()),
                 style: ButtonStyle::Link,
                 url: Some(avatar),
             })],
@@ -101,6 +104,6 @@ impl ProfileCommand {
             .build();
         let author_id = interaction.author_id().context("missing author id")?;
 
-        PostInChat::create(response, author_id, state).await
+        PostInChat::create(response, author_id, state, lang).await
     }
 }
