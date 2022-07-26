@@ -64,7 +64,8 @@ mod translations {
         fn from(lang: &str) -> Self {
             match lang {
                 "fr" => Lang::Fr,
-                _ => Lang::Fr, // TODO : Temporary, remember to set the default language to English when the language is written
+                "en" | "en-GB" | "en-US" => Lang::En,
+                _ => Lang::En,
             }
         }
     }

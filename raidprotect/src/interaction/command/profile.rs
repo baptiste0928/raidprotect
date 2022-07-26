@@ -51,11 +51,12 @@ impl ProfileCommand {
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let user = self.user.resolved;
+        let lang = Lang::from(&interaction.clone().locale.unwrap() as &str);
 
         let avatar = avatar_url(&user, "jpg", 1024);
         let mut embed = EmbedBuilder::new()
             .color(COLOR_TRANSPARENT)
-            .title(Lang::Fr.profile_title(user.discriminator(), &user.name))
+            .title(lang.profile_title(user.discriminator(), &user.name))
             .footer(EmbedFooterBuilder::new(format!("ID: {}", user.id)).build())
             .thumbnail(ImageSource::url(&avatar)?);
 
@@ -66,7 +67,7 @@ impl ProfileCommand {
             Timestamp::new(created_at, Some(TimestampStyle::RelativeTime)).mention();
 
         embed = embed.field(EmbedFieldBuilder::new(
-            Lang::Fr.profile_created_at(),
+            lang.profile_created_at(),
             format!("{timestamp_long} ({timestamp_relative})"),
         ));
 
@@ -79,7 +80,7 @@ impl ProfileCommand {
                 Timestamp::new(joined_at as u64, Some(TimestampStyle::RelativeTime)).mention();
 
             embed = embed.field(EmbedFieldBuilder::new(
-                Lang::Fr.profile_joined_at(),
+                lang.profile_joined_at(),
                 format!("{timestamp_long} ({timestamp_relative})"),
             ));
         }
@@ -101,6 +102,6 @@ impl ProfileCommand {
             .build();
         let author_id = interaction.author_id().context("missing author id")?;
 
-        PostInChat::create(response, author_id, state).await
+        PostInChat::create(response, author_id, state, lang).await
     }
 }
