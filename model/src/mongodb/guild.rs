@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none, with_prefix};
 use twilight_model::id::{
-    marker::{ChannelMarker, GuildMarker, RoleMarker, MessageMarker},
+    marker::{ChannelMarker, GuildMarker, MessageMarker, RoleMarker},
     Id,
 };
 

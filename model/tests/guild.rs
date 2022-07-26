@@ -1,6 +1,6 @@
 use mongodb::bson;
 use pretty_assertions::assert_eq;
-use raidprotect_model::mongodb::guild::{Config, Guild, Captcha};
+use raidprotect_model::mongodb::guild::{Captcha, Config, Guild};
 use serde_test::{assert_tokens, Token};
 use twilight_model::id::Id;
 
@@ -47,7 +47,7 @@ fn test_guild_full() {
                 unverified_role: Some(Id::new(7)),
                 verified_roles: vec![Id::new(8), Id::new(9)],
                 logs_channel: Some(Id::new(10)),
-            }
+            },
         },
     };
 
@@ -115,7 +115,7 @@ fn test_guild_bson() {
                 unverified_role: Some(Id::new(7)),
                 verified_roles: vec![Id::new(8), Id::new(9)],
                 logs_channel: Some(Id::new(10)),
-            }
+            },
         },
     };
 
