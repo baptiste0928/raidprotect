@@ -27,7 +27,7 @@ pub async fn handle_interaction(interaction: Interaction, state: Arc<ClusterStat
     let responder = InteractionResponder::from_interaction(&interaction);
     debug!("received {} interaction", interaction.kind.kind());
 
-    let lang = interaction.locale().unwrap_or(Lang::fallback());
+    let lang = interaction.locale().unwrap_or_else(|_| Lang::fallback());
 
     let response = match interaction.kind {
         InteractionType::ApplicationCommand => handle_command(interaction, &state).await,
@@ -79,7 +79,6 @@ async fn handle_component(
     interaction: Interaction,
     state: &ClusterState,
 ) -> Result<InteractionResponse, anyhow::Error> {
-
     let custom_id = match &interaction.data {
         Some(InteractionData::MessageComponent(data)) => &*data.custom_id,
         _ => bail!("expected message component data"),
