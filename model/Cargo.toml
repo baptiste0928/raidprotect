@@ -10,7 +10,7 @@ publish = false
 [dependencies]
 anyhow = { version = "1.0.58", features = ["backtrace"] }
 async-trait = "0.1.56"
-mongodb = { version = "2.2.2", features = ["zstd-compression"] }
+mongodb = { version = "2.2.2", features = ["zlib-compression"] }
 tracing = "0.1.35"
 
 # Models

@@ -40,7 +40,7 @@ impl MongoDbClient {
         config.app_name = Some(config.app_name.unwrap_or_else(|| "raidprotect".to_string()));
         config.connect_timeout = Some(Duration::from_secs(2));
         config.server_selection_timeout = Some(Duration::from_secs(2));
-        config.compressors = Some(vec![options::Compressor::Zstd { level: None }]);
+        config.compressors = Some(vec![options::Compressor::Zlib { level: None }]);
         config.default_database = Some(database.clone());
 
         let client = Client::with_options(config)?;
