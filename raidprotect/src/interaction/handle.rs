@@ -74,7 +74,7 @@ async fn handle_component(
     interaction: Interaction,
     state: &ClusterState,
 ) -> Result<InteractionResponse, anyhow::Error> {
-    let lang = Lang::from(&interaction.clone().locale.unwrap() as &str);
+    let lang = Lang::from(&interaction.clone().locale.context("missing locale")? as &str);
 
     let custom_id = match &interaction.data {
         Some(InteractionData::MessageComponent(data)) => &*data.custom_id,

@@ -51,7 +51,7 @@ impl ProfileCommand {
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let user = self.user.resolved;
-        let lang = Lang::from(&interaction.clone().locale.unwrap() as &str);
+        let lang = Lang::from(&interaction.clone().locale.context("missing locale")? as &str);
 
         let avatar = avatar_url(&user, "jpg", 1024);
         let mut embed = EmbedBuilder::new()
