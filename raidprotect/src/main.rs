@@ -58,7 +58,7 @@ mod translations {
 
     /// Returns the desired language from the given argument.
     /// Default language is english
-    /// Reffer to https://discord.com/developers/docs/reference#locales for locale names
+    /// Reffer to <https://discord.com/developers/docs/reference#locales> for locale names
     /// Ex: 'fr' gives you the french language
     impl From<&str> for Lang {
         fn from(lang: &str) -> Self {
