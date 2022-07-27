@@ -124,7 +124,7 @@ async fn create_logs_channel(
 
     // Update channel in configuration
     let mut guild = state.mongodb().get_guild_or_create(guild_id).await?;
-    guild.config.logs_chan = Some(logs_channel_id);
+    guild.logs_chan = Some(logs_channel_id);
     state.mongodb().update_guild(&guild).await?;
 
     tx.send(logs_channel_id).ok();
