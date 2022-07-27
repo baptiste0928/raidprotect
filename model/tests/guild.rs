@@ -16,6 +16,8 @@ fn test_guild_default() {
             Token::I64(1),
             Token::Str("logs_chan"),
             Token::None,
+            Token::Str("lang"),
+            Token::Str("fr"),
             Token::Str("moderation_enforce_reason"),
             Token::Bool(false),
             Token::Str("moderation_anonymize"),
@@ -32,6 +34,7 @@ fn test_guild_full() {
     let guild = Guild {
         id: Id::new(1),
         logs_chan: Some(Id::new(2)),
+        lang: "en".to_string(),
         moderation: Moderation {
             roles: vec![Id::new(3), Id::new(4)],
             enforce_reason: true,
@@ -56,6 +59,8 @@ fn test_guild_full() {
             Token::Str("logs_chan"),
             Token::Some,
             Token::I64(2),
+            Token::Str("lang"),
+            Token::Str("en"),
             Token::Str("moderation_roles"),
             Token::Seq { len: Some(2) },
             Token::I64(3),
@@ -94,6 +99,7 @@ fn test_guild_bson() {
     let guild = Guild {
         id: Id::new(1),
         logs_chan: Some(Id::new(2)),
+        lang: "en".to_string(),
         moderation: Moderation {
             roles: vec![Id::new(3), Id::new(4)],
             enforce_reason: true,
@@ -112,6 +118,7 @@ fn test_guild_bson() {
     let expected = bson::doc! {
         "_id": 1_i64,
         "logs_chan": 2_i64,
+        "lang": "en".to_string(),
         "moderation_roles": [3_i64, 4_i64],
         "moderation_enforce_reason": true,
         "moderation_anonymize": false,
