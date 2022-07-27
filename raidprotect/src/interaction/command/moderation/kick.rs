@@ -104,7 +104,7 @@ impl KickCommand {
             .mongodb()
             .get_guild_or_create(guild.id)
             .await?
-            .config
+            .moderation
             .enforce_reason;
 
         match self.reason {
