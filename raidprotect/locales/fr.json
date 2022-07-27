@@ -24,5 +24,7 @@
   "profile_joined_at": "Membre de ce serveur",
   "profile_title": "Profil de {username}#{discriminator}",
   "unknown_command_description": "La commande que vous essayez d'effectuer n'est pas encore disponible. Patientez quelques minutes et réessayez.",
-  "unknown_command_title": "Cette commande n'est pas encore disponible"
+  "unknown_command_title": "Cette commande n'est pas encore disponible",
+  "about_title": "A propos",
+  "about_footer": "Créé avec  ❤️  par l'équipe de RaidProtect et les contributeurs"
 }
