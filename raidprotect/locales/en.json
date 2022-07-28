@@ -25,4 +25,4 @@
     "profile_title": "Profile of {username}#{discriminator}",
     "unknown_command_description": "The command you are trying to perform is not yet available. Wait a few minutes and try again.",
     "unknown_command_title": "This command is not yet available"
-  }
+}
