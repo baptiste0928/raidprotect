@@ -4,4 +4,4 @@
 
 pub mod moderation;
 pub mod profile;
-pub mod about;
+pub mod help;

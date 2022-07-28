@@ -25,6 +25,6 @@
   "profile_title": "Profile of {username}#{discriminator}",
   "unknown_command_description": "The command you are trying to perform is not yet available. Wait a few minutes and try again.",
   "unknown_command_title": "This command is not yet available",
-  "about_title": "About",
-  "about_footer": "Created with ❤️ by RaidProtect team and contributors"
+  "about_title": "Need help ?",
+  "about_description": "You will find tutorials to use raidprotect in our **[help center](https://docs.raidprotect.org/)**. You can also join our **[Discord server](https://raidpro.tk/discord)** and ask your questions to our team."
 }
