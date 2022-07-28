@@ -28,6 +28,7 @@ pub struct Guild {
     #[serde(default)]
     pub logs_chan: Option<Id<ChannelMarker>>,
     /// Lang used for the global guild messages.
+    #[serde(default = "Guild::default_lang")]
     pub lang: String,
     /// The moderation module configuration.
     #[serde(default, flatten, with = "prefix_moderation")]
@@ -46,10 +47,14 @@ impl Guild {
         Self {
             id,
             logs_chan: None,
-            lang: "fr".to_string(),  // TODO: default to en
+            lang: Self::default_lang(),
             moderation: Moderation::default(),
             captcha: Captcha::default(),
         }
+    }
+
+    fn default_lang() -> String {
+        "fr".to_string() // TODO: change default lang to english
     }
 }
 

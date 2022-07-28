@@ -47,6 +47,8 @@ static PENDING_CHANNELS: Lazy<RwLock<PendingChannelsMap>> =
 
 /// Get the logs channel of a guild.
 ///
+/// The `lang` argument should be the guild language, not the user language.
+///
 /// See the [module documentation](super) for more information.
 pub async fn guild_logs_channel(
     guild_id: Id<GuildMarker>,
