@@ -26,5 +26,7 @@
   "unknown_command_description": "La commande que vous essayez d'effectuer n'est pas encore disponible. Patientez quelques minutes et réessayez.",
   "unknown_command_title": "Cette commande n'est pas encore disponible",
   "about_title": "Besoin d'aide ?",
-  "about_description": "Vous trouverez des tutoriels pour utiliser RaidProtect dans notre **[centre d'aide](https://docs.raidprotect.org/)**. Vous pouvez également rejoindre notre **[serveur Discord](https://raidpro.tk/discord)** et poser vos questions à notre équipe."
+  "about_description": "Vous trouverez des tutoriels pour utiliser RaidProtect dans notre **[centre d'aide](https://docs.raidprotect.org/)**. Vous pouvez également rejoindre notre **[serveur Discord](https://raidpro.tk/discord)** et poser vos questions à notre équipe.",
+  "about_support": "Notre serveur Discord",
+  "about_bot_invite": "Ajouter à mon serveur"
 }

@@ -14,7 +14,7 @@ use twilight_model::{
 };
 
 use super::{
-    command::{moderation::KickCommand, profile::ProfileCommand, help::HelpCommand},
+    command::{help::HelpCommand, moderation::KickCommand, profile::ProfileCommand},
     component::PostInChat,
     embed,
     response::{InteractionResponder, InteractionResponse},
@@ -66,7 +66,7 @@ async fn handle_command(
     match name {
         "profile" => ProfileCommand::handle(interaction, state).await,
         "kick" => KickCommand::handle(interaction, state).await,
-        "about" => HelpCommand::handle(interaction, state).await,
+        "help" => HelpCommand::handle(interaction, state).await,
         name => {
             warn!(name = name, "received unknown command");
 
