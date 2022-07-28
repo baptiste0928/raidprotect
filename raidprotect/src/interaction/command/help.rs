@@ -40,8 +40,8 @@ impl HelpCommand {
         // Create embed
         let embed = EmbedBuilder::new()
             .color(COLOR_TRANSPARENT)
-            .title(lang.about_title())
-            .description(lang.about_description());
+            .title(lang.help_title())
+            .description(lang.help_description());
 
         // Add components (buttons)
         let components = Component::ActionRow(ActionRow {
@@ -50,7 +50,7 @@ impl HelpCommand {
                     custom_id: None,
                     disabled: false,
                     emoji: None,
-                    label: Some(lang.about_support().into()),
+                    label: Some(lang.help_support().into()),
                     style: ButtonStyle::Link,
                     url: Some("https://raidpro.tk/discord".to_string()),
                 }),
@@ -58,7 +58,7 @@ impl HelpCommand {
                     custom_id: None,
                     disabled: false,
                     emoji: None,
-                    label: Some(lang.about_bot_invite().into()),
+                    label: Some(lang.help_bot_invite().into()),
                     style: ButtonStyle::Link,
                     url: Some("https://raidpro.tk/invite".to_string()),
                 }),
