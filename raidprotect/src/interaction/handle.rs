@@ -97,7 +97,9 @@ async fn handle_component(
     };
 
     match component {
-        PendingComponent::PostInChat(component) => Ok(PostInChat::handle(component, lang)),
+        PendingComponent::PostInChat(component) => {
+            PostInChat::handle(interaction, component, state).await
+        }
     }
 }
 
