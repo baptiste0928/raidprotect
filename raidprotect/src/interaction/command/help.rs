@@ -22,7 +22,7 @@ use crate::{
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
 #[command(
     name = "help",
-    desc = "Show information about RaidProtect",
+    desc = "Need help to use RaidProtect?",
     dm_permission = true
 )]
 
