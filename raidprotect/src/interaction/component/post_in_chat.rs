@@ -6,14 +6,19 @@
 use nanoid::nanoid;
 use raidprotect_model::cache::model::interaction::{PendingComponent, PostInChatButton};
 use twilight_model::{
-    application::component::{button::ButtonStyle, ActionRow, Button, Component},
+    application::{
+        component::{button::ButtonStyle, ActionRow, Button, Component},
+        interaction::Interaction,
+    },
     channel::{message::MessageFlags, ReactionType},
     http::interaction::{InteractionResponseData, InteractionResponseType},
     id::{marker::UserMarker, Id},
 };
 
 use crate::{
-    cluster::ClusterState, interaction::response::InteractionResponse, translations::Lang,
+    cluster::ClusterState,
+    interaction::{response::InteractionResponse, util::InteractionExt},
+    translations::Lang,
 };
 
 /// Adds a button to post in a channel an ephemeral response.
@@ -72,7 +77,16 @@ impl PostInChat {
     }
 
     /// Handle the button click.
-    pub fn handle(mut component: PostInChatButton, lang: Lang) -> InteractionResponse {
+    pub async fn handle(
+        interaction: Interaction,
+        mut component: PostInChatButton,
+        state: &ClusterState,
+    ) -> Result<InteractionResponse, anyhow::Error> {
+        // Get guild language
+        let guild = interaction.guild()?;
+        let config = state.mongodb().get_guild_or_create(guild.id).await?;
+        let lang = Lang::from(&*config.lang);
+
         // Remove ephemeral flag
         if let Some(flags) = component.response.flags.as_mut() {
             flags.set(MessageFlags::EPHEMERAL, false);
@@ -80,9 +94,9 @@ impl PostInChat {
 
         component.response.content = Some(lang.post_in_chat_author(component.author_id));
 
-        InteractionResponse::Raw {
+        Ok(InteractionResponse::Raw {
             kind: InteractionResponseType::ChannelMessageWithSource,
             data: Some(component.response),
-        }
+        })
     }
 }
