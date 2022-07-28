@@ -1,6 +1,6 @@
 //! Help command.
 //!
-//! This command shows basic informations and links about how to use the bot.
+//! This command shows basic information and link about how to use the bot.
 
 use twilight_interactions::command::{CommandModel, CreateCommand};
 use twilight_model::{
