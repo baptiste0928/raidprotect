@@ -25,7 +25,6 @@ use crate::{
     desc = "Need help to use RaidProtect?",
     dm_permission = true
 )]
-
 pub struct HelpCommand;
 
 impl_command_handle!(HelpCommand);
