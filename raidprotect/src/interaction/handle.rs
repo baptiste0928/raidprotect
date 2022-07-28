@@ -14,7 +14,7 @@ use twilight_model::{
 };
 
 use super::{
-    command::{moderation::KickCommand, profile::ProfileCommand},
+    command::{help::HelpCommand, moderation::KickCommand, profile::ProfileCommand},
     component::PostInChat,
     embed,
     response::{InteractionResponder, InteractionResponse},
@@ -66,6 +66,7 @@ async fn handle_command(
     match name {
         "profile" => ProfileCommand::handle(interaction, state).await,
         "kick" => KickCommand::handle(interaction, state).await,
+        "help" => HelpCommand::handle(interaction, state).await,
         name => {
             warn!(name = name, "received unknown command");
 
@@ -133,6 +134,7 @@ pub async fn register_commands(state: &ClusterState, application_id: Id<Applicat
     let commands: Vec<Command> = vec![
         ProfileCommand::create_command().into(),
         KickCommand::create_command().into(),
+        HelpCommand::create_command().into(),
     ];
 
     let client = state.http().interaction(application_id);
