@@ -65,17 +65,11 @@ impl HelpCommand {
             ],
         });
 
-        // Create response
-        let mut response = InteractionResponseDataBuilder::new()
-            .embeds([embed.validate()?.build()])
+        let response = InteractionResponseDataBuilder::new()
+            .embeds([embed.build()])
             .components([components])
+            .flags(MessageFlags::EPHEMERAL)
             .build();
-
-        // Add ephemeral flag to the response
-        response.flags = response
-            .flags
-            .map(|flags| flags | MessageFlags::EPHEMERAL)
-            .or(Some(MessageFlags::EPHEMERAL));
 
         // Send response
         Ok(InteractionResponse::Raw {
