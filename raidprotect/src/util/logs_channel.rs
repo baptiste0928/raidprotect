@@ -47,6 +47,8 @@ static PENDING_CHANNELS: Lazy<RwLock<PendingChannelsMap>> =
 
 /// Get the logs channel of a guild.
 ///
+/// The `lang` argument should be the guild language, not the user language.
+///
 /// See the [module documentation](super) for more information.
 pub async fn guild_logs_channel(
     guild_id: Id<GuildMarker>,
@@ -124,7 +126,7 @@ async fn create_logs_channel(
 
     // Update channel in configuration
     let mut guild = state.mongodb().get_guild_or_create(guild_id).await?;
-    guild.config.logs_chan = Some(logs_channel_id);
+    guild.logs_chan = Some(logs_channel_id);
     state.mongodb().update_guild(&guild).await?;
 
     tx.send(logs_channel_id).ok();
