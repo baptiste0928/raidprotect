@@ -15,7 +15,7 @@ use twilight_util::builder::{embed::EmbedBuilder, InteractionResponseDataBuilder
 
 use crate::{
     cluster::ClusterState,
-    impl_command_handle,
+    desc_localizations, impl_command_handle,
     interaction::{embed::COLOR_TRANSPARENT, response::InteractionResponse, util::InteractionExt},
 };
 
@@ -23,11 +23,13 @@ use crate::{
 #[command(
     name = "help",
     desc = "Need help to use RaidProtect?",
+    desc_localizations = "help_description",
     dm_permission = true
 )]
 pub struct HelpCommand;
 
 impl_command_handle!(HelpCommand);
+desc_localizations!(help_description);
 
 impl HelpCommand {
     async fn exec(
@@ -40,8 +42,8 @@ impl HelpCommand {
         // Create embed
         let embed = EmbedBuilder::new()
             .color(COLOR_TRANSPARENT)
-            .title(lang.help_title())
-            .description(lang.help_description());
+            .title(lang.help_embed_title())
+            .description(lang.help_embed_description());
 
         // Add components (buttons)
         let components = Component::ActionRow(ActionRow {

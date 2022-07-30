@@ -69,11 +69,5 @@ fn is_old_command(content: &str) -> bool {
         "?stats",
     ];
 
-    for cmd in OLD_COMMANDS {
-        if content.starts_with(cmd) {
-            return true;
-        }
-    }
-
-    false
+    OLD_COMMANDS.iter().any(|cmd| content.starts_with(cmd))
 }
