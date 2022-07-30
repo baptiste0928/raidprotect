@@ -24,12 +24,11 @@ use twilight_util::{
 
 use crate::{
     cluster::ClusterState,
-    desc_translation, impl_command_handle,
+    desc_localizations, impl_command_handle,
     interaction::{
         component::PostInChat, embed::COLOR_TRANSPARENT, response::InteractionResponse,
         util::InteractionExt,
     },
-    translations::Lang,
     util::resource::avatar_url,
 };
 
@@ -47,7 +46,7 @@ pub struct ProfileCommand {
 }
 
 impl_command_handle!(ProfileCommand);
-desc_translation!(profile_description);
+desc_localizations!(profile_description);
 
 impl ProfileCommand {
     async fn exec(

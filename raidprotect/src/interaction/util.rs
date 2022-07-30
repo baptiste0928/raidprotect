@@ -109,7 +109,7 @@ macro_rules! impl_command_handle {
 /// [Discord Docs/Locales]: https://discord.com/developers/docs/reference#locales
 /// [Twilight-interactions Docs/ Command / Localization]: https://docs.rs/twilight-interactions/latest/twilight_interactions/command/index.html#localization
 #[macro_export]
-macro_rules! desc_translation {
+macro_rules! desc_localizations {
     ($name:ident) => {
         pub fn $name() -> [(&'static str, &'static str); 3] {
             [

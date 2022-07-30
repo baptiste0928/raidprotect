@@ -26,7 +26,7 @@ use twilight_model::{
 
 use crate::{
     cluster::ClusterState,
-    desc_translation, impl_command_handle,
+    desc_localizations, impl_command_handle,
     interaction::{embed, response::InteractionResponse, util::InteractionExt},
     translations::Lang,
     util::TextProcessExt,
@@ -52,7 +52,7 @@ pub struct KickCommand {
 }
 
 impl_command_handle!(KickCommand);
-desc_translation!(kick_description);
+desc_localizations!(kick_description);
 
 impl KickCommand {
     fn default_permissions() -> Permissions {
