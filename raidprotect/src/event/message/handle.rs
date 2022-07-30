@@ -47,7 +47,7 @@ async fn warn_old_command(message: Message, state: Arc<ClusterState> {
     Ok(())
 }
 
-fn is_an_old_command(message: &Message) -> bool {
+fn is_old_command(content: &str) -> bool {
     message.content.starts_with("?kick")
         || message.content.starts_with("?userinfo")
         || message.content.starts_with("?lock")
