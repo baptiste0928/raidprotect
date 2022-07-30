@@ -113,9 +113,9 @@ macro_rules! desc_translation {
     ($name:ident) => {
         pub fn $name() -> [(&'static str, &'static str); 3] {
             [
-                ("fr", Lang::Fr.$name()),
-                ("en-US", Lang::En.$name()),
-                ("en-GB", Lang::En.$name()),
+                ("fr", $crate::translations::Lang::Fr.$name()),
+                ("en-US", $crate::translations::Lang::En.$name()),
+                ("en-GB", $crate::translations::Lang::En.$name()),
             ]
         }
     };
