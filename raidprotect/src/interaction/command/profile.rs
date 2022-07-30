@@ -22,16 +22,16 @@ use twilight_util::{
     snowflake::Snowflake,
 };
 
+use crate::translations::Lang;
 use crate::{
     cluster::ClusterState,
-    impl_command_handle,
+    desc_translation, impl_command_handle,
     interaction::{
         component::PostInChat, embed::COLOR_TRANSPARENT, response::InteractionResponse,
         util::InteractionExt,
     },
-    util::resource::avatar_url, desc_translation,
+    util::resource::avatar_url,
 };
-use crate::translations::Lang;
 
 /// Profile command model.
 #[derive(Debug, Clone, CommandModel, CreateCommand)]

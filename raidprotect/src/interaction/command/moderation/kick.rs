@@ -26,10 +26,10 @@ use twilight_model::{
 
 use crate::{
     cluster::ClusterState,
-    impl_command_handle,
+    desc_translation, impl_command_handle,
     interaction::{embed, response::InteractionResponse, util::InteractionExt},
     translations::Lang,
-    util::TextProcessExt, desc_translation,
+    util::TextProcessExt,
 };
 
 /// Kick command model.

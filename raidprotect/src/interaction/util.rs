@@ -118,5 +118,5 @@ macro_rules! desc_translation {
                 ("en-GB", Lang::En.$name()),
             ]
         }
-    }
+    };
 }
