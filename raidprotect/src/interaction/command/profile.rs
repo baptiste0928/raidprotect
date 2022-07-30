@@ -22,7 +22,6 @@ use twilight_util::{
     snowflake::Snowflake,
 };
 
-use crate::translations::Lang;
 use crate::{
     cluster::ClusterState,
     desc_translation, impl_command_handle,
@@ -30,6 +29,7 @@ use crate::{
         component::PostInChat, embed::COLOR_TRANSPARENT, response::InteractionResponse,
         util::InteractionExt,
     },
+    translations::Lang,
     util::resource::avatar_url,
 };
 

@@ -13,11 +13,11 @@ use twilight_model::{
 };
 use twilight_util::builder::{embed::EmbedBuilder, InteractionResponseDataBuilder};
 
-use crate::translations::Lang;
 use crate::{
     cluster::ClusterState,
     desc_translation, impl_command_handle,
     interaction::{embed::COLOR_TRANSPARENT, response::InteractionResponse, util::InteractionExt},
+    translations::Lang,
 };
 
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
