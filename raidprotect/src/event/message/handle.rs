@@ -1,17 +1,12 @@
 use std::sync::Arc;
 
-use anyhow::{Context, Result};
 use rosetta_i18n::Language;
 use tracing::{error, info};
-use twilight_http::Client;
 use twilight_model::channel::Message;
 use twilight_util::builder::embed::EmbedBuilder;
 
-use crate::cluster::ClusterState;
-use crate::interaction::embed::COLOR_TRANSPARENT;
-use crate::translations::Lang;
-
 use super::parser::parse_message;
+use crate::{cluster::ClusterState, interaction::embed::COLOR_TRANSPARENT, translations::Lang};
 
 /// Handle incoming [`Message`].
 ///
@@ -21,42 +16,64 @@ pub async fn handle_message(message: Message, state: Arc<ClusterState>) {
     let parsed = parse_message(&message);
     state.redis().set(&parsed).await.ok();
 
-    if is_an_old_command(&message) {
-        if let Err(error) = warn_about_old_command(&message, state.http()).await {
-            error!(error = ?error, "failed to warn user about question mark commands deprecation");
-        }
+    if is_old_command(&message.content) {
+        let message = message.clone();
+        let state = state.clone();
+
+        tokio::spawn(warn_old_command(message, state));
     }
 
     info!("received message: {}", message.content) // Debug util real implementation
 }
 
-async fn warn_old_command(message: Message, state: Arc<ClusterState> {
-    let lang = message.author.locale.map(Lang::from).unwrap_or_else(|| Lang::fallback());
-    let embeds = [EmbedBuilder::new()
-        .title(lang.warning_deprecated_command_style_title())
-        .description(lang.warning_deprecated_command_style_description())
+async fn warn_old_command(message: Message, state: Arc<ClusterState>) {
+    let lang = message
+        .author
+        .locale
+        .map(|locale| Lang::from(locale.as_str()))
+        .unwrap_or_else(|| Lang::fallback());
+    let embed = EmbedBuilder::new()
+        .title(lang.warning_deprecated_command_title())
+        .description(lang.warning_deprecated_command_description())
         .color(COLOR_TRANSPARENT)
-        .build()];
+        .build();
 
-    http.create_message(message.channel_id)
-        .embeds(&[embed])?
-        .reply(message.id)
-        .exec()
-        .await
-        .context("warning about old commands with question  mark ?")?;
-    Ok(())
+    match state
+        .http()
+        .create_message(message.channel_id)
+        .embeds(&[embed])
+    {
+        Ok(msg) => {
+            let msg = msg.reply(message.id);
+
+            if let Err(error) = msg.exec().await {
+                error!(error = ?error, "failed to warn user about question mark commands deprecation");
+            }
+        }
+        _ => error!("failed to create embed"),
+    }
 }
 
 fn is_old_command(content: &str) -> bool {
-    message.content.starts_with("?kick")
-        || message.content.starts_with("?userinfo")
-        || message.content.starts_with("?lock")
-        || message.content.starts_with("?unlock")
-        || message.content.starts_with("?raidmode")
-        || message.content.starts_with("?settings")
-        || message.content.starts_with("?captcha")
-        || message.content.starts_with("?ban")
-        || message.content.starts_with("?invite")
-        || message.content.starts_with("?clear")
-        || message.content.starts_with("?stats")
+    const OLD_COMMANDS: [&str; 11] = [
+        "?kick",
+        "?userinfo",
+        "?lock",
+        "?unlock",
+        "?raidmode",
+        "?settings",
+        "?captcha",
+        "?ban",
+        "?invite",
+        "?clear",
+        "?stats",
+    ];
+
+    for cmd in OLD_COMMANDS {
+        if content.starts_with(cmd) {
+            return true;
+        }
+    }
+
+    false
 }
