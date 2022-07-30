@@ -30,7 +30,7 @@ pub async fn handle_message(message: Message, state: Arc<ClusterState>) {
     info!("received message: {}", message.content) // Debug util real implementation
 }
 
-async fn warn_about_old_command(message: &Message, http: &Client) -> Result<()> {
+async fn warn_old_command(message: Message, state: Arc<ClusterState> {
     let lang = Lang::fallback();
     let embeds = [EmbedBuilder::new()
         .title(lang.warning_deprecated_command_style_title())
