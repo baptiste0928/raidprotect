@@ -31,7 +31,7 @@ pub async fn handle_message(message: Message, state: Arc<ClusterState>) {
 }
 
 async fn warn_old_command(message: Message, state: Arc<ClusterState> {
-    let lang = Lang::fallback();
+    let lang = message.author.locale.map(Lang::from).unwrap_or_else(|| Lang::fallback());
     let embeds = [EmbedBuilder::new()
         .title(lang.warning_deprecated_command_style_title())
         .description(lang.warning_deprecated_command_style_description())
