@@ -39,7 +39,7 @@ async fn warn_old_command(message: Message, state: Arc<ClusterState> {
         .build()];
 
     http.create_message(message.channel_id)
-        .embeds(&embeds)?
+        .embeds(&[embed])?
         .reply(message.id)
         .exec()
         .await
