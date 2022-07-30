@@ -31,7 +31,7 @@ async fn warn_old_command(message: Message, state: Arc<ClusterState>) {
         .author
         .locale
         .map(|locale| Lang::from(locale.as_str()))
-        .unwrap_or_else(|| Lang::fallback());
+        .unwrap_or_else(Lang::fallback);
     let embed = EmbedBuilder::new()
         .title(lang.warning_deprecated_command_title())
         .description(lang.warning_deprecated_command_description())
