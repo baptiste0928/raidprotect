@@ -37,6 +37,7 @@ async fn warn_old_command(message: Message, state: Arc<ClusterState> {
         .description(lang.warning_deprecated_command_style_description())
         .color(COLOR_TRANSPARENT)
         .build()];
+
     http.create_message(message.channel_id)
         .embeds(&embeds)?
         .reply(message.id)
