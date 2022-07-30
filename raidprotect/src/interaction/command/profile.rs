@@ -29,14 +29,16 @@ use crate::{
         component::PostInChat, embed::COLOR_TRANSPARENT, response::InteractionResponse,
         util::InteractionExt,
     },
-    util::resource::avatar_url,
+    util::resource::avatar_url, desc_translation,
 };
+use crate::translations::Lang;
 
 /// Profile command model.
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
 #[command(
     name = "profile",
     desc = "Show information about a user profile",
+    desc_localizations = "profile_description",
     dm_permission = true
 )]
 pub struct ProfileCommand {
@@ -45,6 +47,7 @@ pub struct ProfileCommand {
 }
 
 impl_command_handle!(ProfileCommand);
+desc_translation!(profile_description);
 
 impl ProfileCommand {
     async fn exec(
