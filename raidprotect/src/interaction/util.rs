@@ -94,3 +94,29 @@ macro_rules! impl_command_handle {
         }
     };
 }
+
+/// Generate a function that gives localized description or name text for a command.
+///
+/// The generated function respects `twilight_interactions::command` localization requirements.
+/// It returns a `[(&'static str, &'static str); 3]` who implements `IntoIterator<Item = (ToString, ToString)>`
+///
+/// The name of the function needs to be a locale key (like `help_description`)
+///
+/// [Twilight-interactions Docs/ Command / Localization]
+///
+/// This macro needs to respect [Discord Docs/Locales] in locale names.
+///
+/// [Discord Docs/Locales]: https://discord.com/developers/docs/reference#locales
+/// [Twilight-interactions Docs/ Command / Localization]: https://docs.rs/twilight-interactions/latest/twilight_interactions/command/index.html#localization
+#[macro_export]
+macro_rules! desc_localizations {
+    ($name:ident) => {
+        pub fn $name() -> [(&'static str, &'static str); 3] {
+            [
+                ("fr", $crate::translations::Lang::Fr.$name()),
+                ("en-US", $crate::translations::Lang::En.$name()),
+                ("en-GB", $crate::translations::Lang::En.$name()),
+            ]
+        }
+    };
+}

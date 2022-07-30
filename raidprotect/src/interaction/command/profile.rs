@@ -24,7 +24,7 @@ use twilight_util::{
 
 use crate::{
     cluster::ClusterState,
-    impl_command_handle,
+    desc_localizations, impl_command_handle,
     interaction::{
         component::PostInChat, embed::COLOR_TRANSPARENT, response::InteractionResponse,
         util::InteractionExt,
@@ -37,6 +37,7 @@ use crate::{
 #[command(
     name = "profile",
     desc = "Show information about a user profile",
+    desc_localizations = "profile_description",
     dm_permission = true
 )]
 pub struct ProfileCommand {
@@ -45,6 +46,7 @@ pub struct ProfileCommand {
 }
 
 impl_command_handle!(ProfileCommand);
+desc_localizations!(profile_description);
 
 impl ProfileCommand {
     async fn exec(

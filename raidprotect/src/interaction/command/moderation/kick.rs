@@ -26,7 +26,7 @@ use twilight_model::{
 
 use crate::{
     cluster::ClusterState,
-    impl_command_handle,
+    desc_localizations, impl_command_handle,
     interaction::{embed, response::InteractionResponse, util::InteractionExt},
     translations::Lang,
     util::TextProcessExt,
@@ -39,6 +39,7 @@ use crate::{
 #[command(
     name = "kick",
     desc = "Kicks a user from the server",
+    desc_localizations = "kick_description",
     default_permissions = "KickCommand::default_permissions",
     dm_permission = false
 )]
@@ -51,6 +52,7 @@ pub struct KickCommand {
 }
 
 impl_command_handle!(KickCommand);
+desc_localizations!(kick_description);
 
 impl KickCommand {
     fn default_permissions() -> Permissions {
