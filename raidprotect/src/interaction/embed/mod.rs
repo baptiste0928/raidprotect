@@ -2,6 +2,7 @@
 //!
 //! This crate contains types used to generate embeds used as bot responses.
 
+pub mod captcha;
 pub mod error;
 pub mod kick;
 

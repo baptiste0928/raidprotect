@@ -1,8 +1,13 @@
 {
     "bot_missing_permission": "RaidProtect a besoin de la permission **Administrateur** pour fonctionner correctement. Rendez-vous dans les paramètres des rôles de votre serveur pour lui accorder.",
+    "captcha_disable_button": "Cliquez pour désactiver le captcha",
+    "captcha_disable_description": "En continuant, RaidProtect désactivera le captcha et supprimera le salon {verification} et le rôle {unverified}. ",
+    "captcha_disable_title": "Désactivation du captcha",
     "captcha_enable_button": "Cliquez pour activer le captcha",
     "captcha_enable_description": "En activant le captcha, RaidProtect demandera à tous les nouveaux membres de votre serveur de passer un challenge pour vérifier qu'ils ne sont pas des robots (*selfbot/userbot*). \n\nUn salon `#vérification` et un role `@Non verifié` seront créés et configurés automatiquement.",
     "captcha_enable_title": "Activation du captcha",
+    "captcha_not_enabled_description": "Cette commande ne peut pas être effectuée car le captcha n'est pas activé sur ce serveur. Vous pouvez l'activer avec la commande `/config captcha enable`.",
+    "captcha_not_enabled_title": "Captcha non activé",
     "expired_interaction_description": "L'action que vous essayez de faire a expirée, car vous avez attendu trop longtemps ou l'avez déjà actionée. Vous pouvez recommencer en renvoyant la commande.",
     "expired_interaction_title": "L'interaction a expirée",
     "help_bot_invite": "Ajouter à mon serveur",

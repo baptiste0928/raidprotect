@@ -1,6 +1,8 @@
 //! Captcha configuration commands.
 
+use anyhow::bail;
 use twilight_interactions::command::{CommandModel, CreateCommand};
+use twilight_mention::Mention;
 use twilight_model::{
     application::{
         component::{button::ButtonStyle, ActionRow, Button, Component},
@@ -17,7 +19,7 @@ use crate::{
     interaction::{
         embed::{self, COLOR_RED},
         response::InteractionResponse,
-        util::{InteractionExt, CustomId},
+        util::{CustomId, InteractionExt},
     },
 };
 
@@ -46,7 +48,7 @@ impl CaptchaConfigCommand {
     ) -> Result<InteractionResponse, anyhow::Error> {
         match self {
             CaptchaConfigCommand::Enable(command) => command.exec(interaction, state).await,
-            CaptchaConfigCommand::Disable(_) => todo!(),
+            CaptchaConfigCommand::Disable(command) => command.exec(interaction, state).await,
             CaptchaConfigCommand::Logs(_) => todo!(),
             CaptchaConfigCommand::AutoroleAdd(_) => todo!(),
             CaptchaConfigCommand::AutoroleRemove(_) => todo!(),
@@ -111,6 +113,63 @@ impl CaptchaEnableCommand {
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
 #[command(name = "disable", desc = "Disable the RaidProtect captcha")]
 pub struct CaptchaDisableCommand;
+
+impl CaptchaDisableCommand {
+    async fn exec(
+        self,
+        interaction: Interaction,
+        state: &ClusterState,
+    ) -> Result<InteractionResponse, anyhow::Error> {
+        let lang = interaction.locale()?;
+        let guild_id = interaction.guild()?.id;
+
+        let config = state.mongodb().get_guild(guild_id).await?;
+        let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
+
+        if !captcha_enabled {
+            return Ok(embed::captcha::not_enabled(lang));
+        }
+
+        let config = config.unwrap(); // SAFETY: `captcha_enabled` is true here.
+        let verification = match config.captcha.channel {
+            Some(channel) => channel.mention(),
+            None => bail!("captcha channel not set"),
+        };
+        let unverified = match config.captcha.role {
+            Some(role) => role.mention(),
+            None => bail!("captcha role not set"),
+        };
+
+        let embed = EmbedBuilder::new()
+            .color(COLOR_RED)
+            .title(lang.captcha_disable_title())
+            .description(lang.captcha_disable_description(unverified, verification))
+            .build();
+
+        let custom_id = CustomId::name("captcha-disable");
+        let components = Component::ActionRow(ActionRow {
+            components: vec![Component::Button(Button {
+                custom_id: Some(custom_id.to_string()),
+                disabled: false,
+                emoji: None,
+                label: Some(lang.captcha_disable_button().to_string()),
+                style: ButtonStyle::Danger,
+                url: None,
+            })],
+        });
+
+        let response = InteractionResponseDataBuilder::new()
+            .embeds([embed])
+            .components([components])
+            .flags(MessageFlags::EPHEMERAL)
+            .build();
+
+        Ok(InteractionResponse::Raw {
+            kind: InteractionResponseType::ChannelMessageWithSource,
+            data: Some(response),
+        })
+    }
+}
 
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
 #[command(name = "logs", desc = "Set the RaidProtect captcha logs channel")]
