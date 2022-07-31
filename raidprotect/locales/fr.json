@@ -6,6 +6,7 @@
     "captcha_enable_button": "Cliquez pour activer le captcha",
     "captcha_enable_description": "En activant le captcha, RaidProtect demandera à tous les nouveaux membres de votre serveur de passer un challenge pour vérifier qu'ils ne sont pas des robots (*selfbot/userbot*). \n\nUn salon `#vérification` et un role `@Non verifié` seront créés et configurés automatiquement.",
     "captcha_enable_title": "Activation du captcha",
+    "captcha_logs_description": "Les logs du captcha seront désormais envoyés dans le salon {channel}.",
     "captcha_not_enabled_description": "Cette commande ne peut pas être effectuée car le captcha n'est pas activé sur ce serveur. Vous pouvez l'activer avec la commande `/config captcha enable`.",
     "captcha_not_enabled_title": "Captcha non activé",
     "expired_interaction_description": "L'action que vous essayez de faire a expirée, car vous avez attendu trop longtemps ou l'avez déjà actionée. Vous pouvez recommencer en renvoyant la commande.",

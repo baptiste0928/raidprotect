@@ -6,18 +6,21 @@ use twilight_mention::Mention;
 use twilight_model::{
     application::{
         component::{button::ButtonStyle, ActionRow, Button, Component},
-        interaction::{application_command::InteractionChannel, Interaction},
+        interaction::Interaction,
     },
     channel::message::MessageFlags,
-    guild::Role,
     http::interaction::InteractionResponseType,
+    id::{
+        marker::{ChannelMarker, RoleMarker},
+        Id,
+    },
 };
 use twilight_util::builder::{embed::EmbedBuilder, InteractionResponseDataBuilder};
 
 use crate::{
     cluster::ClusterState,
     interaction::{
-        embed::{self, COLOR_RED},
+        embed::{self, COLOR_GREEN, COLOR_RED},
         response::InteractionResponse,
         util::{CustomId, InteractionExt},
     },
@@ -49,7 +52,7 @@ impl CaptchaConfigCommand {
         match self {
             CaptchaConfigCommand::Enable(command) => command.exec(interaction, state).await,
             CaptchaConfigCommand::Disable(command) => command.exec(interaction, state).await,
-            CaptchaConfigCommand::Logs(_) => todo!(),
+            CaptchaConfigCommand::Logs(command) => command.exec(interaction, state).await,
             CaptchaConfigCommand::AutoroleAdd(_) => todo!(),
             CaptchaConfigCommand::AutoroleRemove(_) => todo!(),
             CaptchaConfigCommand::AutoroleList(_) => todo!(),
@@ -175,7 +178,39 @@ impl CaptchaDisableCommand {
 #[command(name = "logs", desc = "Set the RaidProtect captcha logs channel")]
 pub struct CaptchaLogsCommand {
     /// Channel to send the logs to.
-    channel: InteractionChannel,
+    channel: Id<ChannelMarker>,
+}
+
+impl CaptchaLogsCommand {
+    async fn exec(
+        self,
+        interaction: Interaction,
+        state: &ClusterState,
+    ) -> Result<InteractionResponse, anyhow::Error> {
+        let lang = interaction.locale()?;
+        let guild_id = interaction.guild()?.id;
+
+        let config = state.mongodb().get_guild(guild_id).await?;
+        let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
+
+        if !captcha_enabled {
+            return Ok(embed::captcha::not_enabled(lang));
+        }
+
+        // Update the config.
+        let mut config = config.unwrap(); // SAFETY: `captcha_enabled` is true here
+        config.captcha.logs = Some(self.channel);
+
+        state.mongodb().update_guild(&config).await?;
+
+        // Send the embed.
+        let embed = EmbedBuilder::new()
+            .color(COLOR_GREEN)
+            .description(lang.captcha_logs_description(self.channel.mention()))
+            .build();
+
+        Ok(InteractionResponse::EphemeralEmbed(embed))
+    }
 }
 
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
@@ -185,7 +220,7 @@ pub struct CaptchaLogsCommand {
 )]
 pub struct CaptchaAutoroleAddCommand {
     /// Role to add to the autorole.
-    role: Role,
+    role: Id<RoleMarker>,
 }
 
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
@@ -195,7 +230,7 @@ pub struct CaptchaAutoroleAddCommand {
 )]
 pub struct CaptchaAutoroleRemoveCommand {
     /// Role to remove from the autorole.
-    role: Role,
+    role: Id<RoleMarker>,
 }
 
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
