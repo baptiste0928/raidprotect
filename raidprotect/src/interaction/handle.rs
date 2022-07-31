@@ -1,7 +1,6 @@
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 
-use anyhow::{bail, Context};
-use raidprotect_model::cache::model::interaction::{PendingComponent, PendingModal};
+use anyhow::bail;
 use rosetta_i18n::Language;
 use tracing::{debug, error, warn};
 use twilight_interactions::command::CreateCommand;
@@ -20,14 +19,14 @@ use super::{
     component::PostInChat,
     embed,
     response::{InteractionResponder, InteractionResponse},
-    util::InteractionExt,
+    util::{CustomId, InteractionExt},
 };
 use crate::{cluster::ClusterState, translations::Lang};
 
 /// Handle incoming [`Interaction`].
 pub async fn handle_interaction(interaction: Interaction, state: Arc<ClusterState>) {
     let responder = InteractionResponder::from_interaction(&interaction);
-    debug!("received {} interaction", interaction.kind.kind());
+    debug!(id = ?interaction.id, "received {} interaction", interaction.kind.kind());
 
     let lang = interaction.locale().unwrap_or_else(|_| Lang::fallback());
 
@@ -64,7 +63,6 @@ async fn handle_command(
         _ => bail!("expected application command data"),
     };
 
-    let lang = interaction.locale()?;
     match name {
         "config" => ConfigCommand::handle(interaction, state).await,
         "help" => HelpCommand::handle(interaction, state).await,
@@ -73,7 +71,7 @@ async fn handle_command(
         name => {
             warn!(name = name, "received unknown command");
 
-            Ok(embed::error::unknown_command(lang))
+            Ok(embed::error::unknown_command(interaction.locale()?))
         }
     }
 }
@@ -84,24 +82,16 @@ async fn handle_component(
     state: &ClusterState,
 ) -> Result<InteractionResponse, anyhow::Error> {
     let custom_id = match &interaction.data {
-        Some(InteractionData::MessageComponent(data)) => &*data.custom_id,
+        Some(InteractionData::MessageComponent(data)) => CustomId::from_str(&*data.custom_id)?,
         _ => bail!("expected message component data"),
     };
 
-    let lang = interaction.locale()?;
-    let component = match state
-        .redis()
-        .get::<PendingComponent>(custom_id)
-        .await
-        .context("failed to get component state")?
-    {
-        Some(component) => component,
-        None => return Ok(embed::error::expired_interaction(lang)),
-    };
+    match &*custom_id.name {
+        "post-in-chat" => PostInChat::handle(interaction, custom_id, state).await,
+        name => {
+            warn!(name = name, "received unknown component");
 
-    match component {
-        PendingComponent::PostInChat(component) => {
-            PostInChat::handle(interaction, component, state).await
+            Ok(embed::error::unknown_command(interaction.locale()?))
         }
     }
 }
@@ -109,26 +99,20 @@ async fn handle_component(
 /// Handle incoming modal interaction
 async fn handle_modal(
     interaction: Interaction,
-    state: &ClusterState,
+    _state: &ClusterState,
 ) -> Result<InteractionResponse, anyhow::Error> {
     let custom_id = match &interaction.data {
-        Some(InteractionData::ModalSubmit(data)) => &*data.custom_id,
+        Some(InteractionData::ModalSubmit(data)) => CustomId::from_str(&*data.custom_id)?,
         _ => bail!("expected modal submit data"),
     };
 
-    let lang = interaction.locale()?;
-    let modal = match state
-        .redis()
-        .get::<PendingModal>(custom_id)
-        .await
-        .context("failed to get modal state")?
-    {
-        Some(modal) => modal,
-        None => return Ok(embed::error::expired_interaction(lang)),
-    };
+    match &*custom_id.name {
+        "sanction" => bail!("not implemented"),
+        name => {
+            warn!(name = name, "received unknown modal");
 
-    match modal {
-        PendingModal::Sanction(_) => bail!("not implemented"),
+            Ok(embed::error::unknown_command(interaction.locale()?))
+        }
     }
 }
 

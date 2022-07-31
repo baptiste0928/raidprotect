@@ -1,6 +1,10 @@
 //! Utility function to handle incoming interactions.
 
-use std::mem;
+use std::{
+    fmt::{self, Display},
+    mem,
+    str::FromStr,
+};
 
 use anyhow::{bail, Context};
 use twilight_interactions::command::CommandModel;
@@ -48,6 +52,61 @@ pub struct GuildInteraction<'a> {
     pub id: Id<GuildMarker>,
     /// The member that triggered the command.
     pub member: &'a PartialMember,
+}
+
+/// Component custom id.
+///
+/// This type is used to hold component identifiers, used in buttons or modals.
+/// Each custom id must have a `name` which correspond to the component type,
+/// and optionally an `id` used to store component state.
+pub struct CustomId {
+    /// Name of the component.
+    pub name: String,
+    /// ID of the component.
+    pub id: Option<String>,
+}
+
+impl CustomId {
+    /// Create a new custom id.
+    pub fn new(name: impl Into<String>, id: String) -> Self {
+        Self {
+            name: name.into(),
+            id: Some(id),
+        }
+    }
+}
+
+impl FromStr for CustomId {
+    type Err = anyhow::Error;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        if value.is_empty() {
+            bail!("expected non-empty custom id");
+        }
+
+        match value.split_once(':') {
+            Some((name, id)) => Ok(CustomId {
+                name: name.to_string(),
+                id: Some(id.to_string()),
+            }),
+            None => Ok(CustomId {
+                name: value.to_string(),
+                id: None,
+            }),
+        }
+    }
+}
+
+impl Display for CustomId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(id) = &self.id {
+            f.write_str(&self.name)?;
+            f.write_str(":")?;
+            f.write_str(id)
+        } else {
+            f.write_str(&self.name)
+        }
+    }
 }
 
 /// Parse incoming [`ApplicationCommand`] or [`ApplicationCommandAutocomplete`]
