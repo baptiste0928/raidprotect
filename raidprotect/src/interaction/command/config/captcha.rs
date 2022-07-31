@@ -2,7 +2,23 @@
 
 use twilight_interactions::command::{CommandModel, CreateCommand};
 use twilight_model::{
-    application::interaction::application_command::InteractionChannel, guild::Role,
+    application::{
+        component::{button::ButtonStyle, ActionRow, Button, Component},
+        interaction::{application_command::InteractionChannel, Interaction},
+    },
+    channel::message::MessageFlags,
+    guild::Role,
+    http::interaction::InteractionResponseType,
+};
+use twilight_util::builder::{embed::EmbedBuilder, InteractionResponseDataBuilder};
+
+use crate::{
+    cluster::ClusterState,
+    interaction::{
+        embed::{self, COLOR_RED},
+        response::InteractionResponse,
+        util::InteractionExt,
+    },
 };
 
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
@@ -22,9 +38,74 @@ pub enum CaptchaConfigCommand {
     AutoroleList(CaptchaAutoroleListCommand),
 }
 
+impl CaptchaConfigCommand {
+    pub(super) async fn exec(
+        self,
+        interaction: Interaction,
+        state: &ClusterState,
+    ) -> Result<InteractionResponse, anyhow::Error> {
+        match self {
+            CaptchaConfigCommand::Enable(command) => command.exec(interaction, state).await,
+            CaptchaConfigCommand::Disable(_) => todo!(),
+            CaptchaConfigCommand::Logs(_) => todo!(),
+            CaptchaConfigCommand::AutoroleAdd(_) => todo!(),
+            CaptchaConfigCommand::AutoroleRemove(_) => todo!(),
+            CaptchaConfigCommand::AutoroleList(_) => todo!(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
 #[command(name = "enable", desc = "Enable the RaidProtect captcha")]
 pub struct CaptchaEnableCommand;
+
+impl CaptchaEnableCommand {
+    async fn exec(
+        self,
+        interaction: Interaction,
+        _state: &ClusterState,
+    ) -> Result<InteractionResponse, anyhow::Error> {
+        let lang = interaction.locale()?;
+
+        let embed = EmbedBuilder::new()
+            .color(COLOR_RED)
+            .title(lang.captcha_enable_title())
+            .description(lang.captcha_enable_description())
+            .build();
+
+        let components = Component::ActionRow(ActionRow {
+            components: vec![
+                Component::Button(Button {
+                    custom_id: Some("captcha_enable".to_string()),
+                    disabled: false,
+                    emoji: None,
+                    label: Some(lang.captcha_enable_button().to_string()),
+                    style: ButtonStyle::Success,
+                    url: None,
+                }),
+                Component::Button(Button {
+                    custom_id: None,
+                    disabled: false,
+                    emoji: None,
+                    label: Some(lang.learn_more().to_string()),
+                    style: ButtonStyle::Link,
+                    url: Some("https://docs.raidprotect.org/".to_string()),
+                }),
+            ],
+        });
+
+        let response = InteractionResponseDataBuilder::new()
+            .embeds([embed])
+            .components([components])
+            .flags(MessageFlags::EPHEMERAL)
+            .build();
+
+        Ok(InteractionResponse::Raw {
+            kind: InteractionResponseType::ChannelMessageWithSource,
+            data: Some(response),
+        })
+    }
+}
 
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
 #[command(name = "disable", desc = "Disable the RaidProtect captcha")]

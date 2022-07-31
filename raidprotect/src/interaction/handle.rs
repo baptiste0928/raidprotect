@@ -66,9 +66,10 @@ async fn handle_command(
 
     let lang = interaction.locale()?;
     match name {
-        "profile" => ProfileCommand::handle(interaction, state).await,
-        "kick" => KickCommand::handle(interaction, state).await,
+        "config" => ConfigCommand::handle(interaction, state).await,
         "help" => HelpCommand::handle(interaction, state).await,
+        "kick" => KickCommand::handle(interaction, state).await,
+        "profile" => ProfileCommand::handle(interaction, state).await,
         name => {
             warn!(name = name, "received unknown command");
 
