@@ -74,6 +74,14 @@ impl CustomId {
             id: Some(id),
         }
     }
+
+    /// Create a new custom id with only a name.
+    pub fn name(name: impl Into<String>) -> Self {
+        Self {
+            name: name.into(),
+            id: None,
+        }
+    }
 }
 
 impl FromStr for CustomId {

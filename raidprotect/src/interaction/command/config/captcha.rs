@@ -17,7 +17,7 @@ use crate::{
     interaction::{
         embed::{self, COLOR_RED},
         response::InteractionResponse,
-        util::InteractionExt,
+        util::{InteractionExt, CustomId},
     },
 };
 
@@ -73,10 +73,11 @@ impl CaptchaEnableCommand {
             .description(lang.captcha_enable_description())
             .build();
 
+        let custom_id = CustomId::name("captcha-enable");
         let components = Component::ActionRow(ActionRow {
             components: vec![
                 Component::Button(Button {
-                    custom_id: Some("captcha_enable".to_string()),
+                    custom_id: Some(custom_id.to_string()),
                     disabled: false,
                     emoji: None,
                     label: Some(lang.captcha_enable_button().to_string()),
