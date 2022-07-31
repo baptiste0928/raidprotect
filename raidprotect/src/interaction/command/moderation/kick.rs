@@ -9,11 +9,7 @@
 //! reason of the kick.
 
 use anyhow::Context;
-use nanoid::nanoid;
-use raidprotect_model::{
-    cache::model::interaction::{PendingModal, PendingSanction},
-    mongodb::modlog::ModlogType,
-};
+use raidprotect_model::{cache::model::interaction::PendingSanction, mongodb::modlog::ModlogType};
 use twilight_interactions::command::{CommandModel, CreateCommand, ResolvedUser};
 use twilight_model::{
     application::{
@@ -21,6 +17,7 @@ use twilight_model::{
         interaction::Interaction,
     },
     guild::Permissions,
+    id::{marker::InteractionMarker, Id},
     user::User,
 };
 
@@ -111,7 +108,9 @@ impl KickCommand {
 
         match self.reason {
             Some(_reason) => Ok(InteractionResponse::EphemeralDeferredMessage),
-            None => KickCommand::reason_modal(user, enforce_reason, state, lang).await,
+            None => {
+                KickCommand::reason_modal(interaction.id, user, enforce_reason, state, lang).await
+            }
         }
     }
 
@@ -120,6 +119,7 @@ impl KickCommand {
     /// This modal is only shown if the user has not specified a reason in the
     /// initial command.
     async fn reason_modal(
+        interaction_id: Id<InteractionMarker>,
         user: User,
         enforce_reason: bool,
         state: &ClusterState,
@@ -154,12 +154,12 @@ impl KickCommand {
         ];
 
         // Add pending component in Redis
-        let custom_id = nanoid!();
-        let pending = PendingModal::Sanction(PendingSanction {
-            id: custom_id.clone(),
+        let custom_id = format!("sanction:{}", interaction_id);
+        let pending = PendingSanction {
+            interaction_id,
             kind: ModlogType::Kick,
             user,
-        });
+        };
 
         state.redis().set(&pending).await?;
 
