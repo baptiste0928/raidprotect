@@ -3,6 +3,7 @@
 //! This module implement the "Post in chat" button, that allow users to post
 //! in the channel an ephemeral response.
 
+use anyhow::anyhow;
 use raidprotect_model::cache::model::interaction::PostInChatButton;
 use twilight_model::{
     application::{
@@ -19,7 +20,11 @@ use twilight_model::{
 
 use crate::{
     cluster::ClusterState,
-    interaction::{embed, response::InteractionResponse, util::InteractionExt},
+    interaction::{
+        embed,
+        response::InteractionResponse,
+        util::{CustomId, InteractionExt},
+    },
     translations::Lang,
 };
 
@@ -51,9 +56,9 @@ impl PostInChat {
             .or(Some(MessageFlags::EPHEMERAL));
 
         // Add post in chat button.
-        let custom_id = format!("post-in-chat:{}", interaction_id);
+        let custom_id = CustomId::new("post-in-chat", interaction_id.to_string());
         let button = Component::Button(Button {
-            custom_id: Some(custom_id),
+            custom_id: Some(custom_id.to_string()),
             disabled: false,
             emoji: Some(ReactionType::Unicode {
                 name: "💬".to_string(),
@@ -82,11 +87,14 @@ impl PostInChat {
     /// Handle the button click.
     pub async fn handle(
         interaction: Interaction,
-        component_id: &str,
+        custom_id: CustomId,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         // Fetch component from redis
-        let mut component = match state.redis().get::<PostInChatButton>(component_id).await? {
+        let component_id = custom_id
+            .id
+            .ok_or_else(|| anyhow!("missing component id in custom_id"))?;
+        let mut component = match state.redis().get::<PostInChatButton>(&component_id).await? {
             Some(component) => component,
             None => return Ok(embed::error::expired_interaction(interaction.locale()?)),
         };

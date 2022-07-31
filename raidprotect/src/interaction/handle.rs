@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 
 use anyhow::bail;
 use rosetta_i18n::Language;
@@ -17,7 +17,7 @@ use super::{
     component::PostInChat,
     embed,
     response::{InteractionResponder, InteractionResponse},
-    util::InteractionExt,
+    util::{CustomId, InteractionExt},
 };
 use crate::{cluster::ClusterState, translations::Lang};
 
@@ -79,17 +79,12 @@ async fn handle_component(
     state: &ClusterState,
 ) -> Result<InteractionResponse, anyhow::Error> {
     let custom_id = match &interaction.data {
-        Some(InteractionData::MessageComponent(data)) => data.custom_id.clone(),
+        Some(InteractionData::MessageComponent(data)) => CustomId::from_str(&*data.custom_id)?,
         _ => bail!("expected message component data"),
     };
 
-    let (name, component_id) = match custom_id.split_once(':') {
-        Some((name, id)) => (name, id),
-        None => (&*custom_id, ""),
-    };
-
-    match name {
-        "post-in-chat" => PostInChat::handle(interaction, component_id, state).await,
+    match &*custom_id.name {
+        "post-in-chat" => PostInChat::handle(interaction, custom_id, state).await,
         name => {
             warn!(name = name, "received unknown component");
 
@@ -104,16 +99,11 @@ async fn handle_modal(
     _state: &ClusterState,
 ) -> Result<InteractionResponse, anyhow::Error> {
     let custom_id = match &interaction.data {
-        Some(InteractionData::ModalSubmit(data)) => &*data.custom_id,
+        Some(InteractionData::ModalSubmit(data)) => CustomId::from_str(&*data.custom_id)?,
         _ => bail!("expected modal submit data"),
     };
 
-    let (name, _modal_id) = match custom_id.split_once(':') {
-        Some((name, id)) => (name, id),
-        None => (&*custom_id, ""),
-    };
-
-    match name {
+    match &*custom_id.name {
         "sanction" => bail!("not implemented"),
         name => {
             warn!(name = name, "received unknown modal");

@@ -24,7 +24,11 @@ use twilight_model::{
 use crate::{
     cluster::ClusterState,
     desc_localizations, impl_command_handle,
-    interaction::{embed, response::InteractionResponse, util::InteractionExt},
+    interaction::{
+        embed,
+        response::InteractionResponse,
+        util::{CustomId, InteractionExt},
+    },
     translations::Lang,
     util::TextProcessExt,
 };
@@ -154,7 +158,7 @@ impl KickCommand {
         ];
 
         // Add pending component in Redis
-        let custom_id = format!("sanction:{}", interaction_id);
+        let custom_id = CustomId::new("sanction", interaction_id.to_string());
         let pending = PendingSanction {
             interaction_id,
             kind: ModlogType::Kick,
@@ -164,7 +168,7 @@ impl KickCommand {
         state.redis().set(&pending).await?;
 
         Ok(InteractionResponse::Modal {
-            custom_id,
+            custom_id: custom_id.to_string(),
             title: lang.modal_kick_title(username),
             components,
         })
