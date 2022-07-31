@@ -85,7 +85,7 @@ async fn handle_component(
 
     let (name, component_id) = match custom_id.split_once(':') {
         Some((name, id)) => (name, id),
-        None => bail!("expected custom_id to contain ':'"),
+        None => (&*custom_id, ""),
     };
 
     match name {
@@ -110,7 +110,7 @@ async fn handle_modal(
 
     let (name, _modal_id) = match custom_id.split_once(':') {
         Some((name, id)) => (name, id),
-        None => bail!("expected custom_id to contain ':'"),
+        None => (&*custom_id, ""),
     };
 
     match name {
