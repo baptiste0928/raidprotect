@@ -10,19 +10,22 @@ use super::parser::parse_message;
 use crate::{cluster::ClusterState, interaction::embed::COLOR_TRANSPARENT, translations::Lang};
 
 /// A mapping between old and new commands
+
 static OLD_COMMANDS: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
     HashMap::from([
         ("?kick", "/kick"),
-        ("?userinfo", "/profile"),
-        ("?lock", "/lock"),
-        ("?unlock", "/unlock"),
-        ("?raidmode", "/raidmode"),
-        ("?settings", "/settings"),
-        ("?captcha", "/captcha"),
         ("?ban", "/ban"),
-        ("?invite", "/invite"),
         ("?clear", "/clear"),
-        ("?stats", "/stats"),
+        ("?raidmode", "/raidmode"),
+        ("?settings", "/config"),
+        ("?captcha", "/config captcha"),
+        ("?userinfo", "/profile"),
+        ("?ui", "/profile"),
+        ("?help", "/help"),
+        ("?invite", "/help"),
+        ("?about", "/help"),
+        ("?stats", "/help"),
+        ("?ping", "/ping"),
     ])
 });
 
