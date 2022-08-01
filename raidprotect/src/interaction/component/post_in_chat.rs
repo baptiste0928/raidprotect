@@ -3,8 +3,8 @@
 //! This module implement the "Post in chat" button, that allow users to post
 //! in the channel an ephemeral response.
 
-use nanoid::nanoid;
-use raidprotect_model::cache::model::interaction::{PendingComponent, PostInChatButton};
+use anyhow::anyhow;
+use raidprotect_model::cache::model::interaction::PostInChatButton;
 use twilight_model::{
     application::{
         component::{button::ButtonStyle, ActionRow, Button, Component},
@@ -12,12 +12,19 @@ use twilight_model::{
     },
     channel::{message::MessageFlags, ReactionType},
     http::interaction::{InteractionResponseData, InteractionResponseType},
-    id::{marker::UserMarker, Id},
+    id::{
+        marker::{InteractionMarker, UserMarker},
+        Id,
+    },
 };
 
 use crate::{
     cluster::ClusterState,
-    interaction::{response::InteractionResponse, util::InteractionExt},
+    interaction::{
+        embed,
+        response::InteractionResponse,
+        util::{CustomId, InteractionExt},
+    },
     translations::Lang,
 };
 
@@ -28,17 +35,17 @@ impl PostInChat {
     /// Create a new [`PostInChat`] component.
     pub async fn create(
         mut response: InteractionResponseData,
+        interaction_id: Id<InteractionMarker>,
         author_id: Id<UserMarker>,
         state: &ClusterState,
         lang: Lang,
     ) -> Result<InteractionResponse, anyhow::Error> {
         // Store button state in redis
-        let custom_id = nanoid!();
-        let component = PendingComponent::PostInChat(PostInChatButton {
-            id: custom_id.clone(),
+        let component = PostInChatButton {
             response: response.clone(),
+            interaction_id,
             author_id,
-        });
+        };
 
         state.redis().set(&component).await?;
 
@@ -49,8 +56,9 @@ impl PostInChat {
             .or(Some(MessageFlags::EPHEMERAL));
 
         // Add post in chat button.
+        let custom_id = CustomId::new("post-in-chat", interaction_id.to_string());
         let button = Component::Button(Button {
-            custom_id: Some(custom_id),
+            custom_id: Some(custom_id.to_string()),
             disabled: false,
             emoji: Some(ReactionType::Unicode {
                 name: "💬".to_string(),
@@ -79,9 +87,18 @@ impl PostInChat {
     /// Handle the button click.
     pub async fn handle(
         interaction: Interaction,
-        mut component: PostInChatButton,
+        custom_id: CustomId,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
+        // Fetch component from redis
+        let component_id = custom_id
+            .id
+            .ok_or_else(|| anyhow!("missing component id in custom_id"))?;
+        let mut component = match state.redis().get::<PostInChatButton>(&component_id).await? {
+            Some(component) => component,
+            None => return Ok(embed::error::expired_interaction(interaction.locale()?)),
+        };
+
         // Get guild language
         let guild = interaction.guild()?;
         let config = state.mongodb().get_guild_or_create(guild.id).await?;

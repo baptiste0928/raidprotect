@@ -106,6 +106,6 @@ impl ProfileCommand {
             .build();
         let author_id = interaction.author_id().context("missing author id")?;
 
-        PostInChat::create(response, author_id, state, lang).await
+        PostInChat::create(response, interaction.id, author_id, state, lang).await
     }
 }
