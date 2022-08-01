@@ -10,7 +10,6 @@ use super::parser::parse_message;
 use crate::{cluster::ClusterState, interaction::embed::COLOR_TRANSPARENT, translations::Lang};
 
 /// A mapping between old and new commands
-
 static OLD_COMMANDS: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
     HashMap::from([
         ("?kick", "/kick"),
