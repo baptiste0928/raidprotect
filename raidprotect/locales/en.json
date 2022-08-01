@@ -31,5 +31,7 @@
     "help_embed_description": "You will find tutorials to use raidprotect in our **[help center](https://docs.raidprotect.org/)**. You can also join our **[Discord server](https://raidpro.tk/discord)** and ask your questions to our team.",
     "help_support": "Our Discord server",
     "help_bot_invite": "Add to my server",
-    "help_description": "Need help to use RaidProtect?"
+    "help_description": "Need help to use RaidProtect?",
+    "warning_deprecated_command_title": "RaidProtect now uses slash commands",
+    "warning_deprecated_command_description": "Use the new `{new_command}` command instead of `{old_command}`.\n\nIf you never used slash commands before, [read the FAQ](https://support.discord.com/hc/en-us/articles/1500000368501-Slash-Commands-FAQ)."
 }
