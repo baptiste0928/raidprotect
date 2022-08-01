@@ -1,5 +1,6 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
+use once_cell::sync::Lazy;
 use rosetta_i18n::Language;
 use tracing::{error, info};
 use twilight_model::channel::Message;
@@ -7,6 +8,23 @@ use twilight_util::builder::embed::EmbedBuilder;
 
 use super::parser::parse_message;
 use crate::{cluster::ClusterState, interaction::embed::COLOR_TRANSPARENT, translations::Lang};
+
+/// A mapping between old and new commands
+static OLD_COMMANDS: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
+    HashMap::from([
+        ("?kick", "/kick"),
+        ("?userinfo", "/profile"),
+        ("?lock", "/lock"),
+        ("?unlock", "/unlock"),
+        ("?raidmode", "/raidmode"),
+        ("?settings", "/settings"),
+        ("?captcha", "/captcha"),
+        ("?ban", "/ban"),
+        ("?invite", "/invite"),
+        ("?clear", "/clear"),
+        ("?stats", "/stats"),
+    ])
+});
 
 /// Handle incoming [`Message`].
 ///
@@ -31,43 +49,37 @@ async fn warn_old_command(message: Message, state: Arc<ClusterState>) {
         .author
         .locale
         .map(|locale| Lang::from(locale.as_str()))
-        .unwrap_or_else(|| Lang::fallback());
+        .unwrap_or_else(Lang::fallback);
+
+    let (old_cmd, new_cmd) = match OLD_COMMANDS
+        .iter()
+        .find(|(old_cmd, _)| message.content.starts_with(**old_cmd))
+    {
+        Some((old_cmd, new_cmd)) => (*old_cmd, *new_cmd),
+        _ => ("", ""),
+    };
+
     let embed = EmbedBuilder::new()
         .title(lang.warning_deprecated_command_title())
-        .description(lang.warning_deprecated_command_description())
+        .description(lang.warning_deprecated_command_description(new_cmd, old_cmd))
         .color(COLOR_TRANSPARENT)
         .build();
 
     match state
         .http()
         .create_message(message.channel_id)
+        .reply(message.id)
         .embeds(&[embed])
     {
         Ok(msg) => {
-            let msg = msg.reply(message.id);
-
             if let Err(error) = msg.exec().await {
-                error!(error = ?error, "failed to warn user about question mark commands deprecation");
+                error!(error = ?error, "failed to send command deprecation warning");
             }
         }
-        _ => error!("failed to create embed"),
+        Err(error) => error!(error = ?error, "failed to create embed"),
     }
 }
 
 fn is_old_command(content: &str) -> bool {
-    const OLD_COMMANDS: [&str; 11] = [
-        "?kick",
-        "?userinfo",
-        "?lock",
-        "?unlock",
-        "?raidmode",
-        "?settings",
-        "?captcha",
-        "?ban",
-        "?invite",
-        "?clear",
-        "?stats",
-    ];
-
-    OLD_COMMANDS.iter().any(|cmd| content.starts_with(cmd))
+    OLD_COMMANDS.keys().any(|cmd| content.starts_with(cmd))
 }

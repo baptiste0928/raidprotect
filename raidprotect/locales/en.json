@@ -32,6 +32,6 @@
     "help_support": "Our Discord server",
     "help_bot_invite": "Add to my server",
     "help_description": "Need help to use RaidProtect?",
-    "warning_deprecated_command_title": "Oups !",
-    "warning_deprecated_command_description": "It seems that you tried to tell me something. But I don't understand :(\n\nUse the new slash commands instead.\nUse `/help` to see the available commands."
+    "warning_deprecated_command_title": "RaidProtect supports slash commands now",
+    "warning_deprecated_command_description": "Use the new command `{new_command}` instead of `{old_command}`.\n\nIf you have never used slash commands, [read the FAQ](https://support.discord.com/hc/en-us/articles/1500000368501-Slash-Commands-FAQ)."
 }
