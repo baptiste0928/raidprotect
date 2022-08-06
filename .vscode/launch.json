@@ -6,8 +6,24 @@
             "request": "launch",
             "name": "Debug raidprotect",
             "cargo": {
-                "args": ["build"],
-            },
+                "args": ["build", "--bin", "raidprotect"],
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug raidprotect-web",
+            "cargo": {
+                "args": ["build", "--bin", "raidprotect-web"],
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug captcha-cli",
+            "cargo": {
+                "args": ["build", "--bin", "captcha-cli", "--features", "cli"],
+            }
         }
     ]
 }
