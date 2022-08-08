@@ -1,7 +1,10 @@
 //! Captcha configuration commands.
 
 use anyhow::bail;
-use raidprotect_model::{cache::permission::RoleOrdering, mongodb::guild::Captcha};
+use raidprotect_model::{
+    cache::permission::RoleOrdering,
+    mongodb::guild::{Captcha, Guild},
+};
 use twilight_interactions::command::{CommandModel, CreateCommand};
 use twilight_mention::Mention;
 use twilight_model::{
@@ -9,7 +12,7 @@ use twilight_model::{
         component::{button::ButtonStyle, ActionRow, Button, Component},
         interaction::Interaction,
     },
-    channel::{message::MessageFlags},
+    channel::message::MessageFlags,
     guild::{Permissions, Role},
     http::interaction::InteractionResponseType,
     id::{
@@ -56,7 +59,7 @@ impl CaptchaConfigCommand {
             CaptchaConfigCommand::Disable(command) => command.exec(interaction, state).await,
             CaptchaConfigCommand::Logs(command) => command.exec(interaction, state).await,
             CaptchaConfigCommand::AutoroleAdd(command) => command.exec(interaction, state).await,
-            CaptchaConfigCommand::AutoroleRemove(_) => todo!(),
+            CaptchaConfigCommand::AutoroleRemove(command) => command.exec(interaction, state).await,
             CaptchaConfigCommand::AutoroleList(_) => todo!(),
         }
     }
@@ -273,7 +276,7 @@ impl CaptchaAutoroleAddCommand {
             return Ok(embed::captcha::role_hierarchy(lang));
         }
 
-        // Update the configuation.
+        // Update the configuration.
         let mut config = config.unwrap(); // SAFETY: `captcha_enabled` is true here
 
         if config.captcha.verified_roles.contains(&self.role.id) {
@@ -306,6 +309,43 @@ impl CaptchaAutoroleAddCommand {
 pub struct CaptchaAutoroleRemoveCommand {
     /// Role to remove from the autorole.
     role: Id<RoleMarker>,
+}
+
+impl CaptchaAutoroleRemoveCommand {
+    async fn exec(
+        self,
+        interaction: Interaction,
+        state: &ClusterState,
+    ) -> Result<InteractionResponse, anyhow::Error> {
+        let lang = interaction.locale()?;
+        let guild_id = interaction.guild()?.id;
+
+        let config = state.mongodb().get_guild(guild_id).await?;
+        let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
+
+        if !captcha_enabled {
+            return Ok(embed::captcha::not_enabled(lang));
+        }
+
+        // Update the configuration.
+        let mut config = config.unwrap(); // SAFETY: `captcha_enabled` is true here
+
+        if !config.captcha.verified_roles.contains(&self.role) {
+            return Ok(embed::captcha::role_not_configured(lang));
+        }
+
+        config.captcha.verified_roles.retain(|r| r != &self.role);
+        state.mongodb().update_guild(&config).await?;
+
+        // Send the embed.
+        let embed = EmbedBuilder::new()
+            .color(COLOR_GREEN)
+            .title(lang.config_updated_title())
+            .description(lang.captcha_autorole_remove_description(self.role.mention()))
+            .build();
+
+        Ok(InteractionResponse::EphemeralEmbed(embed))
+    }
 }
 
 #[derive(Debug, Clone, CommandModel, CreateCommand)]

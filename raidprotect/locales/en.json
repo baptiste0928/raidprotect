@@ -1,6 +1,7 @@
 {
     "bot_missing_permission": "RaidProtect requires permission **Administrator** to work properly. Go to your server's role settings to grant it.",
     "captcha_autorole_add_description": "The {role} role will now be given after a member has completed the captcha.",
+    "captcha_autorole_remove_description": "The role {role} will no longer be given to members who completed the captcha.",
     "captcha_disable_button": "Click to disable the captcha",
     "captcha_disable_description": "If you continue, RaidProtect will disable the captcha and remove the {verification} channel and the {unverified} role.",
     "captcha_disable_title": "Disabling the captcha",
@@ -13,6 +14,7 @@
     "captcha_not_enabled_description": "This command cannot be performed because captcha is not enabled on this server. You can enable it with the `/config captcha enable` command.",
     "captcha_not_enabled_title": "Captcha not enabled",
     "captcha_role_already_added": "This role is already configured to be assigned automatically to new members. You can disable it by using the command `/config captcha autorole-remove`.",
+    "captcha_role_not_configured": "This role is not defined to be given to new members. You can add it with `/config captcha autorole-add`.",
     "captcha_role_too_many": "You can only configure 5 roles to be assigned automatically. Use `/config captcha autorole-list` to display which roles are already configured.",
     "config_updated_title": "Configuration updated",
     "expired_interaction_description": "The action you are trying to do expired, because you waited too long or already did it. You can retry by resending the command",
@@ -49,11 +51,6 @@
     "profile_title": "Profile of {username}#{discriminator}",
     "unknown_command_description": "The command you are trying to perform is not yet available. Wait a few minutes and try again.",
     "unknown_command_title": "This command is not yet available",
-    "help_embed_title": "Need help ?",
-    "help_embed_description": "You will find tutorials to use raidprotect in our **[help center](https://docs.raidprotect.org/)**. You can also join our **[Discord server](https://raidpro.tk/discord)** and ask your questions to our team.",
-    "help_support": "Our Discord server",
-    "help_bot_invite": "Add to my server",
-    "help_description": "Need help to use RaidProtect?",
-    "warning_deprecated_command_title": "RaidProtect now uses slash commands",
-    "warning_deprecated_command_description": "Use the new `{new_command}` command instead of `{old_command}`.\n\nIf you never used slash commands before, [read the FAQ](https://support.discord.com/hc/en-us/articles/1500000368501-Slash-Commands-FAQ)."
+    "warning_deprecated_command_description": "Use the new `{new_command}` command instead of `{old_command}`.\n\nIf you never used slash commands before, [read the FAQ](https://support.discord.com/hc/en-us/articles/1500000368501-Slash-Commands-FAQ).",
+    "warning_deprecated_command_title": "RaidProtect now uses slash commands"
 }

@@ -48,7 +48,7 @@ pub fn role_hierarchy(lang: Lang) -> InteractionResponse {
     InteractionResponse::EphemeralEmbed(embed)
 }
 
-/// Auto-role already configured
+/// Role already configured as a verified role.
 pub fn role_already_added(lang: Lang) -> InteractionResponse {
     let embed = EmbedBuilder::new()
         .color(COLOR_RED)
@@ -58,10 +58,21 @@ pub fn role_already_added(lang: Lang) -> InteractionResponse {
     InteractionResponse::EphemeralEmbed(embed)
 }
 
+/// Too many roles configured as verified roles.
 pub fn role_too_many(lang: Lang) -> InteractionResponse {
     let embed = EmbedBuilder::new()
         .color(COLOR_RED)
         .description(lang.captcha_role_too_many())
+        .build();
+
+    InteractionResponse::EphemeralEmbed(embed)
+}
+
+/// Role not configured as a verified role.
+pub fn role_not_configured(lang: Lang) -> InteractionResponse {
+    let embed = EmbedBuilder::new()
+        .color(COLOR_RED)
+        .description(lang.captcha_role_not_configured())
         .build();
 
     InteractionResponse::EphemeralEmbed(embed)
