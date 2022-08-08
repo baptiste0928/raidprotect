@@ -10,7 +10,8 @@ use twilight_interactions::command::{CommandModel, CreateCommand};
 use twilight_model::{application::interaction::Interaction, guild::Permissions};
 
 use crate::{
-    cluster::ClusterState, impl_command_handle, interaction::response::InteractionResponse,
+    cluster::ClusterState, desc_localizations, impl_command_handle,
+    interaction::response::InteractionResponse,
 };
 
 /// Configuration command model.
@@ -20,6 +21,7 @@ use crate::{
 #[command(
     name = "config",
     desc = "Configure RaidProtect on your server",
+    desc_localizations = "config_description",
     default_permissions = "config_permissions"
 )]
 pub enum ConfigCommand {
@@ -27,11 +29,12 @@ pub enum ConfigCommand {
     Captcha(CaptchaConfigCommand),
 }
 
+impl_command_handle!(ConfigCommand);
+desc_localizations!(config_description);
+
 fn config_permissions() -> Permissions {
     Permissions::ADMINISTRATOR
 }
-
-impl_command_handle!(ConfigCommand);
 
 impl ConfigCommand {
     async fn exec(
