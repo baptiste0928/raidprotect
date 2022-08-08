@@ -9,7 +9,7 @@ use anyhow::{anyhow, Context};
 use tracing::{instrument, trace};
 use twilight_model::{
     channel::ChannelType,
-    guild::Permissions,
+    guild::{Permissions, Role},
     id::{
         marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker},
         Id,
@@ -126,13 +126,13 @@ impl<'a> CachePermissions<'a> {
     /// Returns the highest role of a user.
     pub fn highest_role(&self) -> RoleOrdering {
         if self.member_roles.roles.is_empty() {
-            RoleOrdering::from_cached(&self.member_roles.everyone)
+            RoleOrdering::from(&self.member_roles.everyone)
         } else {
             let mut roles: Vec<_> = self
                 .member_roles
                 .roles
                 .iter()
-                .map(RoleOrdering::from_cached)
+                .map(RoleOrdering::from)
                 .collect();
             roles.sort();
 
@@ -279,16 +279,6 @@ pub struct RoleOrdering {
     position: i64,
 }
 
-impl RoleOrdering {
-    /// Initialize a new [`RoleOrdering`] from a [`CachedRole`].
-    pub(crate) fn from_cached(role: &CachedRole) -> Self {
-        Self {
-            id: role.id,
-            position: role.position,
-        }
-    }
-}
-
 impl Ord for RoleOrdering {
     fn cmp(&self, other: &Self) -> Ordering {
         self.position
@@ -300,6 +290,24 @@ impl Ord for RoleOrdering {
 impl PartialOrd for RoleOrdering {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
+    }
+}
+
+impl From<&Role> for RoleOrdering {
+    fn from(role: &Role) -> Self {
+        Self {
+            id: role.id,
+            position: role.position,
+        }
+    }
+}
+
+impl From<&CachedRole> for RoleOrdering {
+    fn from(role: &CachedRole) -> Self {
+        Self {
+            id: role.id,
+            position: role.position,
+        }
     }
 }
 

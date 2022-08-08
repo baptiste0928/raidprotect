@@ -1,4 +1,5 @@
 //! Utility function to handle incoming interactions.
+
 use std::{
     fmt::{self, Display},
     mem,
@@ -71,6 +72,14 @@ impl CustomId {
         Self {
             name: name.into(),
             id: Some(id),
+        }
+    }
+
+    /// Create a new custom id with only a name.
+    pub fn name(name: impl Into<String>) -> Self {
+        Self {
+            name: name.into(),
+            id: None,
         }
     }
 }
