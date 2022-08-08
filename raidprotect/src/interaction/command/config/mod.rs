@@ -7,7 +7,7 @@ mod captcha;
 
 pub use captcha::CaptchaConfigCommand;
 use twilight_interactions::command::{CommandModel, CreateCommand};
-use twilight_model::application::interaction::Interaction;
+use twilight_model::{application::interaction::Interaction, guild::Permissions};
 
 use crate::{
     cluster::ClusterState, impl_command_handle, interaction::response::InteractionResponse,
@@ -17,10 +17,18 @@ use crate::{
 ///
 /// This type is the main model that register all the configuration subcommands.
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
-#[command(name = "config", desc = "Configure RaidProtect on your server")]
+#[command(
+    name = "config",
+    desc = "Configure RaidProtect on your server",
+    default_permissions = "config_permissions"
+)]
 pub enum ConfigCommand {
     #[command(name = "captcha")]
     Captcha(CaptchaConfigCommand),
+}
+
+fn config_permissions() -> Permissions {
+    Permissions::ADMINISTRATOR
 }
 
 impl_command_handle!(ConfigCommand);

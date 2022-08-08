@@ -1,10 +1,7 @@
 //! Captcha configuration commands.
 
 use anyhow::bail;
-use raidprotect_model::{
-    cache::permission::RoleOrdering,
-    mongodb::guild::{Captcha, Guild},
-};
+use raidprotect_model::{cache::permission::RoleOrdering, mongodb::guild::Captcha};
 use twilight_interactions::command::{CommandModel, CreateCommand};
 use twilight_mention::Mention;
 use twilight_model::{
@@ -25,7 +22,7 @@ use twilight_util::builder::{embed::EmbedBuilder, InteractionResponseDataBuilder
 use crate::{
     cluster::ClusterState,
     interaction::{
-        embed::{self, COLOR_GREEN, COLOR_RED},
+        embed::{self, COLOR_GREEN, COLOR_RED, COLOR_TRANSPARENT},
         response::InteractionResponse,
         util::{CustomId, InteractionExt},
     },
@@ -60,7 +57,7 @@ impl CaptchaConfigCommand {
             CaptchaConfigCommand::Logs(command) => command.exec(interaction, state).await,
             CaptchaConfigCommand::AutoroleAdd(command) => command.exec(interaction, state).await,
             CaptchaConfigCommand::AutoroleRemove(command) => command.exec(interaction, state).await,
-            CaptchaConfigCommand::AutoroleList(_) => todo!(),
+            CaptchaConfigCommand::AutoroleList(command) => command.exec(interaction, state).await,
         }
     }
 }
@@ -354,3 +351,48 @@ impl CaptchaAutoroleRemoveCommand {
     desc = "List the roles of the RaidProtect captcha autorole"
 )]
 pub struct CaptchaAutoroleListCommand;
+
+impl CaptchaAutoroleListCommand {
+    async fn exec(
+        self,
+        interaction: Interaction,
+        state: &ClusterState,
+    ) -> Result<InteractionResponse, anyhow::Error> {
+        let lang = interaction.locale()?;
+        let guild_id = interaction.guild()?.id;
+
+        let config = state.mongodb().get_guild(guild_id).await?;
+        let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
+
+        if !captcha_enabled {
+            return Ok(embed::captcha::not_enabled(lang));
+        }
+
+        // Get the roles list.
+        let config = config.unwrap(); // SAFETY: `captcha_enabled` is true here
+        let roles = config
+            .captcha
+            .verified_roles
+            .iter()
+            .map(|id| id.mention().to_string())
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        // Send the embed.
+        let embed = if roles.is_empty() {
+            EmbedBuilder::new()
+                .color(COLOR_RED)
+                .title(lang.captcha_autorole_empty_title())
+                .description(lang.captcha_autorole_empty_description())
+                .build()
+        } else {
+            EmbedBuilder::new()
+                .color(COLOR_TRANSPARENT)
+                .title(lang.captcha_autorole_list_title())
+                .description(lang.captcha_autorole_list_description(roles))
+                .build()
+        };
+
+        Ok(InteractionResponse::EphemeralEmbed(embed))
+    }
+}

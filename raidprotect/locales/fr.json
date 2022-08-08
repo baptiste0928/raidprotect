@@ -1,6 +1,10 @@
 {
     "bot_missing_permission": "RaidProtect a besoin de la permission **Administrateur** pour fonctionner correctement. Rendez-vous dans les paramètres des rôles de votre serveur pour lui accorder.",
     "captcha_autorole_add_description": "Le rôle {role} sera désormais donné après qu'un membre ait complété le captcha.",
+    "captcha_autorole_empty_description": "Aucun rôle n'est actuellement donné aux nouveaux membres ayant complété le captcha. Utilisez la commande `/config captcha autorole-add` pour en ajouter.",
+    "captcha_autorole_empty_title": "Aucun rôle configuré",
+    "captcha_autorole_list_description": "Les rôles suivants seront donnés aux nouveaux membres après qu'ils aient complété le captcha:\n\n{roles}\n\nPour ajouter un rôle, utilisez la commande `/config captcha autorole-add`.",
+    "captcha_autorole_list_title": "Liste des rôles configurés",
     "captcha_autorole_remove_description": "Le rôle {role} ne sera plus donné aux membres ayant complété le captcha.",
     "captcha_disable_button": "Cliquez pour désactiver le captcha",
     "captcha_disable_description": "En continuant, RaidProtect désactivera le captcha et supprimera le salon {verification} et le rôle {unverified}. ",
