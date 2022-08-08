@@ -12,7 +12,7 @@ use twilight_model::{
 };
 
 use crate::{
-    cache::{permission::RoleOrdering, RedisModel},
+    cache::RedisModel,
     serde::{IdAsU64, TimestampAsI64},
 };
 
@@ -119,13 +119,6 @@ pub struct CachedRole {
     ///
     /// Managed roles include bot, integration or boost roles.
     pub managed: bool,
-}
-
-impl CachedRole {
-    /// Get the [`RoleOrdering`] associated with this role.
-    pub fn as_ordering(&self) -> RoleOrdering {
-        RoleOrdering::from_cached(self)
-    }
 }
 
 impl RedisModel for CachedRole {

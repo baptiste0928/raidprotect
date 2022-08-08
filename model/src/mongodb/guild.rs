@@ -121,4 +121,9 @@ pub struct Captcha {
     pub logs: Option<Id<ChannelMarker>>,
 }
 
+impl Captcha {
+    /// Max length of the `verified_roles` field.
+    pub const MAX_VERIFIED_ROLES_LEN: usize = 5;
+}
+
 with_prefix!(prefix_captcha "captcha_");

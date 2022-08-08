@@ -1,6 +1,7 @@
 //! Captcha configuration commands.
 
 use anyhow::bail;
+use raidprotect_model::{cache::permission::RoleOrdering, mongodb::guild::Captcha};
 use twilight_interactions::command::{CommandModel, CreateCommand};
 use twilight_mention::Mention;
 use twilight_model::{
@@ -8,7 +9,8 @@ use twilight_model::{
         component::{button::ButtonStyle, ActionRow, Button, Component},
         interaction::Interaction,
     },
-    channel::message::MessageFlags,
+    channel::{message::MessageFlags},
+    guild::{Permissions, Role},
     http::interaction::InteractionResponseType,
     id::{
         marker::{ChannelMarker, RoleMarker},
@@ -53,7 +55,7 @@ impl CaptchaConfigCommand {
             CaptchaConfigCommand::Enable(command) => command.exec(interaction, state).await,
             CaptchaConfigCommand::Disable(command) => command.exec(interaction, state).await,
             CaptchaConfigCommand::Logs(command) => command.exec(interaction, state).await,
-            CaptchaConfigCommand::AutoroleAdd(_) => todo!(),
+            CaptchaConfigCommand::AutoroleAdd(command) => command.exec(interaction, state).await,
             CaptchaConfigCommand::AutoroleRemove(_) => todo!(),
             CaptchaConfigCommand::AutoroleList(_) => todo!(),
         }
@@ -178,6 +180,7 @@ impl CaptchaDisableCommand {
 #[command(name = "logs", desc = "Set the RaidProtect captcha logs channel")]
 pub struct CaptchaLogsCommand {
     /// Channel to send the logs to.
+    #[command(channel_types = "guild_text")]
     channel: Id<ChannelMarker>,
 }
 
@@ -197,6 +200,20 @@ impl CaptchaLogsCommand {
             return Ok(embed::captcha::not_enabled(lang));
         }
 
+        // Ensure RaidProtect has permissions to send messages in the channel.
+        let (permissions, _) = state
+            .redis()
+            .permissions(guild_id)
+            .await?
+            .current_member()
+            .await?
+            .channel(self.channel)
+            .await?;
+
+        if !permissions.contains(Permissions::SEND_MESSAGES | Permissions::EMBED_LINKS) {
+            return Ok(embed::captcha::missing_logs_permission(lang));
+        }
+
         // Update the config.
         let mut config = config.unwrap(); // SAFETY: `captcha_enabled` is true here
         config.captcha.logs = Some(self.channel);
@@ -206,6 +223,7 @@ impl CaptchaLogsCommand {
         // Send the embed.
         let embed = EmbedBuilder::new()
             .color(COLOR_GREEN)
+            .title(lang.config_updated_title())
             .description(lang.captcha_logs_description(self.channel.mention()))
             .build();
 
@@ -220,7 +238,64 @@ impl CaptchaLogsCommand {
 )]
 pub struct CaptchaAutoroleAddCommand {
     /// Role to add to the autorole.
-    role: Id<RoleMarker>,
+    role: Role,
+}
+
+impl CaptchaAutoroleAddCommand {
+    async fn exec(
+        self,
+        interaction: Interaction,
+        state: &ClusterState,
+    ) -> Result<InteractionResponse, anyhow::Error> {
+        let lang = interaction.locale()?;
+        let guild_id = interaction.guild()?.id;
+
+        let config = state.mongodb().get_guild(guild_id).await?;
+        let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
+
+        if !captcha_enabled {
+            return Ok(embed::captcha::not_enabled(lang));
+        }
+
+        // Ensure RaidProtect has permissions to give this role.
+        let permissions = state
+            .redis()
+            .permissions(guild_id)
+            .await?
+            .current_member()
+            .await?;
+
+        if !permissions.guild().contains(Permissions::MANAGE_ROLES) {
+            return Ok(embed::captcha::missing_role_permission(lang));
+        }
+
+        if RoleOrdering::from(&self.role) >= permissions.highest_role() {
+            return Ok(embed::captcha::role_hierarchy(lang));
+        }
+
+        // Update the configuation.
+        let mut config = config.unwrap(); // SAFETY: `captcha_enabled` is true here
+
+        if config.captcha.verified_roles.contains(&self.role.id) {
+            return Ok(embed::captcha::role_already_added(lang));
+        }
+
+        if config.captcha.verified_roles.len() >= Captcha::MAX_VERIFIED_ROLES_LEN {
+            return Ok(embed::captcha::role_too_many(lang));
+        }
+
+        config.captcha.verified_roles.push(self.role.id);
+        state.mongodb().update_guild(&config).await?;
+
+        // Send the embed.
+        let embed = EmbedBuilder::new()
+            .color(COLOR_GREEN)
+            .title(lang.config_updated_title())
+            .description(lang.captcha_autorole_add_description(self.role.mention()))
+            .build();
+
+        Ok(InteractionResponse::EphemeralEmbed(embed))
+    }
 }
 
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
