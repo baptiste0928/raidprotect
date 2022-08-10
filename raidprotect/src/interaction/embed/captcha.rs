@@ -37,6 +37,17 @@ pub fn missing_role_permission(lang: Lang) -> InteractionResponse {
     InteractionResponse::EphemeralEmbed(embed)
 }
 
+/// Missing permissions to enable the captcha.
+pub fn missing_enable_permission(lang: Lang) -> InteractionResponse {
+    let embed = EmbedBuilder::new()
+        .color(COLOR_RED)
+        .title(lang.captcha_missing_enable_permission_title())
+        .description(lang.bot_missing_permission())
+        .build();
+
+    InteractionResponse::EphemeralEmbed(embed)
+}
+
 /// Missing permission to give a role due to the role hierarchy.
 pub fn role_hierarchy(lang: Lang) -> InteractionResponse {
     let embed = EmbedBuilder::new()
@@ -73,6 +84,26 @@ pub fn role_not_configured(lang: Lang) -> InteractionResponse {
     let embed = EmbedBuilder::new()
         .color(COLOR_RED)
         .description(lang.captcha_role_not_configured())
+        .build();
+
+    InteractionResponse::EphemeralEmbed(embed)
+}
+
+/// Error while creating the captcha role.
+pub fn role_error(lang: Lang) -> InteractionResponse {
+    let embed = EmbedBuilder::new()
+        .color(COLOR_RED)
+        .description(lang.captcha_role_error())
+        .build();
+
+    InteractionResponse::EphemeralEmbed(embed)
+}
+
+/// Error while creating the captcha channel.
+pub fn channel_error(lang: Lang) -> InteractionResponse {
+    let embed = EmbedBuilder::new()
+        .color(COLOR_RED)
+        .description(lang.captcha_channel_error())
         .build();
 
     InteractionResponse::EphemeralEmbed(embed)
