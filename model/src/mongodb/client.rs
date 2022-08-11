@@ -109,7 +109,7 @@ impl MongoDbClient {
 
         self.db()
             .collection::<Guild>(Guild::COLLECTION)
-            .replace_one(doc! { "_id": to_document(&query)? }, guild, options)
+            .replace_one(to_document(&query)?, guild, options)
             .await?;
 
         Ok(())

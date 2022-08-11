@@ -16,7 +16,7 @@ use super::{
     command::{
         config::ConfigCommand, help::HelpCommand, moderation::KickCommand, profile::ProfileCommand,
     },
-    component::PostInChat,
+    component::{captcha::CaptchaEnable, PostInChat},
     embed,
     response::{InteractionResponder, InteractionResponse},
     util::{CustomId, InteractionExt},
@@ -88,6 +88,8 @@ async fn handle_component(
 
     match &*custom_id.name {
         "post-in-chat" => PostInChat::handle(interaction, custom_id, state).await,
+        "captcha-enable" => CaptchaEnable::handle(interaction, state).await,
+        "captcha-disable" => todo!(),
         name => {
             warn!(name = name, "received unknown component");
 

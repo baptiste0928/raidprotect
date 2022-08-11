@@ -15,6 +15,17 @@ pub fn not_enabled(lang: Lang) -> InteractionResponse {
     InteractionResponse::EphemeralEmbed(embed)
 }
 
+/// Captcha already enabled on the server.
+pub fn already_enabled(lang: Lang) -> InteractionResponse {
+    let embed = EmbedBuilder::new()
+        .color(COLOR_RED)
+        .title(lang.captcha_already_enabled_title())
+        .description(lang.captcha_already_enabled_description())
+        .build();
+
+    InteractionResponse::EphemeralEmbed(embed)
+}
+
 /// Missing permission to send message in the logs channel.
 pub fn missing_logs_permission(lang: Lang) -> InteractionResponse {
     let embed = EmbedBuilder::new()
@@ -31,6 +42,17 @@ pub fn missing_role_permission(lang: Lang) -> InteractionResponse {
     let embed = EmbedBuilder::new()
         .color(COLOR_RED)
         .title(lang.captcha_missing_role_permission_title())
+        .description(lang.bot_missing_permission())
+        .build();
+
+    InteractionResponse::EphemeralEmbed(embed)
+}
+
+/// Missing permissions to enable the captcha.
+pub fn missing_enable_permission(lang: Lang) -> InteractionResponse {
+    let embed = EmbedBuilder::new()
+        .color(COLOR_RED)
+        .title(lang.captcha_missing_enable_permission_title())
         .description(lang.bot_missing_permission())
         .build();
 
@@ -73,6 +95,26 @@ pub fn role_not_configured(lang: Lang) -> InteractionResponse {
     let embed = EmbedBuilder::new()
         .color(COLOR_RED)
         .description(lang.captcha_role_not_configured())
+        .build();
+
+    InteractionResponse::EphemeralEmbed(embed)
+}
+
+/// Error while creating the captcha role.
+pub fn role_error(lang: Lang) -> InteractionResponse {
+    let embed = EmbedBuilder::new()
+        .color(COLOR_RED)
+        .description(lang.captcha_role_error())
+        .build();
+
+    InteractionResponse::EphemeralEmbed(embed)
+}
+
+/// Error while creating the captcha channel.
+pub fn channel_error(lang: Lang) -> InteractionResponse {
+    let embed = EmbedBuilder::new()
+        .color(COLOR_RED)
+        .description(lang.captcha_channel_error())
         .build();
 
     InteractionResponse::EphemeralEmbed(embed)
