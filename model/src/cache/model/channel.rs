@@ -137,6 +137,8 @@ impl From<CachedTextChannel> for CachedChannel {
 }
 
 /// Cached model of a voice [`Channel`].
+///
+/// [`Channel`]: twilight_model::channel::Channel
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct CachedVoiceChannel {
