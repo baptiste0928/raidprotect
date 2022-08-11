@@ -151,17 +151,19 @@ impl UpdateCache for ChannelCreate {
                 let mut pipe = redis::pipe();
                 let mut conn = redis.conn().await?;
 
-                match super::resource::cache_guild_channel(&mut pipe, self) {
-                    Ok(_) => {
-                        guild.channels.insert(self.id);
-                        pipe.set(guild.key(), guild.serialize_model()?);
-                    }
-                    Err(error) => {
-                        error!(error = ?error, "failed to cache guild channel");
-                    }
-                };
+                if CachedChannel::is_cached(self.kind) {
+                    match super::resource::cache_guild_channel(&mut pipe, self) {
+                        Ok(_) => {
+                            guild.channels.insert(self.id);
+                            pipe.set(guild.key(), guild.serialize_model()?);
+                        }
+                        Err(error) => {
+                            error!(error = ?error, "failed to cache guild channel");
+                        }
+                    };
 
-                pipe.query_async(&mut *conn).await?;
+                    pipe.query_async(&mut *conn).await?;
+                }
             }
         }
 
