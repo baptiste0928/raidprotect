@@ -4,6 +4,7 @@ use anyhow::Context;
 use raidprotect_model::cache::model::CachedGuild;
 use tracing::error;
 use twilight_http::request::AuditLogReason;
+use twilight_mention::Mention;
 use twilight_model::{
     application::{
         component::{button::ButtonStyle, ActionRow, Button, Component},
@@ -15,12 +16,12 @@ use twilight_model::{
     },
     guild::Permissions,
 };
-use twilight_util::builder::embed::EmbedBuilder;
+use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 
 use crate::{
     cluster::ClusterState,
     interaction::{
-        embed::{self, COLOR_RED},
+        embed::{self, COLOR_GREEN, COLOR_RED},
         response::InteractionResponse,
         util::{CustomId, InteractionExt},
     },
@@ -182,6 +183,26 @@ impl CaptchaEnable {
         // Start the configuration of channels permissions.
 
         // Send the confirmation message.
-        todo!()
+        let embed = EmbedBuilder::new()
+            .title(lang.captcha_enabled_title())
+            .color(COLOR_GREEN)
+            .description(lang.captcha_enabled_description(
+                verification_channel.mention(),
+                unverified_role.mention(),
+            ))
+            .field(EmbedFieldBuilder::new(
+                lang.captcha_enabled_roles_title(),
+                lang.captcha_enabled_roles_description(),
+            ))
+            .field(EmbedFieldBuilder::new(
+                lang.captcha_enabled_rename_title(),
+                lang.captcha_enabled_rename_description(
+                    verification_channel.mention(),
+                    unverified_role.mention(),
+                ),
+            ))
+            .build();
+
+        Ok(InteractionResponse::EphemeralEmbed(embed))
     }
 }
