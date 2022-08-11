@@ -82,7 +82,8 @@ impl CaptchaEnable {
             .http()
             .create_role(guild.id)
             .name(guild_lang.captcha_role_name())
-            .color(0x99AAB5) // Grey color
+            .color(0x99AAB5) // Default grey color
+            .permissions(Permissions::empty())
             .reason(guild_lang.captcha_enable_reason())?
             .exec()
             .await

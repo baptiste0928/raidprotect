@@ -15,6 +15,17 @@ pub fn not_enabled(lang: Lang) -> InteractionResponse {
     InteractionResponse::EphemeralEmbed(embed)
 }
 
+/// Captcha already enabled on the server.
+pub fn already_enabled(lang: Lang) -> InteractionResponse {
+    let embed = EmbedBuilder::new()
+        .color(COLOR_RED)
+        .title(lang.captcha_already_enabled_title())
+        .description(lang.captcha_already_enabled_description())
+        .build();
+
+    InteractionResponse::EphemeralEmbed(embed)
+}
+
 /// Missing permission to send message in the logs channel.
 pub fn missing_logs_permission(lang: Lang) -> InteractionResponse {
     let embed = EmbedBuilder::new()

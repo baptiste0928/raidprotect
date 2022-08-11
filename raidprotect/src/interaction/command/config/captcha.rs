@@ -83,9 +83,17 @@ impl CaptchaEnableCommand {
     async fn exec(
         self,
         interaction: Interaction,
-        _state: &ClusterState,
+        state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let lang = interaction.locale()?;
+        let guild_id = interaction.guild()?.id;
+
+        let config = state.mongodb().get_guild(guild_id).await?;
+        let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
+
+        if captcha_enabled {
+            return Ok(embed::captcha::already_enabled(lang));
+        }
 
         let embed = EmbedBuilder::new()
             .color(COLOR_RED)
