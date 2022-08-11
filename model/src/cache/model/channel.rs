@@ -12,14 +12,13 @@ use crate::{cache::RedisModel, serde::IdAsU64};
 
 /// Cached model of a [`Channel`].
 ///
-/// Only text channels and threads are cached as the bot
-/// does not interact with voice channels.
-///
 /// [`Channel`]: twilight_model::channel::Channel
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum CachedChannel {
     /// Text channel.
     Text(CachedTextChannel),
+    /// Voice channel.
+    Voice(CachedVoiceChannel),
     /// Category channel.
     Category(CachedCategoryChannel),
     /// Public or private thread.
@@ -31,6 +30,7 @@ impl CachedChannel {
     pub fn id(&self) -> Id<ChannelMarker> {
         match self {
             CachedChannel::Text(channel) => channel.id,
+            CachedChannel::Voice(channel) => channel.id,
             CachedChannel::Category(channel) => channel.id,
             CachedChannel::Thread(channel) => channel.id,
         }
@@ -40,6 +40,7 @@ impl CachedChannel {
     pub fn guild_id(&self) -> Id<GuildMarker> {
         match self {
             CachedChannel::Text(channel) => channel.guild_id,
+            CachedChannel::Voice(channel) => channel.guild_id,
             CachedChannel::Category(channel) => channel.guild_id,
             CachedChannel::Thread(channel) => channel.guild_id,
         }
@@ -47,13 +48,12 @@ impl CachedChannel {
 
     /// Get the [`ChannelType`] of the channel.
     ///
-    /// This always return [`GuildPublicThread`] for threads, even if it is a
-    /// private thread, because the exact thread type is not currently stored.
-    ///
-    /// [`GuildPublicThread`]: ChannelType::GuildPublicThread
+    /// The exact type of the channel is not currently stored in the cache, so
+    /// this function will return a type corresponding to the enum variant.
     pub fn kind(&self) -> ChannelType {
         match self {
             CachedChannel::Text(_) => ChannelType::GuildText,
+            CachedChannel::Voice(_) => ChannelType::GuildVoice,
             CachedChannel::Category(_) => ChannelType::GuildCategory,
             CachedChannel::Thread(_) => ChannelType::GuildPublicThread,
         }
@@ -65,22 +65,31 @@ impl CachedChannel {
     pub fn permissions(&self) -> &[PermissionOverwrite] {
         match self {
             CachedChannel::Text(channel) => &channel.permission_overwrites,
+            CachedChannel::Voice(channel) => &channel.permission_overwrites,
             CachedChannel::Category(channel) => &channel.permission_overwrites,
             CachedChannel::Thread(_) => &[],
         }
     }
 
     /// Whether a [`ChannelType`] can be cached with this model.
+    ///
+    /// KEEP IN SYNC with `cache_guild_channel` in `model/src/cache/process/resource.rs`.
     pub fn is_cached(kind: ChannelType) -> bool {
-        matches!(
-            kind,
+        match kind {
             ChannelType::GuildText
-                | ChannelType::GuildCategory
-                | ChannelType::GuildNews
-                | ChannelType::GuildPublicThread
-                | ChannelType::GuildPrivateThread
-                | ChannelType::GuildNewsThread
-        )
+            | ChannelType::GuildVoice
+            | ChannelType::GuildStageVoice
+            | ChannelType::GuildCategory
+            | ChannelType::GuildNews
+            | ChannelType::GuildPublicThread
+            | ChannelType::GuildPrivateThread
+            | ChannelType::GuildNewsThread => true,
+            ChannelType::Private
+            | ChannelType::Group
+            | ChannelType::GuildDirectory
+            | ChannelType::GuildForum
+            | ChannelType::Unknown(_) => false,
+        }
     }
 }
 
@@ -124,6 +133,35 @@ pub struct CachedTextChannel {
 impl From<CachedTextChannel> for CachedChannel {
     fn from(channel: CachedTextChannel) -> Self {
         CachedChannel::Text(channel)
+    }
+}
+
+/// Cached model of a voice [`Channel`].
+///
+/// [`Channel`]: twilight_model::channel::Channel
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct CachedVoiceChannel {
+    /// Id of the channel.
+    #[serde_as(as = "IdAsU64")]
+    pub id: Id<ChannelMarker>,
+    /// Id of the guild to which the channel belongs.
+    #[serde_as(as = "IdAsU64")]
+    pub guild_id: Id<GuildMarker>,
+    /// Name of the channel.
+    pub name: String,
+    /// If the channel is in a category, the category id.
+    #[serde_as(as = "Option<IdAsU64>")]
+    pub parent_id: Option<Id<ChannelMarker>>,
+    /// Sorting position of the channel.
+    pub position: i16,
+    /// Permission overwrites of the channel.
+    pub permission_overwrites: Vec<PermissionOverwrite>,
+}
+
+impl From<CachedVoiceChannel> for CachedChannel {
+    fn from(channel: CachedVoiceChannel) -> Self {
+        CachedChannel::Voice(channel)
     }
 }
 

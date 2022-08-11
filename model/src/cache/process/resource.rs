@@ -19,7 +19,7 @@ use twilight_model::{
 use crate::cache::{
     model::{
         CachedCategoryChannel, CachedChannel, CachedGuild, CachedRole, CachedTextChannel,
-        CachedThread, CurrentMember,
+        CachedThread, CachedVoiceChannel, CurrentMember,
     },
     RedisModel,
 };
@@ -103,13 +103,23 @@ pub fn cache_role(
 }
 
 pub fn cache_guild_channel(pipe: &mut Pipeline, channel: &Channel) -> Result<(), anyhow::Error> {
+    // KEEP IN SYNC with `is_cached` in `model/src/cache/model/channel.rs`.
     match channel.kind {
         ChannelType::GuildText | ChannelType::GuildNews => cache_text_channel(pipe, channel),
+        ChannelType::GuildVoice | ChannelType::GuildStageVoice => {
+            cache_voice_channel(pipe, channel)
+        }
         ChannelType::GuildCategory => cache_category_channel(pipe, channel),
         ChannelType::GuildNewsThread
         | ChannelType::GuildPublicThread
         | ChannelType::GuildPrivateThread => cache_thread(pipe, channel),
-        _ => Ok(()),
+        // Other channels types are explicitly ignored to trigger a compiler
+        // error if a new type is added.
+        ChannelType::Private
+        | ChannelType::Group
+        | ChannelType::GuildDirectory
+        | ChannelType::GuildForum  // TODO: #133
+        | ChannelType::Unknown(_) => Ok(()),
     }
 }
 
@@ -126,6 +136,25 @@ pub fn cache_text_channel(pipe: &mut Pipeline, channel: &Channel) -> Result<(), 
             .ok_or(CacheError::PermissionOverwrites)?
             .clone(),
         rate_limit_per_user: channel.rate_limit_per_user,
+    });
+
+    pipe.set(cached.key(), cached.serialize_model()?);
+
+    Ok(())
+}
+
+fn cache_voice_channel(pipe: &mut Pipeline, channel: &Channel) -> Result<(), anyhow::Error> {
+    let cached = CachedChannel::from(CachedVoiceChannel {
+        id: channel.id,
+        guild_id: channel.guild_id.ok_or(CacheError::GuildId)?,
+        name: channel.name.as_ref().ok_or(CacheError::Name)?.clone(),
+        parent_id: channel.parent_id,
+        position: channel.position.ok_or(CacheError::Position)?,
+        permission_overwrites: channel
+            .permission_overwrites
+            .as_ref()
+            .ok_or(CacheError::PermissionOverwrites)?
+            .clone(),
     });
 
     pipe.set(cached.key(), cached.serialize_model()?);
