@@ -25,6 +25,7 @@ use crate::{
         response::InteractionResponse,
         util::{CustomId, InteractionExt},
     },
+    translations::Lang,
     util::TextProcessExt,
 };
 
@@ -46,13 +47,16 @@ impl CaptchaEnable {
         interaction: Interaction,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
-        let lang = interaction.locale()?;
         let guild = interaction.guild()?;
         let cached_guild = state
             .redis()
             .get::<CachedGuild>(&guild.id)
             .await?
             .context("missing cached guild")?;
+        let mut config = state.mongodb().get_guild_or_create(guild.id).await?;
+
+        let lang = interaction.locale()?;
+        let guild_lang = Lang::from(&*config.lang);
 
         // Ensure the bot has the required permissions to enable the captcha.
         //
@@ -77,9 +81,9 @@ impl CaptchaEnable {
         let unverified_role = match state
             .http()
             .create_role(guild.id)
-            .name(lang.captcha_role_name())
+            .name(guild_lang.captcha_role_name())
             .color(0x99AAB5) // Grey color
-            .reason(lang.captcha_enable_reason())?
+            .reason(guild_lang.captcha_enable_reason())?
             .exec()
             .await
         {
@@ -119,11 +123,11 @@ impl CaptchaEnable {
 
         let verification_channel = match state
             .http()
-            .create_guild_channel(guild.id, lang.captcha_channel_name())?
+            .create_guild_channel(guild.id, guild_lang.captcha_channel_name())?
             .kind(ChannelType::GuildText)
             .position(0) // Put the channel at the top of the list.
             .permission_overwrites(&channel_permissions)
-            .reason(lang.captcha_enable_reason())?
+            .reason(guild_lang.captcha_enable_reason())?
             .exec()
             .await
         {
@@ -137,8 +141,8 @@ impl CaptchaEnable {
 
         // Send the verification message in the channel.
         let embed = EmbedBuilder::new()
-            .title(lang.captcha_verification_title(cached_guild.name.truncate(30)))
-            .description(lang.captcha_verification_description())
+            .title(guild_lang.captcha_verification_title(cached_guild.name.truncate(30)))
+            .description(guild_lang.captcha_verification_description())
             .color(COLOR_RED)
             .build();
 
@@ -171,8 +175,6 @@ impl CaptchaEnable {
         };
 
         // Update the guild configuration.
-        let mut config = state.mongodb().get_guild_or_create(guild.id).await?;
-
         config.captcha.enabled = true;
         config.captcha.channel = Some(verification_channel.id);
         config.captcha.message = Some(message.id);
