@@ -84,3 +84,14 @@ Pull request titles should follow the
 
 Once your PR has been opened, please remain available if we need to ask for
 changes. Thank you for your contribution! 🎉
+
+## Localization
+
+This project rely on Localazy to manage translations. If you want to help,
+join the [project on Localazy](https://localazy.com/p/raidprotect-bot).
+
+Since the maintainers are not native English speakers, the fallback languages
+is set to French, which means that all strings must be translated in French for
+the code to compile. If you want to do a contribution which implies **adding a
+localized string**, use a web translator for the French translation and let us
+know in the PR. We will review the translation and fix it if needed.
