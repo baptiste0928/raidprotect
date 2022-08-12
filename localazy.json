@@ -6,8 +6,7 @@
         "pattern": "raidprotect/locales/*.json",
         "lang": "${autodetectLang}"
       },
-      "deprecate": "file",
-      "importAsNew": true
+      "deprecate": "file"
     },
 
     "download": {
