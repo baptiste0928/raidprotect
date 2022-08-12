@@ -1,7 +1,6 @@
 use std::{str::FromStr, sync::Arc};
 
 use anyhow::bail;
-use rosetta_i18n::Language;
 use tracing::{debug, error, warn};
 use twilight_interactions::command::CreateCommand;
 use twilight_model::{
@@ -28,7 +27,7 @@ pub async fn handle_interaction(interaction: Interaction, state: Arc<ClusterStat
     let responder = InteractionResponder::from_interaction(&interaction);
     debug!(id = ?interaction.id, "received {} interaction", interaction.kind.kind());
 
-    let lang = interaction.locale().unwrap_or_else(|_| Lang::fallback());
+    let lang = interaction.locale().unwrap_or(Lang::DEFAULT);
 
     let response = match interaction.kind {
         InteractionType::ApplicationCommand => handle_command(interaction, &state).await,

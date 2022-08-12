@@ -59,9 +59,12 @@ mod translations {
     //!
     //! [Discord Docs/Locales]: https://discord.com/developers/docs/reference#locales
 
-    use rosetta_i18n::Language;
-
     rosetta_i18n::include_translations!();
+
+    impl Lang {
+        /// Default language used when the user language is not supported.
+        pub const DEFAULT: Self = Self::En;
+    }
 
     impl From<&str> for Lang {
         fn from(value: &str) -> Self {
@@ -73,7 +76,7 @@ mod translations {
             match lang {
                 "fr" => Lang::Fr,
                 "en" => Lang::En,
-                _ => Lang::fallback(),
+                _ => Lang::DEFAULT,
             }
         }
     }

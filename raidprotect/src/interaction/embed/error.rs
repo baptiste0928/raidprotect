@@ -42,22 +42,20 @@ pub fn expired_interaction(lang: Lang) -> InteractionResponse {
 
 #[cfg(test)]
 mod tests {
-    use rosetta_i18n::Language;
-
     use super::*;
 
     #[test]
     fn test_internal_error() {
-        internal_error(Lang::fallback());
+        internal_error(Lang::DEFAULT);
     }
 
     #[test]
     fn test_unknown_command() {
-        unknown_command(Lang::fallback());
+        unknown_command(Lang::DEFAULT);
     }
 
     #[test]
     fn test_expired_component() {
-        expired_interaction(Lang::fallback());
+        expired_interaction(Lang::DEFAULT);
     }
 }

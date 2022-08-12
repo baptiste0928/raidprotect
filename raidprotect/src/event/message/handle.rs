@@ -1,7 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
 use once_cell::sync::Lazy;
-use rosetta_i18n::Language;
 use tracing::{error, info};
 use twilight_model::channel::Message;
 use twilight_util::builder::embed::EmbedBuilder;
@@ -51,7 +50,7 @@ async fn warn_old_command(message: Message, state: Arc<ClusterState>) {
         .author
         .locale
         .map(|locale| Lang::from(locale.as_str()))
-        .unwrap_or_else(Lang::fallback);
+        .unwrap_or(Lang::DEFAULT);
 
     let (old_cmd, new_cmd) = match OLD_COMMANDS
         .iter()
