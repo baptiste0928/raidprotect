@@ -1,0 +1,36 @@
+name: Download from Localazy
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *'
+
+
+jobs:
+  localazy-download:
+    name: Upload from Localazy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Download localization files
+        uses: localazy/download@v1
+        with:
+          read_key: ${{ secrets.LOCALAZY_READ_KEY }}
+          write_key: ${{ secrets.LOCALAZY_WRITE_KEY }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          branch: localazy/download-translations
+          commit-message: Update translations from Localazy
+          title: 'chore: update translations'
+          body: |
+            Update translations from the [RaidProtect Project on Localazy][1].
+
+            *This pull request will be updated daily at 06:00 UTC.*
+
+            [1]: https://localazy.com/p/raidprotect-bot/
+          committer: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+          author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>

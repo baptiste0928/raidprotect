@@ -1,0 +1,20 @@
+name: Upload to Localazy
+on:
+  push:
+    branches: ["main"]
+    paths: ["raidprotect/locales/*.json"]
+
+jobs:
+  localazy-upload:
+    name: Upload to Localazy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Upload localization files
+        uses: localazy/upload@v1
+        with:
+          read_key: ${{ secrets.LOCALAZY_READ_KEY }}
+          write_key: ${{ secrets.LOCALAZY_WRITE_KEY }}
