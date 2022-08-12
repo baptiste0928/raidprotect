@@ -1,0 +1,16 @@
+{
+    "upload": {
+      "type": "json",
+      "features": ["filter_untranslated"],
+      "files": {
+        "pattern": "raidprotect/locales/*.json",
+        "lang": "${autodetectLang}"
+      },
+      "deprecate": "file",
+      "importAsNew": true
+    },
+
+    "download": {
+      "files": "raidprotect/locales/${lang}.json"
+    }
+  }
