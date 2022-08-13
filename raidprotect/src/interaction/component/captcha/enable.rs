@@ -1,8 +1,10 @@
 //! Captcha button components.
 
+use std::{sync::Arc, time::Duration};
+
 use anyhow::Context;
-use raidprotect_model::cache::model::CachedGuild;
-use tracing::error;
+use raidprotect_model::cache::model::{CachedChannel, CachedGuild};
+use tracing::{debug, error};
 use twilight_http::request::AuditLogReason;
 use twilight_mention::Mention;
 use twilight_model::{
@@ -15,6 +17,14 @@ use twilight_model::{
         ChannelType,
     },
     guild::Permissions,
+    http::permission_overwrite::{
+        PermissionOverwrite as HttpPermissionOverwrite,
+        PermissionOverwriteType as HttpPermissionOverwriteType,
+    },
+    id::{
+        marker::{ChannelMarker, GuildMarker, RoleMarker},
+        Id,
+    },
 };
 use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 
@@ -45,7 +55,7 @@ pub struct CaptchaEnable;
 impl CaptchaEnable {
     pub async fn handle(
         interaction: Interaction,
-        state: &ClusterState,
+        state: Arc<ClusterState>,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let guild = interaction.guild()?;
         let cached_guild = state
@@ -184,6 +194,12 @@ impl CaptchaEnable {
         state.mongodb().update_guild(&config).await?;
 
         // Start the configuration of channels permissions.
+        tokio::spawn(configure_channels(
+            state,
+            guild.id,
+            unverified_role.id,
+            verification_channel.id,
+        ));
 
         // Send the confirmation message.
         let embed = EmbedBuilder::new()
@@ -208,4 +224,124 @@ impl CaptchaEnable {
 
         Ok(InteractionResponse::EphemeralEmbed(embed))
     }
+}
+
+/// Configure the permissions of the guild channels.
+///
+/// For the unverified role to work, all the channels of the guild must be
+/// hidden to the role. This function should be used as a background task.
+///
+/// The function will iterate over all guilds channels and compute permissions
+/// for the unverified role. If the role can see the channel, the permissions
+/// will be updated accordingly (see [`update_channel_permissions`]).
+///
+/// The category channels are iterated first, since a lot of channels can inherit
+/// from their permissions. The verification channel is skipped.
+async fn configure_channels(
+    state: Arc<ClusterState>,
+    guild: Id<GuildMarker>,
+    role: Id<RoleMarker>,
+    verification: Id<ChannelMarker>,
+) -> Result<(), anyhow::Error> {
+    let guild_channels = state.redis().guild_channels(guild).await?;
+
+    let mut categories = Vec::new();
+    let mut channels = Vec::new();
+
+    for channel in guild_channels {
+        // Permissions are not updated for the verification channel.
+        if channel.id() == verification {
+            continue;
+        }
+
+        match channel {
+            CachedChannel::Category(_) => categories.push(channel),
+            CachedChannel::Text(channel) => channels.push(channel.id),
+            CachedChannel::Voice(channel) => channels.push(channel.id),
+            CachedChannel::Thread(_) => continue, // threads inherit from their parent channel
+        }
+    }
+
+    // Update permissions for the category channels first.
+    // This will reduce the number of requests to the API since a lot of channels
+    // can inherit from their category.
+    for channel in categories {
+        update_channel_permissions(&state, &channel, guild, role).await?;
+    }
+
+    // Small delay to ensure the cache is updated with the new permissions.
+    tokio::time::sleep(Duration::from_secs(5)).await;
+
+    // Update permissions for the remaining channels.
+    // Since the permissions for these channels could have been updated by the
+    // category channels, the channel is retrieved from the cache again.
+    for channel in channels {
+        let channel = match state.redis().get::<CachedChannel>(&channel).await? {
+            Some(channel) => channel,
+            None => {
+                // Since some delay could have been elapsed since the previous
+                // cache request, the channel could have been deleted.
+                debug!(channel = ?channel, guild = ?guild, "channel no longer in cache during captcha configuration");
+
+                continue;
+            }
+        };
+
+        update_channel_permissions(&state, &channel, guild, role).await?;
+    }
+
+    Ok(())
+}
+
+/// Updates a channel permissions for the unverified role.
+async fn update_channel_permissions(
+    state: &ClusterState,
+    channel: &CachedChannel,
+    guild: Id<GuildMarker>,
+    role: Id<RoleMarker>,
+) -> Result<(), anyhow::Error> {
+    // Get permissions for the unverified role. The permissions for everyone
+    // are also retrieved to avoid updating permissions unnecessarily for private
+    // channels.
+    let role_permissions = channel.permissions().iter().find(|p| p.id == role.cast());
+    let everyone_permissions = channel.permissions().iter().find(|p| p.id == guild.cast());
+
+    // Skip updating permissions if the channel is private.
+    if everyone_permissions
+        .map(|p| p.deny)
+        .unwrap_or(Permissions::empty())
+        .contains(Permissions::VIEW_CHANNEL)
+    {
+        return Ok(());
+    }
+
+    // Skip updating permissions if the role is already denied to view the channel.
+    // This will be the case if the channel is a text channel that inherits from
+    // a category channel (that should have been updated first).
+    if role_permissions
+        .map(|p| p.deny)
+        .unwrap_or(Permissions::empty())
+        .contains(Permissions::VIEW_CHANNEL)
+    {
+        return Ok(());
+    }
+
+    // Update the permissions for the unverified role.
+    let permission_overwrite = HttpPermissionOverwrite {
+        id: role.cast(),
+        kind: HttpPermissionOverwriteType::Role,
+        allow: None,
+        deny: Some(Permissions::VIEW_CHANNEL),
+    };
+
+    if let Err(error) = state
+        .http()
+        .update_channel_permission(channel.id(), &permission_overwrite)
+        .exec()
+        .await
+    {
+        error!(error = ?error, "failed to update channel permissions for unverified role");
+    }
+
+    Ok(())
 }
