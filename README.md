@@ -9,6 +9,7 @@
   
  ![GitHub top language](https://img.shields.io/github/languages/top/raidprotect/raidprotect)
  ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/raidprotect/raidprotect)
+ [![Translated](https://connect.localazy.com/status/raidprotect-bot?title=translated)](https://localazy.com/p/raidprotect-bot)
  [![Chat on Discord](https://img.shields.io/badge/discord-.gg%2Fraidprotect-5865F2?style=flat&logo=discord&logoColor=white)](https://discord.gg/raidprotect)
  [![Powered by twilight](https://img.shields.io/badge/powered%20by-twilight-6f42c1?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAMAAAAolt3jAAABBVBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIBAoJNDoIMjgIBAoAAQEAAAALGyIFGSEHFRwXWmQXWWMjUl0TUFkST1gQSVEQRk8NQEcNPUUHHicHGiIEFBsHDxQDEBcDDxUCDhQBBgkBBQgBBQcABAcmc4EmbXsVcH42X28nZnEaaHUzXGpOUVNMUVMZZG8cXGsYXWciU2EXWGMdVWIfVGAWWGIsTloYVl8dUVo8REgsSFMzRFEkSlYpRlMcS1YeR1MkQEwrPUYzOj4bQ0wVRE4xOT0wNzwWNkEON0cULjoNLTkMLDgNKDILKDMLJzIKJzIJJzIJIysIHygJHSYAAADr4357AAAAJ3RSTlMAODlveZ6fwurr+vv7+/v7/P39/v7+/v7+/v7+/v7+/v7+/v7+/v4sDJkSAAAAp0lEQVR42i3P1bqCQAAE4IHdPcAJPXZ3N3Z3o5i47/8oKvLfzTc3M3gTCaVEhIUpPJbgyhdM0rczbNzD0T/J7GyP1c4wqtt/GwMEJXI5D2vX2+niUASQuK4vD3v95ZgkoFlNG2nr+njaW6QpaGbS3LQHxVmnMk9REO7JlQv9fKPU6nICUQ6plqAsAszu/SSfnZkzfgJuVXX5fyWYmMxfZAaL8L4gAMATBiQXrvW4mIUAAAAASUVORK5CYII=)](https://twilight.rs/)
  [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](https://github.com/raidprotect/.github/blob/main/CODE_OF_CONDUCT.md)  

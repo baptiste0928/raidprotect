@@ -1,15 +1,16 @@
 {
     "upload": {
-      "type": "json",
-      "features": ["filter_untranslated"],
-      "files": {
-        "pattern": "raidprotect/locales/*.json",
-        "lang": "${autodetectLang}"
-      },
-      "deprecate": "file"
+        "type": "json",
+        "features": ["filter_untranslated"],
+        "files": {
+            "pattern": "raidprotect/locales/*.json",
+            "lang": "${autodetectLang}"
+        },
+        "deprecate": "file"
     },
 
     "download": {
-      "files": "raidprotect/locales/${lang}.json"
+        "files": "raidprotect/locales/${lang}.json",
+        "includeSourceLang": true
     }
   }
