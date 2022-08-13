@@ -4,7 +4,7 @@ use std::{sync::Arc, time::Duration};
 
 use anyhow::Context;
 use raidprotect_model::cache::model::{CachedChannel, CachedGuild};
-use tracing::{debug, error};
+use tracing::{debug, error, trace};
 use twilight_http::request::AuditLogReason;
 use twilight_mention::Mention;
 use twilight_model::{
@@ -67,6 +67,13 @@ impl CaptchaEnable {
 
         let lang = interaction.locale()?;
         let guild_lang = Lang::from(&*config.lang);
+
+        // Ensure the captcha is not already enabled.
+        //
+        // The button could be clicked twice, this is a safety check.
+        if config.captcha.enabled {
+            return Ok(embed::captcha::already_enabled(lang));
+        }
 
         // Ensure the bot has the required permissions to enable the captcha.
         //
@@ -300,6 +307,8 @@ async fn update_channel_permissions(
     guild: Id<GuildMarker>,
     role: Id<RoleMarker>,
 ) -> Result<(), anyhow::Error> {
+    trace!(channel = ?channel.id(), role = ?role, guild = ?guild, "updating channel permissions for captcha");
+
     // Get permissions for the unverified role. The permissions for everyone
     // are also retrieved to avoid updating permissions unnecessarily for private
     // channels.
