@@ -22,7 +22,7 @@ use twilight_model::{
         PermissionOverwriteType as HttpPermissionOverwriteType,
     },
     id::{
-        marker::{ChannelMarker, GuildMarker, RoleMarker},
+        marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker},
         Id,
     },
 };
@@ -36,7 +36,7 @@ use crate::{
         util::{CustomId, InteractionExt},
     },
     translations::Lang,
-    util::TextProcessExt,
+    util::{guild_logs_channel, TextProcessExt},
 };
 
 /// Captcha enabling button.
@@ -67,6 +67,7 @@ impl CaptchaEnable {
 
         let lang = interaction.locale()?;
         let guild_lang = Lang::from(&*config.lang);
+        let author_id = interaction.author_id().context("missing author id")?;
 
         // Ensure the captcha is not already enabled.
         //
@@ -201,12 +202,28 @@ impl CaptchaEnable {
         state.mongodb().update_guild(&config).await?;
 
         // Start the configuration of channels permissions.
-        tokio::spawn(configure_channels(
-            state,
-            guild.id,
-            unverified_role.id,
-            verification_channel.id,
-        ));
+        let state_clone = state.clone();
+        tokio::spawn(async move {
+            if let Err(error) = configure_channels(
+                state_clone,
+                guild.id,
+                unverified_role.id,
+                verification_channel.id,
+            )
+            .await
+            {
+                error!(error = ?error, guild = ?guild.id, "failed to configure captcha channels permissions");
+            }
+        });
+
+        // Send message in logs channel.
+        tokio::spawn(async move {
+            if let Err(error) =
+                logs_message(state, guild.id, config.logs_chan, author_id, lang).await
+            {
+                error!(error = ?error, guild = ?guild.id, "failed to send captcha logs message");
+            }
+        });
 
         // Send the confirmation message.
         let embed = EmbedBuilder::new()
@@ -231,6 +248,32 @@ impl CaptchaEnable {
 
         Ok(InteractionResponse::EphemeralEmbed(embed))
     }
+}
+
+/// Send a message in the logs channel to notify that the captcha has been
+/// enabled.
+async fn logs_message(
+    state: Arc<ClusterState>,
+    guild: Id<GuildMarker>,
+    logs_channel: Option<Id<ChannelMarker>>,
+    user: Id<UserMarker>,
+    lang: Lang,
+) -> Result<(), anyhow::Error> {
+    let channel = guild_logs_channel(state.clone(), guild, logs_channel, lang).await?;
+
+    let embed = EmbedBuilder::new()
+        .color(COLOR_RED)
+        .description(lang.captcha_enabled_log(user.mention()))
+        .build();
+
+    state
+        .http()
+        .create_message(channel)
+        .embeds(&[embed])?
+        .exec()
+        .await?;
+
+    Ok(())
 }
 
 /// Configure the permissions of the guild channels.
