@@ -259,7 +259,7 @@ async fn logs_message(
     user: Id<UserMarker>,
     lang: Lang,
 ) -> Result<(), anyhow::Error> {
-    let channel = guild_logs_channel(state.clone(), guild, logs_channel, lang).await?;
+    let channel = guild_logs_channel(&state, guild, logs_channel, lang).await?;
 
     let embed = EmbedBuilder::new()
         .color(COLOR_RED)

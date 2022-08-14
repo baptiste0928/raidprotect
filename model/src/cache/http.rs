@@ -5,11 +5,15 @@
 
 use anyhow::anyhow;
 use twilight_http::{
-    request::{channel::message::CreateMessage, guild::CreateGuildChannel},
+    request::{
+        channel::{message::CreateMessage, UpdateChannelPermission},
+        guild::CreateGuildChannel,
+    },
     Client as HttpClient,
 };
 use twilight_model::{
     guild::Permissions,
+    http::permission_overwrite::PermissionOverwrite,
     id::{
         marker::{ChannelMarker, GuildMarker},
         Id,
@@ -94,5 +98,27 @@ impl<'a> CacheHttp<'a> {
         }
 
         Ok(self.http.create_guild_channel(self.guild_id, name)?)
+    }
+
+    pub async fn update_channel_permission(
+        &'a self,
+        channel_id: Id<ChannelMarker>,
+        permission_overwrite: &'a PermissionOverwrite,
+    ) -> Result<UpdateChannelPermission<'a>, anyhow::Error> {
+        let permissions = self
+            .redis
+            .permissions(self.guild_id)
+            .await?
+            .current_member()
+            .await?
+            .guild();
+
+        if !permissions.contains(Permissions::MANAGE_CHANNELS) {
+            return Err(anyhow!("missing permissions to update channel permissions"));
+        }
+
+        Ok(self
+            .http
+            .update_channel_permission(channel_id, permission_overwrite))
     }
 }
