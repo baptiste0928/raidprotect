@@ -9,21 +9,23 @@
 //! A simple locking mechanism is used to prevent multiple channels to be created
 //! at the same time.
 
-#![allow(unused)]
-
 use std::collections::HashMap;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use once_cell::sync::Lazy;
-use raidprotect_model::{cache::model::CachedChannel, mongodb::MongoDbError};
+use raidprotect_model::cache::model::CachedChannel;
 use tokio::sync::{broadcast, RwLock};
-use twilight_http::{error::Error as HttpError, response::DeserializeBodyError};
+use tracing::{error, trace, warn};
 use twilight_model::{
     channel::{
         permission_overwrite::{PermissionOverwrite, PermissionOverwriteType},
         ChannelType,
     },
     guild::Permissions,
+    http::permission_overwrite::{
+        PermissionOverwrite as HttpPermissionOverwrite,
+        PermissionOverwriteType as HttpPermissionOverwriteType,
+    },
     id::{
         marker::{ChannelMarker, GuildMarker},
         Id,
@@ -51,87 +53,168 @@ static PENDING_CHANNELS: Lazy<RwLock<PendingChannelsMap>> =
 ///
 /// See the [module documentation](super) for more information.
 pub async fn guild_logs_channel(
-    guild_id: Id<GuildMarker>,
-    logs_chan: Option<Id<ChannelMarker>>,
     state: &ClusterState,
+    guild: Id<GuildMarker>,
+    logs_channel: Option<Id<ChannelMarker>>,
     lang: Lang,
 ) -> Result<Id<ChannelMarker>, anyhow::Error> {
-    // If a channel is given, ensure the channel exists
-    if let Some(logs_chan) = logs_chan {
-        if state
-            .redis()
-            .get::<CachedChannel>(&logs_chan)
-            .await?
-            .is_some()
-        {
-            return Ok(logs_chan);
+    // If a channel is already configured, ensure it exists and return it.
+    if let Some(channel) = logs_channel {
+        let cached = state.redis().get::<CachedChannel>(&channel).await?;
+
+        if cached.is_some() {
+            return Ok(channel);
         }
     }
 
-    // Create the logs channel
-    if let Some(tx) = PENDING_CHANNELS.read().await.get(&guild_id) {
-        let mut rx = tx.subscribe();
+    // To avoid creating multiple channels, we use the `PENDING_CHANNELS` map to
+    // store a lock for each guild. The lock is a broadcast channel, so we can
+    // send the created channel to all the pending tasks.
+    let receiver = {
+        let pending_channels = PENDING_CHANNELS.read().await;
+        let sender = pending_channels.get(&guild);
+
+        sender.map(|s| s.subscribe())
+    };
+
+    // If a channel is being created, wait and return it's id
+    if let Some(mut rx) = receiver {
+        trace!(guild = ?guild, "waiting for logs channel to be created");
 
         match rx.recv().await {
-            Ok(logs_chan) => Ok(logs_chan),
-            Err(_) => Err(anyhow!("error while waiting for logs channel creation")),
+            Ok(channel) => return Ok(channel),
+            Err(_) => return Err(anyhow!("error while waiting for logs channel creation")),
         }
-    } else {
-        create_logs_channel(guild_id, state, lang).await
     }
+
+    // Create a new logs channel
+    trace!(guild = ?guild, "creating logs channel");
+
+    configure_logs_channel(state, guild, lang).await
 }
 
-/// Create a new logs channel
-async fn create_logs_channel(
-    guild_id: Id<GuildMarker>,
+/// Try to find an existing logs channel, or create a new one.
+async fn configure_logs_channel(
     state: &ClusterState,
+    guild: Id<GuildMarker>,
     lang: Lang,
 ) -> Result<Id<ChannelMarker>, anyhow::Error> {
-    let (tx, _) = broadcast::channel(1);
-    PENDING_CHANNELS.write().await.insert(guild_id, tx.clone());
+    // Add a lock to the pending channels map.
+    let sender = {
+        let mut pending_channels = PENDING_CHANNELS.write().await;
+        let (sender, _) = broadcast::channel(1);
 
-    // Check if a channel named `raidprotect-logs` already exists.
-    // If not, create a new channel.
-    let channels = state.redis().guild_channels(guild_id).await?;
-    let logs_channel = channels.iter().find(|channel| match channel {
+        pending_channels.insert(guild, sender.clone());
+
+        sender
+    };
+
+    // Try to find an existing channel .
+    let guild_channels = state.redis().guild_channels(guild).await?;
+    let logs_channel = guild_channels.iter().find(|channel| match channel {
         CachedChannel::Text(channel) => channel.name == DEFAULT_LOGS_NAME,
         _ => false,
     });
 
-    // Create channel if not exists
-    let logs_channel_id = if let Some(channel) = logs_channel {
-        channel.id()
-    } else {
-        // Deny everyone role to see the channel
-        let permission_overwrite = PermissionOverwrite {
-            allow: Permissions::empty(),
-            deny: Permissions::VIEW_CHANNEL,
-            id: guild_id.cast(),
-            kind: PermissionOverwriteType::Role,
-        };
-
-        let channel = state
-            .cache_http(guild_id)
-            .create_guild_channel(DEFAULT_LOGS_NAME)
-            .await?
-            .kind(ChannelType::GuildText)
-            .permission_overwrites(&[permission_overwrite])
-            .exec()
-            .await?
-            .model()
-            .await?;
-
-        channel.id
+    let logs_channel = match logs_channel {
+        Some(channel) => update_logs_permissions(state, channel, guild).await,
+        None => create_logs_channel(state, guild, lang).await?,
     };
 
-    // Update channel in configuration
-    let mut guild = state.mongodb().get_guild_or_create(guild_id).await?;
-    guild.logs_chan = Some(logs_channel_id);
-    state.mongodb().update_guild(&guild).await?;
+    // Update the guild configuration
+    let mut config = state.mongodb().get_guild_or_create(guild).await?;
+    config.logs_chan = Some(logs_channel);
+    state.mongodb().update_guild(&config).await?;
 
-    tx.send(logs_channel_id).ok();
+    // Notify pending tasks that the channel has been created.
+    sender.send(logs_channel).ok();
 
-    // Send message in channel
+    Ok(logs_channel)
+}
+
+/// Update permissions for an existing logs channel.
+async fn update_logs_permissions(
+    state: &ClusterState,
+    channel: &CachedChannel,
+    guild: Id<GuildMarker>,
+) -> Id<ChannelMarker> {
+    let permission_overwrite = HttpPermissionOverwrite {
+        id: state.current_user().cast(),
+        kind: HttpPermissionOverwriteType::Member,
+        allow: Some(
+            Permissions::VIEW_CHANNEL | Permissions::SEND_MESSAGES | Permissions::EMBED_LINKS,
+        ),
+        deny: None,
+    };
+
+    if let Err(error) = state
+        .cache_http(guild)
+        .update_channel_permission(channel.id(), &permission_overwrite)
+        .await
+    {
+        warn!(error = ?error, guild = ?guild, "failed to update existing logs channel permissions");
+    }
+
+    channel.id()
+}
+
+/// Create a new logs channel in the guild.
+async fn create_logs_channel(
+    state: &ClusterState,
+    guild: Id<GuildMarker>,
+    lang: Lang,
+) -> Result<Id<ChannelMarker>, anyhow::Error> {
+    // Hide the channel to the everyone role.
+    // Only users with the `ADMINISTRATOR` permission will be able to see it.
+    let permission_overwrite = [
+        PermissionOverwrite {
+            id: guild.cast(),
+            kind: PermissionOverwriteType::Role,
+            allow: Permissions::empty(),
+            deny: Permissions::VIEW_CHANNEL,
+        },
+        PermissionOverwrite {
+            id: state.current_user().cast(),
+            kind: PermissionOverwriteType::Member,
+            allow: Permissions::VIEW_CHANNEL
+                | Permissions::SEND_MESSAGES
+                | Permissions::EMBED_LINKS,
+            deny: Permissions::empty(),
+        },
+    ];
+
+    let channel = match state
+        .cache_http(guild)
+        .create_guild_channel(DEFAULT_LOGS_NAME)
+        .await?
+        .kind(ChannelType::GuildText)
+        .permission_overwrites(&permission_overwrite)
+        .exec()
+        .await
+    {
+        Ok(response) => response.model().await?,
+        Err(error) => {
+            error!(error = ?error, guild = ?guild, "failed to create logs channel");
+
+            return Err(error).context("failed to create logs channel");
+        }
+    };
+
+    // Send an initial message to the channel.
+    if let Err(error) = send_logs_message(state, guild, channel.id, lang).await {
+        warn!(error = ?error, guild = ?guild, "error while sending initial logs channel message");
+    }
+
+    Ok(channel.id)
+}
+
+/// Send an informational message to the logs channel.
+async fn send_logs_message(
+    state: &ClusterState,
+    guild: Id<GuildMarker>,
+    channel: Id<ChannelMarker>,
+    lang: Lang,
+) -> Result<(), anyhow::Error> {
     let embed = EmbedBuilder::new()
         .title(lang.logs_creation_title())
         .color(COLOR_RED)
@@ -139,13 +222,12 @@ async fn create_logs_channel(
         .build();
 
     state
-        .cache_http(guild_id)
-        .create_message(logs_channel_id)
+        .cache_http(guild)
+        .create_message(channel)
         .await?
         .embeds(&[embed])?
         .exec()
-        .await
-        .ok(); // Do not fail if message cannot be sent
+        .await?;
 
-    Ok(logs_channel_id)
+    Ok(())
 }

@@ -23,7 +23,7 @@
   "captcha_disable_description": "Désactiver le captcha RaidProtect",
   "captcha_enable_description": "Activer le captcha RaidProtect",
   "captcha_enable_reason": "Activation du captcha",
-  "captcha_enabled_description": "Les nouveaux membres devront désormais passer une vérification afin d'accéder à ce serveur. Le salon {channel} et le rôle {role} ont été créés et configurés automatiquement.\n\nRaidProtect est en train de masquer vos salons aux membres n'ayant pas passé la vérification. Ce processus peut prendre une dizaine de minutes en fonction du nombre de salons que vous avez.",
+  "captcha_enabled_description": "Les nouveaux membres devront désormais passer une vérification afin d'accéder à ce serveur. Le salon {channel} et le rôle {role} ont été créés et configurés automatiquement.\n\nRaidProtect est en train de masquer vos salons aux membres n'ayant pas passé la vérification. Tout sera fonctionnel d'ici quelques minutes !",
   "captcha_enabled_rename_description": "Vous pouvez sans problème renommer le rôle {role} et le salon {channel} si leurs noms ne vous conviennent pas. Attention à ne pas modifier leurs permissions, le captcha risque de ne plus fonctionner.",
   "captcha_enabled_rename_title": "Renommage du rôle et du salon",
   "captcha_enabled_roles_description": "Par défaut, les membres ne recevront aucun rôle après avoir passé la vérification. Vous pouvez ajouter un rôle à donner automatiquement avec la commande `/config captcha autorole-add`. \n\n**Si vous avez déjà un bot qui donne automatiquement un rôle à tous les nouveaux membres** (autorole), désactivez-le et utilisez la fonctionnalité du captcha décrite ci-dessus. Les autres bots risquent d'interférer avec le captcha.",
@@ -81,5 +81,6 @@
   "unknown_command_description": "La commande que vous essayez d'effectuer n'est pas encore disponible. Patientez quelques minutes et réessayez.",
   "unknown_command_title": "Cette commande n'est pas encore disponible",
   "warning_deprecated_command_description": "Utilisez la nouvelle commande `{new_command}` à la place de `{old_command}`.\n\nSi vous n'avez jamais utilisé les commandes slash, [lisez la FAQ](https://support.discord.com/hc/en-us/articles/1500000368501-Slash-Commands-FAQ).",
-  "warning_deprecated_command_title": "RaidProtect supporte désormais les commandes slash"
+  "warning_deprecated_command_title": "RaidProtect supporte désormais les commandes slash",
+  "captcha_enabled_log": "**Le captcha a été activé** sur le serveur par {user}."
 }
