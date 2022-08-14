@@ -117,8 +117,8 @@ async fn configure_logs_channel(
     });
 
     let logs_channel = match logs_channel {
-        Some(channel) => update_logs_permissions(&state, channel, guild).await,
-        None => create_logs_channel(&state, guild, lang).await?,
+        Some(channel) => update_logs_permissions(state, channel, guild).await,
+        None => create_logs_channel(state, guild, lang).await?,
     };
 
     // Update the guild configuration

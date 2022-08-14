@@ -100,6 +100,13 @@ impl<'a> CacheHttp<'a> {
         Ok(self.http.create_guild_channel(self.guild_id, name)?)
     }
 
+    /// Update a channel's permission overwrite.
+    ///
+    /// This method ensures that the bot has the [`MANAGE_ROLES`] and
+    /// [`MANAGE_CHANNELS`] permission.
+    ///
+    /// [`MANAGE_ROLES`]: Permissions::MANAGE_ROLES
+    /// [`MANAGE_CHANNELS`]: Permissions::MANAGE_CHANNELS
     pub async fn update_channel_permission(
         &'a self,
         channel_id: Id<ChannelMarker>,
@@ -113,7 +120,7 @@ impl<'a> CacheHttp<'a> {
             .await?
             .guild();
 
-        if !permissions.contains(Permissions::MANAGE_CHANNELS) {
+        if !permissions.contains(Permissions::MANAGE_ROLES | Permissions::MANAGE_CHANNELS) {
             return Err(anyhow!("missing permissions to update channel permissions"));
         }
 
