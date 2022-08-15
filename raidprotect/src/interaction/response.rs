@@ -57,7 +57,7 @@ impl InteractionResponder {
 /// Response to an interaction.
 ///
 /// This enum contains types that can be used to respond to an interaction.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum InteractionResponse {
     /// Respond with an embed.
     #[allow(unused)]
