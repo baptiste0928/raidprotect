@@ -86,5 +86,6 @@
   "captcha_disable_reason": "Désactivation du captcha",
   "captcha_disabled_title": "Le captcha a été désactivé avec succès",
   "captcha_disabled_description": "Vous pouvez le réactiver à tout moment avec la commande `/config captcha enable`.",
-  "captcha_disabled_log": "**Le captcha a été désactivé** sur le serveur par {user}."
+  "captcha_disabled_log": "**Le captcha a été désactivé** sur le serveur par {user}.",
+  "captcha_role_reason": "Affichage du captcha"
 }

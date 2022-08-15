@@ -5,6 +5,7 @@
 //!
 //! The user-side event handling is done in the `raidprotect_handler` crate.
 
+mod captcha;
 mod message;
 mod process;
 

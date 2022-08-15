@@ -14,6 +14,7 @@ mod cluster;
 mod event;
 mod interaction;
 mod util;
+mod feature;
 
 use anyhow::{Context, Result};
 use raidprotect_model::config::{parse_config, BotConfig};

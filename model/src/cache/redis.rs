@@ -3,10 +3,7 @@
 //! This module expose the [`RedisClient] type used to access the cache stored
 //! in Redis.
 
-use std::{
-    fmt::{Debug, Display},
-    time::Duration,
-};
+use std::{fmt::Debug, time::Duration};
 
 use anyhow::Context;
 use bb8::{Pool, PooledConnection};
@@ -176,7 +173,7 @@ impl RedisClient {
 /// for serialization and deserialization.
 pub trait RedisModel: Debug + Serialize + DeserializeOwned {
     /// Type used for the unique model identifier.
-    type Id: ?Sized + Debug + Display;
+    type Id: ?Sized + Debug;
 
     /// Default key expiration delay.
     ///
