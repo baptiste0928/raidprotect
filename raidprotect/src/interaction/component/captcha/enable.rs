@@ -1,4 +1,4 @@
-//! Captcha button components.
+//! Captcha enable button.
 
 use std::{sync::Arc, time::Duration};
 
@@ -70,7 +70,6 @@ impl CaptchaEnable {
         let author_id = interaction.author_id().context("missing author id")?;
 
         // Ensure the captcha is not already enabled.
-        //
         // The button could be clicked twice, this is a safety check.
         if config.captcha.enabled {
             return Ok(embed::captcha::already_enabled(lang));
@@ -219,9 +218,9 @@ impl CaptchaEnable {
         // Send message in logs channel.
         tokio::spawn(async move {
             if let Err(error) =
-                logs_message(state, guild.id, config.logs_chan, author_id, lang).await
+                logs_message(state, guild.id, config.logs_chan, author_id, guild_lang).await
             {
-                error!(error = ?error, guild = ?guild.id, "failed to send captcha logs message");
+                error!(error = ?error, guild = ?guild.id, "failed to send captcha enable logs message");
             }
         });
 
