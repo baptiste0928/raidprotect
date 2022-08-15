@@ -82,5 +82,9 @@
   "unknown_command_title": "Cette commande n'est pas encore disponible",
   "warning_deprecated_command_description": "Utilisez la nouvelle commande `{new_command}` à la place de `{old_command}`.\n\nSi vous n'avez jamais utilisé les commandes slash, [lisez la FAQ](https://support.discord.com/hc/en-us/articles/1500000368501-Slash-Commands-FAQ).",
   "warning_deprecated_command_title": "RaidProtect supporte désormais les commandes slash",
-  "captcha_enabled_log": "**Le captcha a été activé** sur le serveur par {user}."
+  "captcha_enabled_log": "**Le captcha a été activé** sur le serveur par {user}.",
+  "captcha_disable_reason": "Désactivation du captcha",
+  "captcha_disabled_title": "Le captcha a été désactivé avec succès",
+  "captcha_disabled_description": "Vous pouvez le réactiver à tout moment avec la commande `/config captcha enable`.",
+  "captcha_disabled_log": "**Le captcha a été désactivé** sur le serveur par {user}."
 }
