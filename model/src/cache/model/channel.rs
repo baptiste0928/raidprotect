@@ -123,7 +123,7 @@ pub struct CachedTextChannel {
     #[serde_as(as = "Option<IdAsU64>")]
     pub parent_id: Option<Id<ChannelMarker>>,
     /// Sorting position of the channel.
-    pub position: i16,
+    pub position: i32,
     /// Permission overwrites of the channel.
     pub permission_overwrites: Vec<PermissionOverwrite>,
     /// Amount of seconds a user has to wait between two message.
@@ -154,7 +154,7 @@ pub struct CachedVoiceChannel {
     #[serde_as(as = "Option<IdAsU64>")]
     pub parent_id: Option<Id<ChannelMarker>>,
     /// Sorting position of the channel.
-    pub position: i16,
+    pub position: i32,
     /// Permission overwrites of the channel.
     pub permission_overwrites: Vec<PermissionOverwrite>,
 }
@@ -180,7 +180,7 @@ pub struct CachedCategoryChannel {
     /// Name of the category.
     pub name: String,
     /// Sorting position of the category.
-    pub position: i16,
+    pub position: i32,
     /// Permission overwrites of the category.
     pub permission_overwrites: Vec<PermissionOverwrite>,
 }

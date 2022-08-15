@@ -10,11 +10,11 @@ publish = false
 [dependencies]
 raidprotect-model = { path = "../model" }
 
-anyhow = "1.0.58"
+anyhow = "1.0.60"
 
 # Tokio dependencies
 tokio = { version = "1.20.1", features = ["rt-multi-thread", "macros"] }
-tracing = "0.1.35"
+tracing = "0.1.36"
 
 # Axum and http dependencies
 axum = { version = "0.5.13", features = ["http1", "http2"], default-features = false }
