@@ -91,7 +91,7 @@ async fn handle_component(
     match &*custom_id.name {
         "captcha-disable" => CaptchaDisable::handle(interaction, state).await,
         "captcha-enable" => CaptchaEnable::handle(interaction, state).await,
-        "captcha-verify" => CaptchaVerifyButton::handle(interaction, &state).await,
+        "captcha-verify" => CaptchaVerifyButton::handle(interaction, state).await,
         "post-in-chat" => PostInChat::handle(interaction, custom_id, &state).await,
         name => {
             warn!(name = name, "received unknown component");

@@ -1,13 +1,12 @@
 //! Handle `MemberAdd` event.
 
-use raidprotect_captcha::code::random_human_code;
 use raidprotect_model::cache::model::interaction::PendingCaptcha;
 use time::{Duration, OffsetDateTime};
 use tracing::{debug, error};
 use twilight_http::request::AuditLogReason;
 use twilight_model::guild::Member;
 
-use crate::{cluster::ClusterState, translations::Lang, feature::captcha};
+use crate::{cluster::ClusterState, feature::captcha, translations::Lang};
 
 /// Handle `MemberAdd` event.
 pub async fn member_add(member: &Member, state: &ClusterState) {
@@ -58,11 +57,10 @@ async fn member_add_inner(member: &Member, state: &ClusterState) -> Result<(), a
     }
 
     // Store the captcha in redis.
-    let code = random_human_code(captcha::DEFAULT_LENGTH);
     let pending_captcha = PendingCaptcha {
         guild_id: member.guild_id,
         member_id: member.user.id,
-        code,
+        code : String::new(),  // Code generated on button click.
         regenerate_count: 0,
         expires_at: OffsetDateTime::now_utc() + captcha::DEFAULT_DURATION,
     };

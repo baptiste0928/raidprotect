@@ -7,7 +7,10 @@ use anyhow::anyhow;
 use twilight_http::{
     request::{
         channel::{message::CreateMessage, UpdateChannelPermission},
-        guild::{member::AddRoleToMember, CreateGuildChannel},
+        guild::{
+            member::{AddRoleToMember, RemoveMember},
+            CreateGuildChannel,
+        },
     },
     Client as HttpClient,
 };
@@ -165,5 +168,29 @@ impl<'a> CacheHttp<'a> {
         Ok(self
             .http
             .add_guild_member_role(self.guild_id, user_id, role_id))
+    }
+
+    /// Kick a user from a guild.
+    ///
+    /// This method ensures that the bot has the [`KICK_MEMBERS`] permission. It
+    /// does not check for the role hierarchy.
+    ///
+    /// [`KICK_MEMBERS`]: Permissions::KICK_MEMBERS
+    pub async fn remove_guild_member(
+        &'a self,
+        user_id: Id<UserMarker>,
+    ) -> Result<RemoveMember<'a>, anyhow::Error> {
+        let permissions = self
+            .redis
+            .permissions(self.guild_id)
+            .await?
+            .current_member()
+            .await?;
+
+        if !permissions.guild().contains(Permissions::KICK_MEMBERS) {
+            return Err(anyhow!("missing permissions to kick member"));
+        }
+
+        Ok(self.http.remove_guild_member(self.guild_id, user_id))
     }
 }
