@@ -60,7 +60,7 @@ async fn member_add_inner(member: &Member, state: &ClusterState) -> Result<(), a
     let pending_captcha = PendingCaptcha {
         guild_id: member.guild_id,
         member_id: member.user.id,
-        code : String::new(),  // Code generated on button click.
+        code: String::new(), // Code generated on button click.
         regenerate_count: 0,
         expires_at: OffsetDateTime::now_utc() + captcha::DEFAULT_DURATION,
     };

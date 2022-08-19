@@ -16,7 +16,7 @@ use super::{
         config::ConfigCommand, help::HelpCommand, moderation::KickCommand, profile::ProfileCommand,
     },
     component::{
-        captcha::{CaptchaDisable, CaptchaEnable, CaptchaVerifyButton},
+        captcha::{CaptchaDisable, CaptchaEnable, CaptchaVerifyButton, CaptchaValidateButton},
         PostInChat,
     },
     embed,
@@ -91,6 +91,7 @@ async fn handle_component(
     match &*custom_id.name {
         "captcha-disable" => CaptchaDisable::handle(interaction, state).await,
         "captcha-enable" => CaptchaEnable::handle(interaction, state).await,
+        "captcha-validate" => CaptchaValidateButton::handle(interaction, state).await,
         "captcha-verify" => CaptchaVerifyButton::handle(interaction, state).await,
         "post-in-chat" => PostInChat::handle(interaction, custom_id, &state).await,
         name => {

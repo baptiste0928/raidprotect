@@ -9,7 +9,10 @@ use tracing::{error, instrument};
 use twilight_http::request::AuditLogReason;
 use twilight_model::{
     application::{
-        component::{button::ButtonStyle, ActionRow, Button, Component},
+        component::{
+            button::ButtonStyle, text_input::TextInputStyle, ActionRow, Button, Component,
+            TextInput,
+        },
         interaction::Interaction,
     },
     channel::message::MessageFlags,
@@ -26,12 +29,13 @@ use twilight_util::builder::{
 
 use crate::{
     cluster::ClusterState,
+    feature::captcha,
     interaction::{
         embed::{self, COLOR_TRANSPARENT},
         response::InteractionResponse,
-        util::InteractionExt,
+        util::{CustomId, InteractionExt},
     },
-    translations::Lang, feature::captcha,
+    translations::Lang,
 };
 
 /// Captcha verification button.
@@ -82,7 +86,8 @@ impl CaptchaVerifyButton {
         let code = random_human_code(captcha::DEFAULT_LENGTH);
 
         let code_clone = code.clone();
-        let image = tokio::task::spawn_blocking(move || generate_captcha_png(&code_clone)).await??;
+        let image =
+            tokio::task::spawn_blocking(move || generate_captcha_png(&code_clone)).await??;
 
         // Update the captcha in the cache.
         captcha.code = code;
@@ -98,25 +103,16 @@ impl CaptchaVerifyButton {
             .image(ImageSource::attachment("captcha.png")?)
             .build();
 
+        let custom_id = CustomId::name("captcha-validate");
         let component = Component::ActionRow(ActionRow {
-            components: vec![
-                Component::Button(Button {
-                    custom_id: Some("captcha-validate".to_string()),
-                    label: Some(lang.captcha_image_button().to_string()),
-                    style: ButtonStyle::Success,
-                    disabled: false,
-                    emoji: None,
-                    url: None,
-                }),
-                Component::Button(Button {
-                    custom_id: Some("captcha-regenerate".to_string()),
-                    label: Some(lang.captcha_image_regenerate().to_string()),
-                    style: ButtonStyle::Secondary,
-                    disabled: false,
-                    emoji: None,
-                    url: None,
-                }),
-            ],
+            components: vec![Component::Button(Button {
+                custom_id: Some(custom_id.to_string()),
+                label: Some(lang.captcha_image_button().to_string()),
+                style: ButtonStyle::Success,
+                disabled: false,
+                emoji: None,
+                url: None,
+            })],
         });
 
         let attachment = Attachment {
@@ -160,5 +156,58 @@ async fn kick_after(
 
     if let Err(error) = req.reason(lang.captcha_kick_reason()).unwrap().exec().await {
         error!(error = ?error, "failed to kick user after captcha");
+    }
+}
+
+/// Captcha validation button.
+///
+/// This button send the captcha modal to the user.
+pub struct CaptchaValidateButton;
+
+impl CaptchaValidateButton {
+    #[instrument(skip(state))]
+    pub async fn handle(
+        interaction: Interaction,
+        state: Arc<ClusterState>,
+    ) -> Result<InteractionResponse, anyhow::Error> {
+        let guild = interaction.guild()?;
+        let author = interaction.author_id().context("missing author_id")?;
+        let lang = interaction.locale()?;
+
+        // Ensure the user is not already verified.
+        match state
+            .redis()
+            .get::<PendingCaptcha>(&(guild.id, author))
+            .await?
+        {
+            Some(captcha) => captcha,
+            None => {
+                return Ok(embed::captcha::captcha_not_found(lang));
+            }
+        };
+
+        // Send the captcha modal.
+        let input_custom_id = CustomId::name("captcha-input");
+        let modal_custom_id = CustomId::name("captcha-modal");
+
+        let components = vec![Component::ActionRow(ActionRow {
+            components: vec![Component::TextInput(TextInput {
+                custom_id: input_custom_id.to_string(),
+                label: lang.captcha_input_label().to_string(),
+                max_length: Some(captcha::DEFAULT_LENGTH as u16),
+                min_length: Some(captcha::DEFAULT_LENGTH as u16),
+                placeholder: Some("-".repeat(captcha::DEFAULT_LENGTH)),
+                required: Some(true),
+                style: TextInputStyle::Short,
+                value: None,
+            })],
+        })];
+
+
+        Ok(InteractionResponse::Modal {
+            custom_id: modal_custom_id.to_string(),
+            title: lang.captcha_image_title().to_string(),
+            components,
+        })
     }
 }

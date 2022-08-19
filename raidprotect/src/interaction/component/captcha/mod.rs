@@ -8,4 +8,4 @@ mod verify;
 
 pub use disable::CaptchaDisable;
 pub use enable::CaptchaEnable;
-pub use verify::CaptchaVerifyButton;
+pub use verify::{CaptchaVerifyButton, CaptchaValidateButton};
