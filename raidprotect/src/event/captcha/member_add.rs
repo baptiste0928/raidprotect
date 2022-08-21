@@ -79,7 +79,7 @@ async fn captcha_expire(state: Arc<ClusterState>, captcha: PendingCaptcha, lang:
     // Sleep until the captcha expiration.
     let duration = captcha.expires_at - OffsetDateTime::now_utc();
 
-    if let Some(duration) = duration.try_into().ok() {
+    if let Ok(duration) = duration.try_into() {
         tokio::time::sleep(duration).await;
     }
 
