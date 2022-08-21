@@ -110,6 +110,6 @@ impl ProcessEvent for incoming::MessageCreate {
 impl ProcessEvent for incoming::MemberAdd {
     async fn process(self, state: Arc<ClusterState>) {
         process_cache_event(self.clone(), &state).await;
-        super::captcha::member_add(&self.0, &state).await;
+        super::captcha::member_add(&self.0, state).await;
     }
 }

@@ -16,7 +16,7 @@ use super::{
         config::ConfigCommand, help::HelpCommand, moderation::KickCommand, profile::ProfileCommand,
     },
     component::{
-        captcha::{CaptchaDisable, CaptchaEnable, CaptchaVerifyButton, CaptchaValidateButton},
+        captcha::{CaptchaDisable, CaptchaEnable, CaptchaValidateButton, CaptchaVerifyButton},
         PostInChat,
     },
     embed,

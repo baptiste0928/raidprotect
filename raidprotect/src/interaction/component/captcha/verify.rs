@@ -203,7 +203,6 @@ impl CaptchaValidateButton {
             })],
         })];
 
-
         Ok(InteractionResponse::Modal {
             custom_id: modal_custom_id.to_string(),
             title: lang.captcha_image_title().to_string(),
