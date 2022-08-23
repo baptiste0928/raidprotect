@@ -8,15 +8,15 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = { version = "1.0.60", features = ["backtrace"] }
+anyhow = { version = "1.0.61", features = ["backtrace"] }
 async-trait = "0.1.57"
 mongodb = { version = "2.3.0", features = ["zlib-compression"] }
 tracing = "0.1.36"
 
 # Models
-serde = { version = "1.0.142", features = ["derive"] }
+serde = { version = "1.0.143", features = ["derive"] }
 serde_with = "1.14.0"
-time = "0.3.12"
+time = "0.3.13"
 url = { version = "2.2.2", features = ["serde"] }
 
 # Redis (client + serialization)
@@ -39,5 +39,5 @@ tracing-subscriber = { version = "0.3.15", features = ["std", "fmt", "ansi"], de
 
 
 [dev-dependencies]
-serde_test = "1.0.142"
+serde_test = "1.0.143"
 pretty_assertions = "1.2.1"
