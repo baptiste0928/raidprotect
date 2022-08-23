@@ -7,7 +7,10 @@ use anyhow::anyhow;
 use twilight_http::{
     request::{
         channel::{message::CreateMessage, UpdateChannelPermission},
-        guild::CreateGuildChannel,
+        guild::{
+            member::{AddRoleToMember, RemoveMember},
+            CreateGuildChannel,
+        },
     },
     Client as HttpClient,
 };
@@ -15,12 +18,12 @@ use twilight_model::{
     guild::Permissions,
     http::permission_overwrite::PermissionOverwrite,
     id::{
-        marker::{ChannelMarker, GuildMarker},
+        marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker},
         Id,
     },
 };
 
-use super::redis::RedisClient;
+use super::{model::CachedRole, permission::RoleOrdering, redis::RedisClient};
 
 /// HTTP client with permission checks.
 #[derive(Debug)]
@@ -127,5 +130,67 @@ impl<'a> CacheHttp<'a> {
         Ok(self
             .http
             .update_channel_permission(channel_id, permission_overwrite))
+    }
+
+    /// Add a role to a member.
+    ///
+    /// This method ensures that the bot has the [`MANAGE_ROLES`] permission and
+    /// the role to give is lower than the bot's highest role.
+    ///
+    /// [`MANAGE_ROLES`]: Permissions::MANAGE_ROLES
+    pub async fn add_guild_member_role(
+        &'a self,
+        user_id: Id<UserMarker>,
+        role_id: Id<RoleMarker>,
+    ) -> Result<AddRoleToMember<'a>, anyhow::Error> {
+        let permissions = self
+            .redis
+            .permissions(self.guild_id)
+            .await?
+            .current_member()
+            .await?;
+
+        if !permissions.guild().contains(Permissions::MANAGE_ROLES) {
+            return Err(anyhow!("missing permissions to add role to member"));
+        }
+
+        let role = match self.redis.get::<CachedRole>(&role_id).await? {
+            Some(role) => role,
+            None => return Err(anyhow!("role to add not found")),
+        };
+
+        if RoleOrdering::from(&role) >= permissions.highest_role() {
+            return Err(anyhow!(
+                "role to add role is higher than bot's highest role"
+            ));
+        }
+
+        Ok(self
+            .http
+            .add_guild_member_role(self.guild_id, user_id, role_id))
+    }
+
+    /// Kick a user from a guild.
+    ///
+    /// This method ensures that the bot has the [`KICK_MEMBERS`] permission. It
+    /// does not check for the role hierarchy.
+    ///
+    /// [`KICK_MEMBERS`]: Permissions::KICK_MEMBERS
+    pub async fn remove_guild_member(
+        &'a self,
+        user_id: Id<UserMarker>,
+    ) -> Result<RemoveMember<'a>, anyhow::Error> {
+        let permissions = self
+            .redis
+            .permissions(self.guild_id)
+            .await?
+            .current_member()
+            .await?;
+
+        if !permissions.guild().contains(Permissions::KICK_MEMBERS) {
+            return Err(anyhow!("missing permissions to kick member"));
+        }
+
+        Ok(self.http.remove_guild_member(self.guild_id, user_id))
     }
 }

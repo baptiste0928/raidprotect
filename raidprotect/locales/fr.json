@@ -86,5 +86,16 @@
   "unknown_command_description": "La commande que vous essayez d'effectuer n'est pas encore disponible. Patientez quelques minutes et réessayez.",
   "unknown_command_title": "Cette commande n'est pas encore disponible",
   "warning_deprecated_command_description": "Utilisez la nouvelle commande `{new_command}` à la place de `{old_command}`.\n\nSi vous n'avez jamais utilisé les commandes slash, [lisez la FAQ](https://support.discord.com/hc/en-us/articles/1500000368501-Slash-Commands-FAQ).",
-  "warning_deprecated_command_title": "RaidProtect supporte désormais les commandes slash"
+  "warning_deprecated_command_title": "RaidProtect supporte désormais les commandes slash",
+  "captcha_role_reason": "Affichage du captcha",
+  "captcha_error_title": "Impossible d'afficher le captcha",
+  "captcha_regenerate_error_description": "Vous avez demandé trop de regénérations du captcha. Par mesure de sécurité, vous allez être expulsé du serveur dans quelques secondes. Vous pouvez rejoindre le serveur de nouveau et réésayer.",
+  "captcha_kick_reason": "Échec de la vérification",
+  "captcha_image_title": "Complétez le captcha pour continuer",
+  "captcha_image_description": "Pour accéder au serveur, __mémorisez le code que vous lisez dans l'image ci-dessous__ puis cliquez sur le bouton et écrivez-le dans le formulaire qui s'affichera.\n\nSi vous ne validez pas ce captcha, vous serez expulsé du serveur dans 5 minutes. Vous pouvez le regénérer si vous avez des difficultés à le lire.",
+  "captcha_image_button": "Continuer (entrer le code)",
+  "captcha_image_alt": "Image du captcha",
+  "captcha_not_found_description": "RaidProtect ne trouve pas de vérification en attente pour vous. Si vous n'arrivez pas à accéder au reste du serveur, contactez des responsables.",
+  "captcha_input_label": "Entrez le code ci-dessous",
+  "captcha_expired_reason": "Vérification non completée dans les délais"
 }

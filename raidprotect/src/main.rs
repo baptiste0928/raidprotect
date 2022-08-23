@@ -12,6 +12,7 @@
 
 mod cluster;
 mod event;
+mod feature;
 mod interaction;
 mod util;
 

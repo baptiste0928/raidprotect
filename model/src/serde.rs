@@ -153,6 +153,34 @@ impl SerializeAs<OffsetDateTime> for DateTimeAsBson {
     }
 }
 
+/// Serialize [`OffsetDateTime`] as a UNIX timestamp ([`i64`]).
+///
+/// This type implement [`SerializeAs`] and [`DeserializeAs`] and should be
+/// used with the [`serde_as`] macro.
+///
+/// [`serde_as`]: serde_with::serde_as
+pub struct DateTimeAsI64;
+
+impl<'de> DeserializeAs<'de, OffsetDateTime> for DateTimeAsI64 {
+    fn deserialize_as<D>(deserializer: D) -> Result<OffsetDateTime, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let timestamp = i64::deserialize(deserializer)?;
+
+        OffsetDateTime::from_unix_timestamp(timestamp).map_err(de::Error::custom)
+    }
+}
+
+impl SerializeAs<OffsetDateTime> for DateTimeAsI64 {
+    fn serialize_as<S>(source: &OffsetDateTime, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_i64(source.unix_timestamp())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use serde::{Deserialize, Serialize};
@@ -164,7 +192,7 @@ mod tests {
         util::Timestamp,
     };
 
-    use super::{DateTimeAsBson, IdAsI64, IdAsU64, TimestampAsI64};
+    use super::{DateTimeAsBson, DateTimeAsI64, IdAsI64, IdAsU64, TimestampAsI64};
 
     #[serde_as]
     #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -303,6 +331,26 @@ mod tests {
                 Token::Str("1628594197123"),
                 Token::StructEnd,
                 Token::StructEnd,
+            ],
+        )
+    }
+
+    #[serde_as]
+    #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+    struct DateTimeAsI64Wrapper(#[serde_as(as = "DateTimeAsI64")] OffsetDateTime);
+
+    #[test]
+    fn test_datetime_as_i64() {
+        let datetime =
+            DateTimeAsI64Wrapper(OffsetDateTime::from_unix_timestamp(1_628_594_197_123).unwrap());
+
+        assert_tokens(
+            &datetime,
+            &[
+                Token::NewtypeStruct {
+                    name: "DateTimeAsI64Wrapper",
+                },
+                Token::I64(1_628_594_197_123),
             ],
         )
     }

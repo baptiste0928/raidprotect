@@ -119,3 +119,25 @@ pub fn channel_error(lang: Lang) -> InteractionResponse {
 
     InteractionResponse::EphemeralEmbed(embed)
 }
+
+/// Captcha has been regenerated too many times.
+pub fn regenerate_error(lang: Lang) -> InteractionResponse {
+    let embed = EmbedBuilder::new()
+        .title(lang.captcha_error_title())
+        .color(COLOR_RED)
+        .description(lang.captcha_regenerate_error_description())
+        .build();
+
+    InteractionResponse::EphemeralEmbed(embed)
+}
+
+/// Error because no captcha was found.
+pub fn captcha_not_found(lang: Lang) -> InteractionResponse {
+    let embed = EmbedBuilder::new()
+        .title(lang.captcha_error_title())
+        .color(COLOR_RED)
+        .description(lang.captcha_not_found_description())
+        .build();
+
+    InteractionResponse::EphemeralEmbed(embed)
+}

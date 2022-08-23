@@ -87,7 +87,6 @@ process_cache_events! {
     ThreadUpdate,
     RoleCreate,
     RoleDelete,
-    MemberAdd,
     MemberUpdate
 }
 
@@ -104,5 +103,13 @@ impl ProcessEvent for incoming::MessageCreate {
         if self.guild_id.is_some() && ALLOWED_MESSAGES_TYPES.contains(&self.kind) {
             super::message::handle_message(self.0, state).await;
         }
+    }
+}
+
+#[async_trait]
+impl ProcessEvent for incoming::MemberAdd {
+    async fn process(self, state: Arc<ClusterState>) {
+        process_cache_event(self.clone(), &state).await;
+        super::captcha::member_add(&self.0, state).await;
     }
 }
