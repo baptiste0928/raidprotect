@@ -1,12 +1,16 @@
-//! # RaidProtect model
+//! # RaidProtect models
 //!
-//! This crate contains models that represent the state of the bot.
+//! This crate contains the models used to store the data shared by the
+//! raidprotect components, such as the database or cache models. It also
+//! exports utilities to interact with the data.
 //!
-//! - Persistent state (guild configuration, moderation logs, ...) is stored in
-//! a MongoDB database. See [`mongodb`].
-//! - Cache and temporary state (pending components, ...) is stored in a Redis
-//! database. See [`cache`].
-//! - Runtime configuration. See [`config`].
+//! Most models derive the [`Serialize`] and [`Deserialize`] traits to convert
+//! them into the format used by the database. Some fields use a custom
+//! serializer/deserializer targeted to a specific format, and thus shouldn't be
+//! used with other formats.
+//!
+//! [`Serialize`]: ::serde::Serialize
+//! [`Deserialize`]: ::serde::Deserialize
 
 mod serde;
 
