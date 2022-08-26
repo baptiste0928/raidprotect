@@ -111,9 +111,8 @@ async fn configure_logs_channel(
 
     // Try to find an existing channel .
     let guild_channels = state.redis().guild_channels(guild).await?;
-    let logs_channel = guild_channels.iter().find(|channel| match channel {
-        CachedChannel::Text(channel) => channel.name == DEFAULT_LOGS_NAME,
-        _ => false,
+    let logs_channel = guild_channels.iter().find(|channel| {
+        channel.kind == ChannelType::GuildText && channel.name == DEFAULT_LOGS_NAME
     });
 
     let logs_channel = match logs_channel {
@@ -149,13 +148,13 @@ async fn update_logs_permissions(
 
     if let Err(error) = state
         .cache_http(guild)
-        .update_channel_permission(channel.id(), &permission_overwrite)
+        .update_channel_permission(channel.id, &permission_overwrite)
         .await
     {
         warn!(error = ?error, guild = ?guild, "failed to update existing logs channel permissions");
     }
 
-    channel.id()
+    channel.id
 }
 
 /// Create a new logs channel in the guild.

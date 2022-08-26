@@ -177,12 +177,14 @@ impl<'a> CachePermissions<'a> {
             .context("channel not found in cache")?;
 
         // If the channel is a thread, get the parent channel.
-        if let CachedChannel::Thread(thread) = channel {
-            channel = self
-                .redis
-                .get::<CachedChannel>(&thread.parent_id)
-                .await?
-                .context("parent channel not found in cache")?;
+        if channel.is_thread() {
+            if let Some(parent_id) = channel.parent_id {
+                channel = self
+                    .redis
+                    .get::<CachedChannel>(&parent_id)
+                    .await?
+                    .context("parent channel not found in cache")?;
+            }
         }
 
         // TODO: extract this into a function
@@ -197,8 +199,9 @@ impl<'a> CachePermissions<'a> {
         let calculator =
             PermissionCalculator::new(self.guild_id, self.member_id, everyone_role, &member_roles);
 
-        let kind = channel.kind();
-        let permissions = calculator.in_channel(kind, channel.permissions());
+        let kind = channel.kind;
+        let permissions =
+            calculator.in_channel(kind, &channel.permission_overwrites.unwrap_or_default());
 
         Ok((permissions, kind))
     }

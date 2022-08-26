@@ -3,12 +3,13 @@
 //! This module contains functions to update the cache from Discord models. The
 //! various functions convert the value into the one used in the cache.
 
-use std::{collections::HashSet, error::Error, fmt};
+use std::collections::HashSet;
 
+use anyhow::Context;
 use redis::Pipeline;
 use tracing::error;
 use twilight_model::{
-    channel::{Channel, ChannelType},
+    channel::Channel,
     guild::{Guild, Role},
     id::{
         marker::{ApplicationMarker, GuildMarker},
@@ -17,10 +18,7 @@ use twilight_model::{
 };
 
 use crate::cache::{
-    model::{
-        CachedCategoryChannel, CachedChannel, CachedGuild, CachedRole, CachedTextChannel,
-        CachedThread, CachedVoiceChannel, CurrentMember,
-    },
+    model::{CachedChannel, CachedGuild, CachedRole, CurrentMember},
     RedisModel,
 };
 
@@ -103,120 +101,20 @@ pub fn cache_role(
 }
 
 pub fn cache_guild_channel(pipe: &mut Pipeline, channel: &Channel) -> Result<(), anyhow::Error> {
-    // KEEP IN SYNC with `is_cached` in `model/src/cache/model/channel.rs`.
-    match channel.kind {
-        ChannelType::GuildText | ChannelType::GuildNews => cache_text_channel(pipe, channel),
-        ChannelType::GuildVoice | ChannelType::GuildStageVoice => {
-            cache_voice_channel(pipe, channel)
-        }
-        ChannelType::GuildCategory => cache_category_channel(pipe, channel),
-        ChannelType::GuildNewsThread
-        | ChannelType::GuildPublicThread
-        | ChannelType::GuildPrivateThread => cache_thread(pipe, channel),
-        // Other channels types are explicitly ignored to trigger a compiler
-        // error if a new type is added.
-        ChannelType::Private
-        | ChannelType::Group
-        | ChannelType::GuildDirectory
-        | ChannelType::GuildForum  // TODO: #133
-        | ChannelType::Unknown(_) => Ok(()),
+    if CachedChannel::is_cached(channel.kind) {
+        let cached = CachedChannel {
+            id: channel.id,
+            guild_id: channel.guild_id.context("missing guild id")?,
+            kind: channel.kind,
+            name: channel.name.clone().context("missing channel name")?,
+            parent_id: channel.parent_id,
+            permission_overwrites: channel.permission_overwrites.clone(),
+            position: channel.position,
+            rate_limit_per_user: channel.rate_limit_per_user,
+        };
+
+        pipe.set(cached.key(), cached.serialize_model()?);
     }
-}
-
-pub fn cache_text_channel(pipe: &mut Pipeline, channel: &Channel) -> Result<(), anyhow::Error> {
-    let cached = CachedChannel::from(CachedTextChannel {
-        id: channel.id,
-        guild_id: channel.guild_id.ok_or(CacheError::GuildId)?,
-        name: channel.name.as_ref().ok_or(CacheError::Name)?.clone(),
-        parent_id: channel.parent_id,
-        position: channel.position.ok_or(CacheError::Position)?,
-        permission_overwrites: channel
-            .permission_overwrites
-            .as_ref()
-            .ok_or(CacheError::PermissionOverwrites)?
-            .clone(),
-        rate_limit_per_user: channel.rate_limit_per_user,
-    });
-
-    pipe.set(cached.key(), cached.serialize_model()?);
 
     Ok(())
-}
-
-fn cache_voice_channel(pipe: &mut Pipeline, channel: &Channel) -> Result<(), anyhow::Error> {
-    let cached = CachedChannel::from(CachedVoiceChannel {
-        id: channel.id,
-        guild_id: channel.guild_id.ok_or(CacheError::GuildId)?,
-        name: channel.name.as_ref().ok_or(CacheError::Name)?.clone(),
-        parent_id: channel.parent_id,
-        position: channel.position.ok_or(CacheError::Position)?,
-        permission_overwrites: channel
-            .permission_overwrites
-            .as_ref()
-            .ok_or(CacheError::PermissionOverwrites)?
-            .clone(),
-    });
-
-    pipe.set(cached.key(), cached.serialize_model()?);
-
-    Ok(())
-}
-
-pub fn cache_category_channel(pipe: &mut Pipeline, channel: &Channel) -> Result<(), anyhow::Error> {
-    let cached = CachedChannel::from(CachedCategoryChannel {
-        id: channel.id,
-        guild_id: channel.guild_id.ok_or(CacheError::GuildId)?,
-        name: channel.name.as_ref().ok_or(CacheError::Name)?.clone(),
-        position: channel.position.ok_or(CacheError::Position)?,
-        permission_overwrites: channel
-            .permission_overwrites
-            .as_ref()
-            .ok_or(CacheError::PermissionOverwrites)?
-            .clone(),
-    });
-
-    pipe.set(cached.key(), cached.serialize_model()?);
-
-    Ok(())
-}
-
-pub fn cache_thread(pipe: &mut Pipeline, thread: &Channel) -> Result<(), anyhow::Error> {
-    let cached = CachedChannel::from(CachedThread {
-        id: thread.id,
-        guild_id: thread.guild_id.ok_or(CacheError::GuildId)?,
-        name: thread.name.as_ref().ok_or(CacheError::Name)?.clone(),
-        private: false,
-        parent_id: thread.parent_id.ok_or(CacheError::ParentId)?,
-        rate_limit_per_user: thread.rate_limit_per_user,
-    });
-
-    pipe.set(cached.key(), cached.serialize_model()?);
-
-    Ok(())
-}
-
-/// Error occurred when caching resource.
-#[derive(Debug)]
-pub enum CacheError {
-    GuildId,
-    Name,
-    Position,
-    PermissionOverwrites,
-    ParentId,
-}
-
-impl Error for CacheError {}
-
-impl fmt::Display for CacheError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            CacheError::GuildId => f.write_str("missing guild id"),
-            CacheError::Name => f.write_str("missing channel name"),
-            CacheError::Position => f.write_str("missing channel position"),
-            CacheError::PermissionOverwrites => {
-                f.write_str("missing channel permission overwrites")
-            }
-            CacheError::ParentId => f.write_str("missing thread parent id"),
-        }
-    }
 }

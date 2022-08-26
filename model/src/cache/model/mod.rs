@@ -15,7 +15,5 @@ pub mod message;
 mod channel;
 mod guild;
 
-pub use channel::{
-    CachedCategoryChannel, CachedChannel, CachedTextChannel, CachedThread, CachedVoiceChannel,
-};
+pub use channel::CachedChannel;
 pub use guild::{CachedGuild, CachedRole, CurrentMember};
