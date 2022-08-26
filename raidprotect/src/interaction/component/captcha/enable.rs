@@ -299,15 +299,19 @@ async fn configure_channels(
 
     for channel in guild_channels {
         // Permissions are not updated for the verification channel.
-        if channel.id() == verification {
+        if channel.id == verification {
             continue;
         }
 
-        match channel {
-            CachedChannel::Category(_) => categories.push(channel),
-            CachedChannel::Text(channel) => channels.push(channel.id),
-            CachedChannel::Voice(channel) => channels.push(channel.id),
-            CachedChannel::Thread(_) => continue, // threads inherit from their parent channel
+        // Threads inherit permissions from their parent channel.
+        if channel.is_thread() {
+            continue;
+        }
+
+        if channel.kind == ChannelType::GuildCategory {
+            categories.push(channel);
+        } else {
+            channels.push(channel.id);
         }
     }
 
@@ -349,13 +353,15 @@ async fn update_channel_permissions(
     guild: Id<GuildMarker>,
     role: Id<RoleMarker>,
 ) -> Result<(), anyhow::Error> {
-    trace!(channel = ?channel.id(), role = ?role, guild = ?guild, "updating channel permissions for captcha");
+    trace!(channel = ?channel.id, role = ?role, guild = ?guild, "updating channel permissions for captcha");
 
     // Get permissions for the unverified role. The permissions for everyone
     // are also retrieved to avoid updating permissions unnecessarily for private
     // channels.
-    let role_permissions = channel.permissions().iter().find(|p| p.id == role.cast());
-    let everyone_permissions = channel.permissions().iter().find(|p| p.id == guild.cast());
+    let permissions = channel.permission_overwrites.clone().unwrap_or_default();
+
+    let role_permissions = permissions.iter().find(|p| p.id == role.cast());
+    let everyone_permissions = permissions.iter().find(|p| p.id == guild.cast());
 
     // Skip updating permissions if the channel is private.
     if everyone_permissions
@@ -387,7 +393,7 @@ async fn update_channel_permissions(
 
     if let Err(error) = state
         .http()
-        .update_channel_permission(channel.id(), &permission_overwrite)
+        .update_channel_permission(channel.id, &permission_overwrite)
         .exec()
         .await
     {
