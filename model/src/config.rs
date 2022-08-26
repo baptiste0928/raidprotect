@@ -1,7 +1,7 @@
 //! Runtime configuration model.
 //!
 //! This module contains the models used to configure the binary crates. The
-//! values are loaded at runtime from environement variables prefixed with
+//! values are loaded at runtime from environment variables prefixed with
 //! `RAIDPROTECT_` (see [`parse_config`]). These variables can be loaded from
 //! a `.env` file.
 
