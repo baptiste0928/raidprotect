@@ -14,7 +14,7 @@ use twilight_model::{
 
 use crate::{
     cache::RedisModel,
-    mongodb::modlog::ModlogType,
+    database::model::ModlogType,
     serde::{DateTimeAsI64, IdAsU64},
 };
 

@@ -16,4 +16,4 @@ mod serde;
 
 pub mod cache;
 pub mod config;
-pub mod mongodb;
+pub mod database;
