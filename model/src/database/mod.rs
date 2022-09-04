@@ -10,7 +10,7 @@
 //!
 //! Each collection name is exported as an associated constant.
 //!
-//! [Guild]: guild::Guild
+//! [GuildConfig]: guild::GuildConfig
 //! [Modlog]: modlog::Modlog
 
 mod client;

@@ -53,7 +53,7 @@ impl GuildConfig {
     /// Name of the MongoDB collection.
     pub const COLLECTION: &'static str = "guilds";
 
-    /// Initialize a new [`Guild`] with default configuration.
+    /// Initialize a new [`GuildConfig`] with default configuration.
     pub fn new(id: Id<GuildMarker>) -> Self {
         Self {
             id,
@@ -174,7 +174,7 @@ impl DbClient {
         guild.context("no guild sent by the database")
     }
 
-    /// Update or insert a [`Guild`] in the database.
+    /// Update or insert a [`GuildConfig`] in the database.
     pub async fn update_guild(&self, guild: &GuildConfig) -> Result<(), anyhow::Error> {
         let query = GuildQuery { id: guild.id };
         let options = options::ReplaceOptions::builder().upsert(true).build();

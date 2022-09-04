@@ -184,7 +184,7 @@ impl ClusterState {
         &self.redis
     }
 
-    /// Get the cluster [`MongoDbClient`].
+    /// Get the cluster [`DbClient`].
     pub fn mongodb(&self) -> &DbClient {
         &self.mongodb
     }
