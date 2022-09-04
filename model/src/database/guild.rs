@@ -1,20 +1,27 @@
 //! Models for the `guilds` collection.
 
+use anyhow::Context;
+use mongodb::{
+    bson::{doc, to_document},
+    options,
+};
 use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, skip_serializing_none, with_prefix};
+use serde_with::{serde_as, skip_serializing_none};
 use twilight_model::id::{
     marker::{ChannelMarker, GuildMarker, MessageMarker, RoleMarker},
     Id,
 };
 
+use super::DbClient;
 use crate::serde::IdAsI64;
 
 /// Guild configuration.
 ///
-/// This struct correspond to documents stored in the `guilds` collection.
+/// This type represent a guild configuration stored in the `guilds` collection
+/// of the database.
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-pub struct Guild {
+pub struct GuildConfig {
     /// Discord guild id.
     #[serde_as(as = "IdAsI64")]
     #[serde(rename = "_id")]
@@ -28,33 +35,33 @@ pub struct Guild {
     #[serde(default)]
     pub logs_chan: Option<Id<ChannelMarker>>,
     /// Lang used for the global guild messages.
-    #[serde(default = "Guild::default_lang")]
+    #[serde(default = "default_lang")]
     pub lang: String,
     /// The moderation module configuration.
-    #[serde(default, flatten, with = "prefix_moderation")]
-    pub moderation: Moderation,
+    #[serde(default)]
+    pub moderation: ModerationConfig,
     /// The captcha module configuration.
-    #[serde(default, flatten, with = "prefix_captcha")]
-    pub captcha: Captcha,
+    #[serde(default)]
+    pub captcha: CaptchaConfig,
 }
 
-impl Guild {
+fn default_lang() -> String {
+    "fr".to_string() // TODO: change default lang to english
+}
+
+impl GuildConfig {
     /// Name of the MongoDB collection.
     pub const COLLECTION: &'static str = "guilds";
 
-    /// Initialize a new [`Guild`] with default configuration.
+    /// Initialize a new [`GuildConfig`] with default configuration.
     pub fn new(id: Id<GuildMarker>) -> Self {
         Self {
             id,
             logs_chan: None,
-            lang: Self::default_lang(),
-            moderation: Moderation::default(),
-            captcha: Captcha::default(),
+            lang: default_lang(),
+            moderation: ModerationConfig::default(),
+            captcha: CaptchaConfig::default(),
         }
-    }
-
-    fn default_lang() -> String {
-        "fr".to_string() // TODO: change default lang to english
     }
 }
 
@@ -62,7 +69,7 @@ impl Guild {
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 #[serde(default)]
-pub struct Moderation {
+pub struct ModerationConfig {
     /// The moderator roles, allowed to access to guild modlogs.
     #[serde_as(as = "Vec<IdAsI64>")]
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -77,7 +84,7 @@ pub struct Moderation {
     pub anonymize: bool,
 }
 
-impl Default for Moderation {
+impl Default for ModerationConfig {
     fn default() -> Self {
         Self {
             roles: Vec::new(),
@@ -87,14 +94,12 @@ impl Default for Moderation {
     }
 }
 
-with_prefix!(prefix_moderation "moderation_");
-
 /// Configuration for the captcha module.
 #[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Default, Clone, PartialEq, Eq)]
 #[serde(default)]
-pub struct Captcha {
+pub struct CaptchaConfig {
     /// Whether the captcha is enabled.
     pub enabled: bool,
     /// Channel used to send the captcha message.
@@ -121,9 +126,73 @@ pub struct Captcha {
     pub logs: Option<Id<ChannelMarker>>,
 }
 
-impl Captcha {
+impl CaptchaConfig {
     /// Max length of the `verified_roles` field.
     pub const MAX_VERIFIED_ROLES_LEN: usize = 5;
 }
 
-with_prefix!(prefix_captcha "captcha_");
+// Implementation of methods to query the database.
+impl DbClient {
+    /// Get the [`GuildConfig`] for a given guild_id, if it exists.
+    pub async fn get_guild(
+        &self,
+        guild_id: Id<GuildMarker>,
+    ) -> Result<Option<GuildConfig>, anyhow::Error> {
+        let query = GuildQuery { id: guild_id };
+
+        let guild = self
+            .db()
+            .collection::<GuildConfig>(GuildConfig::COLLECTION)
+            .find_one(to_document(&query)?, None)
+            .await?;
+
+        Ok(guild)
+    }
+
+    /// Get the [`GuildConfig`] for a given guild_id, or create it with default configuration.
+    pub async fn get_guild_or_create(
+        &self,
+        guild_id: Id<GuildMarker>,
+    ) -> Result<GuildConfig, anyhow::Error> {
+        let query = GuildQuery { id: guild_id };
+        let default_guild = GuildConfig::new(guild_id);
+        let options = options::FindOneAndUpdateOptions::builder()
+            .upsert(true)
+            .return_document(options::ReturnDocument::After)
+            .build();
+
+        let guild = self
+            .db()
+            .collection::<GuildConfig>(GuildConfig::COLLECTION)
+            .find_one_and_update(
+                to_document(&query)?,
+                doc! { "$setOnInsert": to_document(&default_guild)? },
+                options,
+            )
+            .await?;
+
+        guild.context("no guild sent by the database")
+    }
+
+    /// Update or insert a [`GuildConfig`] in the database.
+    pub async fn update_guild(&self, guild: &GuildConfig) -> Result<(), anyhow::Error> {
+        let query = GuildQuery { id: guild.id };
+        let options = options::ReplaceOptions::builder().upsert(true).build();
+
+        self.db()
+            .collection::<GuildConfig>(GuildConfig::COLLECTION)
+            .replace_one(to_document(&query)?, guild, options)
+            .await?;
+
+        Ok(())
+    }
+}
+
+/// Query a guild with its guild_id
+#[serde_as]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+struct GuildQuery {
+    #[serde_as(as = "IdAsI64")]
+    #[serde(rename = "_id")]
+    pub id: Id<GuildMarker>,
+}

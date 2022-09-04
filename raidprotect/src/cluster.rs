@@ -7,7 +7,7 @@ use futures::StreamExt;
 use raidprotect_model::{
     cache::{http::CacheHttp, RedisClient},
     config::BotConfig,
-    mongodb::MongoDbClient,
+    database::DbClient,
 };
 use tracing::{info, info_span, instrument, trace};
 use twilight_gateway::{cluster::Events, Cluster, Intents};
@@ -62,7 +62,7 @@ impl ShardCluster {
         let redis = RedisClient::new(&config.database.redis_uri).await?;
         redis.ping().await.context("failed to connect to redis")?;
 
-        let mongodb = MongoDbClient::connect(
+        let mongodb = DbClient::connect(
             &config.database.mongodb_uri,
             config.database.mongodb_database,
         )
@@ -156,7 +156,7 @@ pub struct ClusterState {
     /// In-memory cache
     redis: RedisClient,
     /// MongoDB client
-    mongodb: MongoDbClient,
+    mongodb: DbClient,
     /// Http client
     http: Arc<HttpClient>,
     /// Bot user id
@@ -167,7 +167,7 @@ impl ClusterState {
     /// Initialize a new [`ClusterState`].
     pub fn new(
         redis: RedisClient,
-        mongodb: MongoDbClient,
+        mongodb: DbClient,
         http: Arc<HttpClient>,
         current_user: Id<ApplicationMarker>,
     ) -> Self {
@@ -184,8 +184,8 @@ impl ClusterState {
         &self.redis
     }
 
-    /// Get the cluster [`MongoDbClient`].
-    pub fn mongodb(&self) -> &MongoDbClient {
+    /// Get the cluster [`DbClient`].
+    pub fn mongodb(&self) -> &DbClient {
         &self.mongodb
     }
 

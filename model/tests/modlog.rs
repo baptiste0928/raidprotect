@@ -1,6 +1,6 @@
 use mongodb::bson::{self, oid::ObjectId, DateTime};
 use pretty_assertions::assert_eq;
-use raidprotect_model::mongodb::modlog::{Modlog, ModlogType, ModlogUser};
+use raidprotect_model::database::model::{Modlog, ModlogType, ModlogUser};
 use serde_test::{assert_tokens, Configure, Token};
 use time::OffsetDateTime;
 use twilight_model::{id::Id, util::ImageHash};
