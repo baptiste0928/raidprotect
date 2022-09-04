@@ -1,46 +1,61 @@
 use mongodb::bson;
 use pretty_assertions::assert_eq;
-use raidprotect_model::mongodb::guild::{Captcha, Guild, Moderation};
+use raidprotect_model::database::model::{CaptchaConfig, GuildConfig, ModerationConfig};
 use serde_test::{assert_tokens, Token};
 use twilight_model::id::Id;
 
 #[test]
 fn test_guild_default() {
-    let guild = Guild::new(Id::new(1));
+    let guild = GuildConfig::new(Id::new(1));
 
     assert_tokens(
         &guild,
         &[
-            Token::Map { len: None },
+            Token::Struct {
+                name: "GuildConfig",
+                len: 5,
+            },
             Token::Str("_id"),
             Token::I64(1),
             Token::Str("logs_chan"),
             Token::None,
             Token::Str("lang"),
             Token::Str("fr"),
-            Token::Str("moderation_enforce_reason"),
+            Token::Str("moderation"),
+            Token::Struct {
+                name: "ModerationConfig",
+                len: 2,
+            },
+            Token::Str("enforce_reason"),
             Token::Bool(false),
-            Token::Str("moderation_anonymize"),
+            Token::Str("anonymize"),
             Token::Bool(true),
-            Token::Str("captcha_enabled"),
+            Token::StructEnd,
+            Token::Str("captcha"),
+            Token::Struct {
+                name: "CaptchaConfig",
+                len: 1,
+            },
+            Token::Str("enabled"),
             Token::Bool(false),
-            Token::MapEnd,
+            Token::StructEnd,
+            Token::StructEnd,
         ],
     );
 }
 
 #[test]
 fn test_guild_full() {
-    let guild = Guild {
+    let guild = GuildConfig {
         id: Id::new(1),
         logs_chan: Some(Id::new(2)),
         lang: "en".to_string(),
-        moderation: Moderation {
+        moderation: ModerationConfig {
             roles: vec![Id::new(3), Id::new(4)],
             enforce_reason: true,
             anonymize: false,
         },
-        captcha: Captcha {
+        captcha: CaptchaConfig {
             enabled: true,
             channel: Some(Id::new(5)),
             message: Some(Id::new(6)),
@@ -53,7 +68,10 @@ fn test_guild_full() {
     assert_tokens(
         &guild,
         &[
-            Token::Map { len: None },
+            Token::Struct {
+                name: "GuildConfig",
+                len: 5,
+            },
             Token::Str("_id"),
             Token::I64(1),
             Token::Str("logs_chan"),
@@ -61,51 +79,65 @@ fn test_guild_full() {
             Token::I64(2),
             Token::Str("lang"),
             Token::Str("en"),
-            Token::Str("moderation_roles"),
+            // moderation
+            Token::Str("moderation"),
+            Token::Struct {
+                name: "ModerationConfig",
+                len: 3,
+            },
+            Token::Str("roles"),
             Token::Seq { len: Some(2) },
             Token::I64(3),
             Token::I64(4),
             Token::SeqEnd,
-            Token::Str("moderation_enforce_reason"),
+            Token::Str("enforce_reason"),
             Token::Bool(true),
-            Token::Str("moderation_anonymize"),
+            Token::Str("anonymize"),
             Token::Bool(false),
-            Token::Str("captcha_enabled"),
+            Token::StructEnd,
+            // captcha
+            Token::Str("captcha"),
+            Token::Struct {
+                name: "CaptchaConfig",
+                len: 6,
+            },
+            Token::Str("enabled"),
             Token::Bool(true),
-            Token::Str("captcha_channel"),
+            Token::Str("channel"),
             Token::Some,
             Token::I64(5),
-            Token::Str("captcha_message"),
+            Token::Str("message"),
             Token::Some,
             Token::I64(6),
-            Token::Str("captcha_role"),
+            Token::Str("role"),
             Token::Some,
             Token::I64(7),
-            Token::Str("captcha_verified_roles"),
+            Token::Str("verified_roles"),
             Token::Seq { len: Some(2) },
             Token::I64(8),
             Token::I64(9),
             Token::SeqEnd,
-            Token::Str("captcha_logs"),
+            Token::Str("logs"),
             Token::Some,
             Token::I64(10),
-            Token::MapEnd,
+            Token::StructEnd,
+            Token::StructEnd,
         ],
     );
 }
 
 #[test]
 fn test_guild_bson() {
-    let guild = Guild {
+    let guild = GuildConfig {
         id: Id::new(1),
         logs_chan: Some(Id::new(2)),
         lang: "en".to_string(),
-        moderation: Moderation {
+        moderation: ModerationConfig {
             roles: vec![Id::new(3), Id::new(4)],
             enforce_reason: true,
             anonymize: false,
         },
-        captcha: Captcha {
+        captcha: CaptchaConfig {
             enabled: true,
             channel: Some(Id::new(5)),
             message: Some(Id::new(6)),
@@ -119,17 +151,21 @@ fn test_guild_bson() {
         "_id": 1_i64,
         "logs_chan": 2_i64,
         "lang": "en".to_string(),
-        "moderation_roles": [3_i64, 4_i64],
-        "moderation_enforce_reason": true,
-        "moderation_anonymize": false,
-        "captcha_enabled": true,
-        "captcha_channel": 5_i64,
-        "captcha_message": 6_i64,
-        "captcha_role": 7_i64,
-        "captcha_verified_roles": [8_i64, 9_i64],
-        "captcha_logs": 10_i64,
+        "moderation": {
+            "roles": [3_i64, 4_i64],
+            "enforce_reason": true,
+            "anonymize": false,
+        },
+        "captcha": {
+            "enabled": true,
+            "channel": 5_i64,
+            "message": 6_i64,
+            "role": 7_i64,
+            "verified_roles": [8_i64, 9_i64],
+            "logs": 10_i64,
+        },
     };
 
     assert_eq!(bson::to_document(&guild).unwrap(), expected);
-    assert_eq!(bson::from_document::<Guild>(expected).unwrap(), guild);
+    assert_eq!(bson::from_document::<GuildConfig>(expected).unwrap(), guild);
 }
