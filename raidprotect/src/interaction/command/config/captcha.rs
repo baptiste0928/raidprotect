@@ -1,7 +1,7 @@
 //! Captcha configuration commands.
 
 use anyhow::bail;
-use raidprotect_model::{cache::permission::RoleOrdering, mongodb::guild::Captcha};
+use raidprotect_model::{cache::permission::RoleOrdering, database::model::CaptchaConfig};
 use twilight_interactions::command::{CommandModel, CreateCommand};
 use twilight_mention::Mention;
 use twilight_model::{
@@ -316,7 +316,7 @@ impl CaptchaAutoroleAddCommand {
             return Ok(embed::captcha::role_already_added(lang));
         }
 
-        if config.captcha.verified_roles.len() >= Captcha::MAX_VERIFIED_ROLES_LEN {
+        if config.captcha.verified_roles.len() >= CaptchaConfig::MAX_VERIFIED_ROLES_LEN {
             return Ok(embed::captcha::role_too_many(lang));
         }
 

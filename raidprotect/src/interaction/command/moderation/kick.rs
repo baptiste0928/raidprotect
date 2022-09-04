@@ -9,7 +9,7 @@
 //! reason of the kick.
 
 use anyhow::Context;
-use raidprotect_model::{cache::model::interaction::PendingSanction, mongodb::modlog::ModlogType};
+use raidprotect_model::{cache::model::interaction::PendingSanction, database::model::ModlogType};
 use twilight_interactions::command::{CommandModel, CreateCommand, ResolvedUser};
 use twilight_model::{
     application::{
