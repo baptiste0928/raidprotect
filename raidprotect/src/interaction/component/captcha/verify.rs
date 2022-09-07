@@ -1,6 +1,6 @@
 //! Captcha verification button and modal.
 
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use anyhow::Context;
 use raidprotect_captcha::{code::random_human_code, generate_captcha_png};
@@ -48,7 +48,7 @@ impl CaptchaVerifyButton {
     #[instrument(skip(state))]
     pub async fn handle(
         interaction: Interaction,
-        state: Arc<ClusterState>,
+        state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let guild = interaction.guild()?;
         let author = interaction.author_id().context("missing author_id")?;
@@ -71,8 +71,9 @@ impl CaptchaVerifyButton {
 
         // Captcha has been regenerated too many times.
         if captcha.regenerate_count >= captcha::MAX_RETRY {
+            let state_clone = state.clone();
             tokio::spawn(kick_after(
-                state,
+                state_clone,
                 guild.id,
                 author,
                 captcha::KICK_AFTER,
@@ -137,7 +138,7 @@ impl CaptchaVerifyButton {
 }
 
 async fn kick_after(
-    state: Arc<ClusterState>,
+    state: ClusterState,
     guild: Id<GuildMarker>,
     user: Id<UserMarker>,
     after: Duration,
@@ -168,7 +169,7 @@ impl CaptchaValidateButton {
     #[instrument(skip(state))]
     pub async fn handle(
         interaction: Interaction,
-        state: Arc<ClusterState>,
+        state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let guild = interaction.guild()?;
         let author = interaction.author_id().context("missing author_id")?;

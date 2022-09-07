@@ -1,7 +1,5 @@
 //! Handle `MemberAdd` event.
 
-use std::sync::Arc;
-
 use raidprotect_model::cache::model::interaction::PendingCaptcha;
 use time::{Duration, OffsetDateTime};
 use tracing::{debug, error, instrument};
@@ -11,13 +9,13 @@ use twilight_model::guild::Member;
 use crate::{cluster::ClusterState, feature::captcha, translations::Lang};
 
 /// Handle `MemberAdd` event.
-pub async fn member_add(member: &Member, state: Arc<ClusterState>) {
+pub async fn member_add(member: &Member, state: &ClusterState) {
     if let Err(error) = member_add_inner(member, state).await {
         error!(error = ?error, member = ?member, "error while processing `MemberAdd` event");
     }
 }
 
-async fn member_add_inner(member: &Member, state: Arc<ClusterState>) -> Result<(), anyhow::Error> {
+async fn member_add_inner(member: &Member, state: &ClusterState) -> Result<(), anyhow::Error> {
     // Ensure the member has joined recently to ignore members sent on bot
     // startup.
     let now = OffsetDateTime::now_utc();
@@ -67,15 +65,16 @@ async fn member_add_inner(member: &Member, state: Arc<ClusterState>) -> Result<(
         expires_at: OffsetDateTime::now_utc() + captcha::DEFAULT_DURATION,
     };
 
+    let state_clone = state.clone();
     state.cache.set(&pending_captcha).await?;
-    tokio::spawn(captcha_expire(state, pending_captcha, lang));
+    tokio::spawn(captcha_expire(state_clone, pending_captcha, lang));
 
     Ok(())
 }
 
 /// Kick the user if the captcha has not been validated in time.
 #[instrument(skip(state))]
-async fn captcha_expire(state: Arc<ClusterState>, captcha: PendingCaptcha, lang: Lang) {
+async fn captcha_expire(state: ClusterState, captcha: PendingCaptcha, lang: Lang) {
     // Sleep until the captcha expiration.
     let duration = captcha.expires_at - OffsetDateTime::now_utc();
 

@@ -1,7 +1,5 @@
 //! Captcha disable button.
 
-use std::sync::Arc;
-
 use anyhow::Context;
 use tracing::{error, warn};
 use twilight_http::request::AuditLogReason;
@@ -38,7 +36,7 @@ pub struct CaptchaDisable;
 impl CaptchaDisable {
     pub async fn handle(
         interaction: Interaction,
-        state: Arc<ClusterState>,
+        state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let guild = interaction.guild()?;
         let lang = interaction.locale()?;
@@ -82,9 +80,16 @@ impl CaptchaDisable {
         state.database.update_guild(&config).await?;
 
         // Send message in logs channel.
+        let state_clone = state.clone();
         tokio::spawn(async move {
-            if let Err(error) =
-                logs_message(state, guild.id, config.logs_chan, author_id, guild_lang).await
+            if let Err(error) = logs_message(
+                &state_clone,
+                guild.id,
+                config.logs_chan,
+                author_id,
+                guild_lang,
+            )
+            .await
             {
                 error!(error = ?error, guild = ?guild.id, "failed to send captcha disable logs message");
             }
@@ -102,13 +107,13 @@ impl CaptchaDisable {
 }
 
 async fn logs_message(
-    state: Arc<ClusterState>,
+    state: &ClusterState,
     guild: Id<GuildMarker>,
     logs_channel: Option<Id<ChannelMarker>>,
     user: Id<UserMarker>,
     lang: Lang,
 ) -> Result<(), anyhow::Error> {
-    let channel = guild_logs_channel(&state, guild, logs_channel, lang).await?;
+    let channel = guild_logs_channel(state, guild, logs_channel, lang).await?;
 
     let embed = EmbedBuilder::new()
         .color(COLOR_RED)

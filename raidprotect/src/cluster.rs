@@ -38,7 +38,7 @@ pub struct ShardCluster {
     /// Events stream
     events: Events,
     /// Shared cluster state
-    state: Arc<ClusterState>,
+    state: ClusterState,
 }
 
 impl ShardCluster {
@@ -92,7 +92,7 @@ impl ShardCluster {
         Ok(Self {
             cluster: Arc::new(cluster),
             events,
-            state: Arc::new(state),
+            state,
         })
     }
 

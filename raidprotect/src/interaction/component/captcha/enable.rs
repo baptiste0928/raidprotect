@@ -1,6 +1,6 @@
 //! Captcha enable button.
 
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use anyhow::Context;
 use raidprotect_model::cache::discord::{CachedChannel, CachedGuild};
@@ -55,7 +55,7 @@ pub struct CaptchaEnable;
 impl CaptchaEnable {
     pub async fn handle(
         interaction: Interaction,
-        state: Arc<ClusterState>,
+        state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let guild = interaction.guild()?;
         let cached_guild = state
@@ -204,7 +204,7 @@ impl CaptchaEnable {
         let state_clone = state.clone();
         tokio::spawn(async move {
             if let Err(error) = configure_channels(
-                state_clone,
+                &state_clone,
                 guild.id,
                 unverified_role.id,
                 verification_channel.id,
@@ -216,9 +216,16 @@ impl CaptchaEnable {
         });
 
         // Send message in logs channel.
+        let state_clone = state.clone();
         tokio::spawn(async move {
-            if let Err(error) =
-                logs_message(state, guild.id, config.logs_chan, author_id, guild_lang).await
+            if let Err(error) = logs_message(
+                &state_clone,
+                guild.id,
+                config.logs_chan,
+                author_id,
+                guild_lang,
+            )
+            .await
             {
                 error!(error = ?error, guild = ?guild.id, "failed to send captcha enable logs message");
             }
@@ -252,13 +259,13 @@ impl CaptchaEnable {
 /// Send a message in the logs channel to notify that the captcha has been
 /// enabled.
 async fn logs_message(
-    state: Arc<ClusterState>,
+    state: &ClusterState,
     guild: Id<GuildMarker>,
     logs_channel: Option<Id<ChannelMarker>>,
     user: Id<UserMarker>,
     lang: Lang,
 ) -> Result<(), anyhow::Error> {
-    let channel = guild_logs_channel(&state, guild, logs_channel, lang).await?;
+    let channel = guild_logs_channel(state, guild, logs_channel, lang).await?;
 
     let embed = EmbedBuilder::new()
         .color(COLOR_RED)
@@ -287,7 +294,7 @@ async fn logs_message(
 /// The category channels are iterated first, since a lot of channels can inherit
 /// from their permissions. The verification channel is skipped.
 async fn configure_channels(
-    state: Arc<ClusterState>,
+    state: &ClusterState,
     guild: Id<GuildMarker>,
     role: Id<RoleMarker>,
     verification: Id<ChannelMarker>,
@@ -319,7 +326,7 @@ async fn configure_channels(
     // This will reduce the number of requests to the API since a lot of channels
     // can inherit from their category.
     for channel in categories {
-        update_channel_permissions(&state, &channel, guild, role).await?;
+        update_channel_permissions(state, &channel, guild, role).await?;
     }
 
     // Small delay to ensure the cache is updated with the new permissions.
@@ -340,7 +347,7 @@ async fn configure_channels(
             }
         };
 
-        update_channel_permissions(&state, &channel, guild, role).await?;
+        update_channel_permissions(state, &channel, guild, role).await?;
     }
 
     Ok(())
