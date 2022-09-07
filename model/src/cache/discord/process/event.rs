@@ -12,8 +12,8 @@ use twilight_model::{
 };
 
 use crate::cache::{
-    model::{CachedChannel, CachedGuild, CachedRole, CurrentMember},
-    RedisClient, RedisModel,
+    discord::{CachedChannel, CachedGuild, CachedRole, CurrentMember},
+    CacheClient, RedisModel,
 };
 
 /// Update the cache based on event data.
@@ -33,7 +33,7 @@ pub trait UpdateCache {
     /// returned.
     async fn update(
         &self,
-        redis: &RedisClient,
+        redis: &CacheClient,
         current_user: Id<ApplicationMarker>,
     ) -> Result<(), anyhow::Error>;
 }
@@ -44,7 +44,7 @@ impl UpdateCache for GuildCreate {
 
     async fn update(
         &self,
-        redis: &RedisClient,
+        redis: &CacheClient,
         current_user: Id<ApplicationMarker>,
     ) -> Result<(), anyhow::Error> {
         let mut pipe = redis::pipe();
@@ -63,7 +63,7 @@ impl UpdateCache for GuildDelete {
 
     async fn update(
         &self,
-        redis: &RedisClient,
+        redis: &CacheClient,
         _current_user: Id<ApplicationMarker>,
     ) -> Result<(), anyhow::Error> {
         if let Some(guild) = redis.get::<CachedGuild>(&self.id).await? {
@@ -92,7 +92,7 @@ impl UpdateCache for UnavailableGuild {
 
     async fn update(
         &self,
-        redis: &RedisClient,
+        redis: &CacheClient,
         _current_user: Id<ApplicationMarker>,
     ) -> Result<(), anyhow::Error> {
         if let Some(mut guild) = redis.get::<CachedGuild>(&self.id).await? {
@@ -123,7 +123,7 @@ impl UpdateCache for GuildUpdate {
 
     async fn update(
         &self,
-        redis: &RedisClient,
+        redis: &CacheClient,
         _current_user: Id<ApplicationMarker>,
     ) -> Result<(), anyhow::Error> {
         if let Some(mut guild) = redis.get::<CachedGuild>(&self.id).await? {
@@ -143,7 +143,7 @@ impl UpdateCache for ChannelCreate {
 
     async fn update(
         &self,
-        redis: &RedisClient,
+        redis: &CacheClient,
         _current_user: Id<ApplicationMarker>,
     ) -> Result<(), anyhow::Error> {
         if let Some(guild_id) = self.guild_id {
@@ -177,7 +177,7 @@ impl UpdateCache for ChannelDelete {
 
     async fn update(
         &self,
-        redis: &RedisClient,
+        redis: &CacheClient,
         _current_user: Id<ApplicationMarker>,
     ) -> Result<(), anyhow::Error> {
         let mut pipe = redis::pipe();
@@ -206,7 +206,7 @@ impl UpdateCache for ChannelUpdate {
 
     async fn update(
         &self,
-        redis: &RedisClient,
+        redis: &CacheClient,
         _current_user: Id<ApplicationMarker>,
     ) -> Result<(), anyhow::Error> {
         if self.guild_id.is_none() {
@@ -233,7 +233,7 @@ impl UpdateCache for ThreadCreate {
 
     async fn update(
         &self,
-        redis: &RedisClient,
+        redis: &CacheClient,
         _current_user: Id<ApplicationMarker>,
     ) -> Result<(), anyhow::Error> {
         if let Some(guild_id) = self.guild_id {
@@ -265,7 +265,7 @@ impl UpdateCache for ThreadDelete {
 
     async fn update(
         &self,
-        redis: &RedisClient,
+        redis: &CacheClient,
         _current_user: Id<ApplicationMarker>,
     ) -> Result<(), anyhow::Error> {
         let mut pipe = redis::pipe();
@@ -292,7 +292,7 @@ impl UpdateCache for ThreadUpdate {
 
     async fn update(
         &self,
-        redis: &RedisClient,
+        redis: &CacheClient,
         _current_user: Id<ApplicationMarker>,
     ) -> Result<(), anyhow::Error> {
         if self.guild_id.is_none() {
@@ -319,7 +319,7 @@ impl UpdateCache for RoleCreate {
 
     async fn update(
         &self,
-        redis: &RedisClient,
+        redis: &CacheClient,
         _current_user: Id<ApplicationMarker>,
     ) -> Result<(), anyhow::Error> {
         let mut pipe = redis::pipe();
@@ -344,7 +344,7 @@ impl UpdateCache for RoleDelete {
 
     async fn update(
         &self,
-        redis: &RedisClient,
+        redis: &CacheClient,
         _current_user: Id<ApplicationMarker>,
     ) -> Result<(), anyhow::Error> {
         let mut pipe = redis::pipe();
@@ -369,7 +369,7 @@ impl UpdateCache for RoleUpdate {
 
     async fn update(
         &self,
-        redis: &RedisClient,
+        redis: &CacheClient,
         _current_user: Id<ApplicationMarker>,
     ) -> Result<(), anyhow::Error> {
         let mut pipe = redis::pipe();
@@ -388,7 +388,7 @@ impl UpdateCache for MemberAdd {
 
     async fn update(
         &self,
-        redis: &RedisClient,
+        redis: &CacheClient,
         current_user: Id<ApplicationMarker>,
     ) -> Result<(), anyhow::Error> {
         if self.user.id != current_user.cast() {
@@ -417,7 +417,7 @@ impl UpdateCache for MemberUpdate {
 
     async fn update(
         &self,
-        redis: &RedisClient,
+        redis: &CacheClient,
         current_user: Id<ApplicationMarker>,
     ) -> Result<(), anyhow::Error> {
         if self.user.id != current_user.cast() {

@@ -18,7 +18,7 @@ use twilight_model::{
 };
 
 use crate::cache::{
-    model::{CachedChannel, CachedGuild, CachedRole, CurrentMember},
+    discord::{CachedChannel, CachedGuild, CachedRole, CurrentMember},
     RedisModel,
 };
 

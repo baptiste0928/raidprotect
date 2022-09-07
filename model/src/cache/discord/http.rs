@@ -23,12 +23,13 @@ use twilight_model::{
     },
 };
 
-use super::{model::CachedRole, permission::RoleOrdering, redis::RedisClient};
+use super::{permission::RoleOrdering, CachedRole};
+use crate::cache::CacheClient;
 
 /// HTTP client with permission checks.
 #[derive(Debug)]
 pub struct CacheHttp<'a> {
-    redis: &'a RedisClient,
+    cache: &'a CacheClient,
     http: &'a HttpClient,
     guild_id: Id<GuildMarker>,
 }
@@ -36,12 +37,12 @@ pub struct CacheHttp<'a> {
 impl<'a> CacheHttp<'a> {
     /// Initialize a new [`CacheHttp`].
     pub(crate) fn new(
-        redis: &'a RedisClient,
+        cache: &'a CacheClient,
         http: &'a HttpClient,
         guild_id: Id<GuildMarker>,
     ) -> Self {
         Self {
-            redis,
+            cache,
             http,
             guild_id,
         }
@@ -61,7 +62,7 @@ impl<'a> CacheHttp<'a> {
         &self,
         channel: Id<ChannelMarker>,
     ) -> Result<CreateMessage<'a>, anyhow::Error> {
-        let permissions = self.redis.permissions(self.guild_id).await?;
+        let permissions = self.cache.permissions(self.guild_id).await?;
         let (permissions, kind) = permissions.current_member().await?.channel(channel).await?;
 
         let send_messages = if kind.is_thread() {
@@ -89,7 +90,7 @@ impl<'a> CacheHttp<'a> {
         name: &'a str,
     ) -> Result<CreateGuildChannel<'a>, anyhow::Error> {
         let permissions = self
-            .redis
+            .cache
             .permissions(self.guild_id)
             .await?
             .current_member()
@@ -116,7 +117,7 @@ impl<'a> CacheHttp<'a> {
         permission_overwrite: &'a PermissionOverwrite,
     ) -> Result<UpdateChannelPermission<'a>, anyhow::Error> {
         let permissions = self
-            .redis
+            .cache
             .permissions(self.guild_id)
             .await?
             .current_member()
@@ -144,7 +145,7 @@ impl<'a> CacheHttp<'a> {
         role_id: Id<RoleMarker>,
     ) -> Result<AddRoleToMember<'a>, anyhow::Error> {
         let permissions = self
-            .redis
+            .cache
             .permissions(self.guild_id)
             .await?
             .current_member()
@@ -154,7 +155,7 @@ impl<'a> CacheHttp<'a> {
             return Err(anyhow!("missing permissions to add role to member"));
         }
 
-        let role = match self.redis.get::<CachedRole>(&role_id).await? {
+        let role = match self.cache.get::<CachedRole>(&role_id).await? {
             Some(role) => role,
             None => return Err(anyhow!("role to add not found")),
         };
@@ -181,7 +182,7 @@ impl<'a> CacheHttp<'a> {
         user_id: Id<UserMarker>,
     ) -> Result<RemoveMember<'a>, anyhow::Error> {
         let permissions = self
-            .redis
+            .cache
             .permissions(self.guild_id)
             .await?
             .current_member()

@@ -5,7 +5,7 @@ use std::sync::Arc;
 use anyhow::Context;
 use futures::StreamExt;
 use raidprotect_model::{
-    cache::{http::CacheHttp, RedisClient},
+    cache::{discord::http::CacheHttp, CacheClient},
     config::BotConfig,
     database::DbClient,
 };
@@ -44,7 +44,7 @@ pub struct ShardCluster {
 impl ShardCluster {
     /// Initialize a new [`ShardCluster`].
     ///
-    /// This method also initialize an [`HttpClient`] and a [`RedisClient`],
+    /// This method also initialize an [`HttpClient`] and a [`CacheClient`],
     /// that can be later retrieved using corresponding methods.
     pub async fn new(config: BotConfig) -> Result<Self, anyhow::Error> {
         // Initialize HTTP client and get current user.
@@ -59,7 +59,7 @@ impl ShardCluster {
 
         info!("logged as {} with ID {}", application.name, current_user);
 
-        let redis = RedisClient::new(&config.database.redis_uri).await?;
+        let redis = CacheClient::connect(&config.database.redis_uri).await?;
         redis.ping().await.context("failed to connect to redis")?;
 
         let mongodb = DbClient::connect(
@@ -154,7 +154,7 @@ fn presence() -> UpdatePresencePayload {
 #[derive(Debug)]
 pub struct ClusterState {
     /// In-memory cache
-    redis: RedisClient,
+    redis: CacheClient,
     /// MongoDB client
     mongodb: DbClient,
     /// Http client
@@ -166,7 +166,7 @@ pub struct ClusterState {
 impl ClusterState {
     /// Initialize a new [`ClusterState`].
     pub fn new(
-        redis: RedisClient,
+        redis: CacheClient,
         mongodb: DbClient,
         http: Arc<HttpClient>,
         current_user: Id<ApplicationMarker>,
@@ -179,8 +179,8 @@ impl ClusterState {
         }
     }
 
-    /// Get the cluster [`RedisClient`].
-    pub fn redis(&self) -> &RedisClient {
+    /// Get the cluster [`CacheClient`].
+    pub fn redis(&self) -> &CacheClient {
         &self.redis
     }
 

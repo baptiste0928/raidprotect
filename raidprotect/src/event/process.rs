@@ -1,7 +1,7 @@
 use std::{fmt::Debug, sync::Arc};
 
 use async_trait::async_trait;
-use raidprotect_model::cache::UpdateCache;
+use raidprotect_model::cache::discord::UpdateCache;
 use tracing::{debug, error, trace};
 use twilight_model::gateway::{event::Event as GatewayEvent, payload::incoming};
 

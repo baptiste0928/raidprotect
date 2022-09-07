@@ -13,7 +13,7 @@ use std::collections::HashMap;
 
 use anyhow::{anyhow, Context};
 use once_cell::sync::Lazy;
-use raidprotect_model::cache::model::CachedChannel;
+use raidprotect_model::cache::discord::CachedChannel;
 use tokio::sync::{broadcast, RwLock};
 use tracing::{error, trace, warn};
 use twilight_model::{

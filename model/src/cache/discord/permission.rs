@@ -17,27 +17,25 @@ use twilight_model::{
 };
 use twilight_util::permission_calculator::PermissionCalculator;
 
-use super::{
-    model::{CachedChannel, CachedGuild, CachedRole},
-    redis::{RedisClient, RedisModel},
-};
+use super::{CachedChannel, CachedGuild, CachedRole};
+use crate::cache::{CacheClient, RedisModel};
 
 /// Calculate the permissions for a given guild.
 pub struct GuildPermissions<'a> {
-    redis: &'a RedisClient,
+    client: &'a CacheClient,
     guild: CachedGuild,
 }
 
 impl<'a> GuildPermissions<'a> {
     /// Initialize [`GuildPermissions`] with from a guild.
     pub(crate) async fn new(
-        redis: &'a RedisClient,
+        client: &'a CacheClient,
         guild_id: Id<GuildMarker>,
     ) -> Result<GuildPermissions<'a>, anyhow::Error> {
         trace!("initialize permissions for guild {}", guild_id);
 
-        if let Some(guild) = redis.get::<CachedGuild>(&guild_id).await? {
-            Ok(Self { redis, guild })
+        if let Some(guild) = client.get::<CachedGuild>(&guild_id).await? {
+            Ok(Self { client, guild })
         } else {
             Err(anyhow!("guild not found in cache"))
         }
@@ -62,7 +60,7 @@ impl<'a> GuildPermissions<'a> {
 
 /// Calculate the permissions of a member with information from the cache.
 pub struct CachePermissions<'a> {
-    redis: &'a RedisClient,
+    client: &'a CacheClient,
     guild_id: Id<GuildMarker>,
     member_id: Id<UserMarker>,
     member_roles: MemberRoles,
@@ -70,7 +68,7 @@ pub struct CachePermissions<'a> {
 }
 
 impl<'a> CachePermissions<'a> {
-    /// Initialize [`CachePermissions`] from a redis client.
+    /// Initialize [`CachePermissions`] from a cache client.
     ///
     /// If the guild is not found in the cache, [`None`] is returned.
     pub(crate) async fn new(
@@ -82,10 +80,10 @@ impl<'a> CachePermissions<'a> {
         let is_owner = member_id == guild_permissions.guild.owner_id;
 
         let member_roles =
-            MemberRoles::query(guild_permissions.redis, guild_id, member_roles.iter()).await?;
+            MemberRoles::query(guild_permissions.client, guild_id, member_roles.iter()).await?;
 
         Ok(Self {
-            redis: guild_permissions.redis,
+            client: guild_permissions.client,
             guild_id,
             member_id,
             member_roles,
@@ -107,10 +105,10 @@ impl<'a> CachePermissions<'a> {
         let is_owner = member.id == guild_permissions.guild.owner_id;
 
         let member_roles =
-            MemberRoles::query(guild_permissions.redis, guild_id, member.roles.iter()).await?;
+            MemberRoles::query(guild_permissions.client, guild_id, member.roles.iter()).await?;
 
         Ok(Self {
-            redis: guild_permissions.redis,
+            client: guild_permissions.client,
             guild_id,
             member_id: member.id,
             member_roles,
@@ -171,7 +169,7 @@ impl<'a> CachePermissions<'a> {
         channel: Id<ChannelMarker>,
     ) -> Result<(Permissions, ChannelType), anyhow::Error> {
         let mut channel = self
-            .redis
+            .client
             .get::<CachedChannel>(&channel)
             .await?
             .context("channel not found in cache")?;
@@ -180,7 +178,7 @@ impl<'a> CachePermissions<'a> {
         if channel.is_thread() {
             if let Some(parent_id) = channel.parent_id {
                 channel = self
-                    .redis
+                    .client
                     .get::<CachedChannel>(&parent_id)
                     .await?
                     .context("parent channel not found in cache")?;
@@ -218,7 +216,7 @@ struct MemberRoles {
 impl MemberRoles {
     /// Query roles of a member in the cache.
     async fn query(
-        redis: &RedisClient,
+        client: &CacheClient,
         guild_id: Id<GuildMarker>,
         member_roles: impl Iterator<Item = &Id<RoleMarker>>,
     ) -> Result<MemberRoles, anyhow::Error> {
@@ -230,7 +228,7 @@ impl MemberRoles {
             pipe.get(CachedRole::key_from(&role));
         }
 
-        let mut conn = redis.conn().await?;
+        let mut conn = client.conn().await?;
         let result: Vec<_> = pipe
             .query_async(&mut *conn)
             .await

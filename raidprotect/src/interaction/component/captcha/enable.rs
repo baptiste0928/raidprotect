@@ -3,7 +3,7 @@
 use std::{sync::Arc, time::Duration};
 
 use anyhow::Context;
-use raidprotect_model::cache::model::{CachedChannel, CachedGuild};
+use raidprotect_model::cache::discord::{CachedChannel, CachedGuild};
 use tracing::{debug, error, trace};
 use twilight_http::request::AuditLogReason;
 use twilight_mention::Mention;
