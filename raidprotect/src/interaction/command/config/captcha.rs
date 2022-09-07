@@ -1,7 +1,7 @@
 //! Captcha configuration commands.
 
 use anyhow::bail;
-use raidprotect_model::{cache::permission::RoleOrdering, database::model::CaptchaConfig};
+use raidprotect_model::{cache::discord::permission::RoleOrdering, database::model::CaptchaConfig};
 use twilight_interactions::command::{CommandModel, CreateCommand};
 use twilight_mention::Mention;
 use twilight_model::{

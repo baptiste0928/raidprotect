@@ -1,14 +1,9 @@
-//! Custom cache used to store Discord objects.
+//! Discord cache models and event processing.
 //!
-//! This cache is based on Redis and store Discord objects used by the bot
-//! including guilds, channels and roles. The cache is built to use as little
-//! memory as possible, and such only store useful fields.
-//!
-//! ## Access the cache data
-//! The cache can be queried using [`RedisClient`]. Higher-level interfaces are
-//! also provided to use the cache data: the [`permission`] allow to compute
-//! permissions for a user using cached data, and [`http`] allow to perform
-//! permission checks before http requests.
+//! This module contains all types representing Discord cached objects and the
+//! functions to process incoming events into the cache. These models are based
+//! on [`twilight_model`] models but without unnecessary fields to decrease memory
+//! usage.
 //!
 //! ## Event processing
 //! Incoming Discord events that implement [`UpdateCache`] are processed to
@@ -22,10 +17,19 @@
 //! | Channels (guild-only) | `ChannelCreate`, `ChannelUpdate`, `ChannelUpdate` (+ thread ones) |
 //! | Roles                 | `RoleCreate`, `RoleUpdate`, `RoleDelete`                          |
 //! | Current user member   | `MemberAdd`, `MemberUpdate`                                       |
-
-pub mod discord;
-pub mod model;
+//!
+//! [`Serialize`]: serde::Serialize
+//! [`Deserialize`]: serde::Deserialize
 
 mod client;
+mod model;
+mod process;
 
-pub use self::client::{CacheClient, RedisConnection, RedisModel};
+pub mod http;
+pub mod permission;
+
+pub use model::{
+    channel::CachedChannel,
+    guild::{CachedGuild, CachedRole, CurrentMember},
+};
+pub use process::event::UpdateCache;
