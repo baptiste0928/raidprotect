@@ -44,7 +44,7 @@ pub struct ShardCluster {
 impl ShardCluster {
     /// Initialize a new [`ShardCluster`].
     ///
-    /// This method also initialize an [`HttpClient`] and a [`RedisClient`],
+    /// This method also initialize an [`HttpClient`] and a [`CacheClient`],
     /// that can be later retrieved using corresponding methods.
     pub async fn new(config: BotConfig) -> Result<Self, anyhow::Error> {
         // Initialize HTTP client and get current user.
@@ -179,7 +179,7 @@ impl ClusterState {
         }
     }
 
-    /// Get the cluster [`RedisClient`].
+    /// Get the cluster [`CacheClient`].
     pub fn redis(&self) -> &CacheClient {
         &self.redis
     }

@@ -1,27 +1,18 @@
-//! Custom cache used to store Discord objects.
+//! Shared bot cache.
 //!
-//! This cache is based on Redis and store Discord objects used by the bot
-//! including guilds, channels and roles. The cache is built to use as little
-//! memory as possible, and such only store useful fields.
+//! This cache is based on Redis and store temporary data for the bot, such as the
+//! Discord cache. It is built to use as little memory as possible to handle millions
+//! of cached items.
 //!
 //! ## Access the cache data
-//! The cache can be queried using [`RedisClient`]. Higher-level interfaces are
-//! also provided to use the cache data: the [`permission`] allow to compute
-//! permissions for a user using cached data, and [`http`] allow to perform
-//! permission checks before http requests.
+//! The cache can be queried using [`CacheClient`] and the model of the requested
+//! data. Higher-level interfaces are provided to use the cache data in the
+//! [`discord`] module, such as a permission calculator and a Discord http client
+//! wrapper.
 //!
-//! ## Event processing
-//! Incoming Discord events that implement [`UpdateCache`] are processed to
-//! update the cache. The old cached value is returned after updating.
-//!
-//! The following events are used to update the cache:
-//!
-//! | Cached data           | Event types                                                       |
-//! |-----------------------|-------------------------------------------------------------------|
-//! | Guilds                | `GuildCreate`, `GuildUpdate`, `GuildDelete`, `UnavailableGuild`   |
-//! | Channels (guild-only) | `ChannelCreate`, `ChannelUpdate`, `ChannelUpdate` (+ thread ones) |
-//! | Roles                 | `RoleCreate`, `RoleUpdate`, `RoleDelete`                          |
-//! | Current user member   | `MemberAdd`, `MemberUpdate`                                       |
+//! Models of cached data can be found in the [`model`] module and the [`discord`]
+//! module (for cached Discord data). All models implements the [`RedisModel`]
+//! trait to be serializable in the cache.
 
 pub mod discord;
 pub mod model;
