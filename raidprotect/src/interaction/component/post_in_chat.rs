@@ -47,7 +47,7 @@ impl PostInChat {
             author_id,
         };
 
-        state.redis().set(&component).await?;
+        state.cache.set(&component).await?;
 
         // Add ephemeral flag to the response
         response.flags = response
@@ -94,14 +94,14 @@ impl PostInChat {
         let component_id = custom_id
             .id
             .ok_or_else(|| anyhow!("missing component id in custom_id"))?;
-        let mut component = match state.redis().get::<PostInChatButton>(&component_id).await? {
+        let mut component = match state.cache.get::<PostInChatButton>(&component_id).await? {
             Some(component) => component,
             None => return Ok(embed::error::expired_interaction(interaction.locale()?)),
         };
 
         // Get guild language
         let guild = interaction.guild()?;
-        let config = state.mongodb().get_guild_or_create(guild.id).await?;
+        let config = state.database.get_guild_or_create(guild.id).await?;
         let lang = Lang::from(&*config.lang);
 
         // Remove ephemeral flag

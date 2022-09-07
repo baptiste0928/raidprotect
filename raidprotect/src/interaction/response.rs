@@ -42,7 +42,7 @@ impl InteractionResponder {
 
     /// Send a response to an interaction.
     pub async fn respond(&self, state: &ClusterState, response: InteractionResponse) {
-        let client = state.http().interaction(self.application_id);
+        let client = state.http.interaction(self.application_id);
 
         if let Err(error) = client
             .create_response(self.id, &self.token, &response.into_http())

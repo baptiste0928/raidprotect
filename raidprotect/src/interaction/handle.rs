@@ -131,7 +131,7 @@ pub async fn register_commands(state: &ClusterState, application_id: Id<Applicat
         ProfileCommand::create_command().into(),
     ];
 
-    let client = state.http().interaction(application_id);
+    let client = state.http.interaction(application_id);
 
     if let Err(error) = client.set_global_commands(&commands).exec().await {
         error!(error = ?error, "failed to register commands");

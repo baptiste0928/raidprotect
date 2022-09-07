@@ -88,7 +88,7 @@ impl CaptchaEnableCommand {
         let lang = interaction.locale()?;
         let guild_id = interaction.guild()?.id;
 
-        let config = state.mongodb().get_guild(guild_id).await?;
+        let config = state.database.get_guild(guild_id).await?;
         let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
 
         if captcha_enabled {
@@ -155,7 +155,7 @@ impl CaptchaDisableCommand {
         let lang = interaction.locale()?;
         let guild_id = interaction.guild()?.id;
 
-        let config = state.mongodb().get_guild(guild_id).await?;
+        let config = state.database.get_guild(guild_id).await?;
         let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
 
         if !captcha_enabled {
@@ -226,7 +226,7 @@ impl CaptchaLogsCommand {
         let lang = interaction.locale()?;
         let guild_id = interaction.guild()?.id;
 
-        let config = state.mongodb().get_guild(guild_id).await?;
+        let config = state.database.get_guild(guild_id).await?;
         let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
 
         if !captcha_enabled {
@@ -235,7 +235,7 @@ impl CaptchaLogsCommand {
 
         // Ensure RaidProtect has permissions to send messages in the channel.
         let (permissions, _) = state
-            .redis()
+            .cache
             .permissions(guild_id)
             .await?
             .current_member()
@@ -251,7 +251,7 @@ impl CaptchaLogsCommand {
         let mut config = config.unwrap(); // SAFETY: `captcha_enabled` is true here
         config.captcha.logs = Some(self.channel);
 
-        state.mongodb().update_guild(&config).await?;
+        state.database.update_guild(&config).await?;
 
         // Send the embed.
         let embed = EmbedBuilder::new()
@@ -286,7 +286,7 @@ impl CaptchaAutoroleAddCommand {
         let lang = interaction.locale()?;
         let guild_id = interaction.guild()?.id;
 
-        let config = state.mongodb().get_guild(guild_id).await?;
+        let config = state.database.get_guild(guild_id).await?;
         let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
 
         if !captcha_enabled {
@@ -295,7 +295,7 @@ impl CaptchaAutoroleAddCommand {
 
         // Ensure RaidProtect has permissions to give this role.
         let permissions = state
-            .redis()
+            .cache
             .permissions(guild_id)
             .await?
             .current_member()
@@ -321,7 +321,7 @@ impl CaptchaAutoroleAddCommand {
         }
 
         config.captcha.verified_roles.push(self.role.id);
-        state.mongodb().update_guild(&config).await?;
+        state.database.update_guild(&config).await?;
 
         // Send the embed.
         let embed = EmbedBuilder::new()
@@ -356,7 +356,7 @@ impl CaptchaAutoroleRemoveCommand {
         let lang = interaction.locale()?;
         let guild_id = interaction.guild()?.id;
 
-        let config = state.mongodb().get_guild(guild_id).await?;
+        let config = state.database.get_guild(guild_id).await?;
         let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
 
         if !captcha_enabled {
@@ -371,7 +371,7 @@ impl CaptchaAutoroleRemoveCommand {
         }
 
         config.captcha.verified_roles.retain(|r| r != &self.role);
-        state.mongodb().update_guild(&config).await?;
+        state.database.update_guild(&config).await?;
 
         // Send the embed.
         let embed = EmbedBuilder::new()
@@ -403,7 +403,7 @@ impl CaptchaAutoroleListCommand {
         let lang = interaction.locale()?;
         let guild_id = interaction.guild()?.id;
 
-        let config = state.mongodb().get_guild(guild_id).await?;
+        let config = state.database.get_guild(guild_id).await?;
         let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
 
         if !captcha_enabled {

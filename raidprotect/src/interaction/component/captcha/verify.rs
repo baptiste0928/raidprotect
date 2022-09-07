@@ -54,12 +54,12 @@ impl CaptchaVerifyButton {
         let author = interaction.author_id().context("missing author_id")?;
         let lang = interaction.locale()?;
 
-        let config = state.mongodb().get_guild_or_create(guild.id).await?;
+        let config = state.database.get_guild_or_create(guild.id).await?;
         let guild_lang = Lang::from(&*config.lang);
 
         // Get the pending captcha from the cache.
         let mut captcha = match state
-            .redis()
+            .cache
             .get::<PendingCaptcha>(&(guild.id, author))
             .await?
         {
@@ -93,7 +93,7 @@ impl CaptchaVerifyButton {
         captcha.code = code;
         captcha.regenerate_count += 1;
 
-        state.redis().set(&captcha).await?;
+        state.cache.set(&captcha).await?;
 
         // Send the verification message.
         let embed = EmbedBuilder::new()
@@ -176,7 +176,7 @@ impl CaptchaValidateButton {
 
         // Ensure the user is not already verified.
         match state
-            .redis()
+            .cache
             .get::<PendingCaptcha>(&(guild.id, author))
             .await?
         {

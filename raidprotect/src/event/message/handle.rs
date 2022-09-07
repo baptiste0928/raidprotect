@@ -33,7 +33,7 @@ static OLD_COMMANDS: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
 /// modules.
 pub async fn handle_message(message: Message, state: Arc<ClusterState>) {
     let parsed = parse_message(&message);
-    state.redis().set(&parsed).await.ok();
+    state.cache.set(&parsed).await.ok();
 
     if is_old_command(&message.content) {
         let message = message.clone();
@@ -67,7 +67,7 @@ async fn warn_old_command(message: Message, state: Arc<ClusterState>) {
         .build();
 
     match state
-        .http()
+        .http
         .create_message(message.channel_id)
         .reply(message.id)
         .embeds(&[embed])

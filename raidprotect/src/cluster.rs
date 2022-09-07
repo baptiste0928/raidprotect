@@ -149,58 +149,34 @@ fn presence() -> UpdatePresencePayload {
 
 /// Current state of the cluster.
 ///
-/// This type hold shared types such as the cache or the http client. It does
-/// not implement [`Clone`] and is intended to be wrapped inside a [`Arc`].
-#[derive(Debug)]
+/// This type hold shared types such as the cache or the http client. It implement
+/// [`Clone`] since all underlying types are wrapped in an [`Arc`].
+#[derive(Debug, Clone)]
 pub struct ClusterState {
-    /// In-memory cache
-    redis: CacheClient,
-    /// MongoDB client
-    mongodb: DbClient,
-    /// Http client
-    http: Arc<HttpClient>,
-    /// Bot user id
-    current_user: Id<ApplicationMarker>,
+    pub cache: CacheClient,
+    pub database: DbClient,
+    pub http: Arc<HttpClient>,
+    pub current_user: Id<ApplicationMarker>,
 }
 
 impl ClusterState {
     /// Initialize a new [`ClusterState`].
     pub fn new(
-        redis: CacheClient,
+        cache: CacheClient,
         mongodb: DbClient,
         http: Arc<HttpClient>,
         current_user: Id<ApplicationMarker>,
     ) -> Self {
         Self {
-            redis,
-            mongodb,
+            cache,
+            database: mongodb,
             http,
             current_user,
         }
     }
 
-    /// Get the cluster [`CacheClient`].
-    pub fn redis(&self) -> &CacheClient {
-        &self.redis
-    }
-
-    /// Get the cluster [`DbClient`].
-    pub fn mongodb(&self) -> &DbClient {
-        &self.mongodb
-    }
-
-    /// Get the cluster [`HttpClient`].
-    pub fn http(&self) -> &HttpClient {
-        &self.http
-    }
-
-    /// Get the cluster [`CacheHttp`]
+    /// Get the [`CacheHttp`] client associated with the cache client.
     pub fn cache_http(&self, guild_id: Id<GuildMarker>) -> CacheHttp {
-        self.redis.http(&self.http, guild_id)
-    }
-
-    /// Get the bot user id
-    pub fn current_user(&self) -> Id<ApplicationMarker> {
-        self.current_user
+        self.cache.http(&self.http, guild_id)
     }
 }

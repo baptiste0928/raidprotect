@@ -28,7 +28,7 @@ async fn member_add_inner(member: &Member, state: Arc<ClusterState>) -> Result<(
     }
 
     // Get the guild configuration.
-    let config = state.mongodb().get_guild_or_create(member.guild_id).await?;
+    let config = state.database.get_guild_or_create(member.guild_id).await?;
     let lang = Lang::from(&*config.lang);
 
     if !config.captcha.enabled {
@@ -67,7 +67,7 @@ async fn member_add_inner(member: &Member, state: Arc<ClusterState>) -> Result<(
         expires_at: OffsetDateTime::now_utc() + captcha::DEFAULT_DURATION,
     };
 
-    state.redis().set(&pending_captcha).await?;
+    state.cache.set(&pending_captcha).await?;
     tokio::spawn(captcha_expire(state, pending_captcha, lang));
 
     Ok(())
@@ -85,7 +85,7 @@ async fn captcha_expire(state: Arc<ClusterState>, captcha: PendingCaptcha, lang:
 
     // If the captcha still present in the cache, kick the user.
     let key = (captcha.guild_id, captcha.member_id);
-    let pending_captcha = state.redis().get::<PendingCaptcha>(&key).await;
+    let pending_captcha = state.cache.get::<PendingCaptcha>(&key).await;
 
     if pending_captcha
         .as_ref()

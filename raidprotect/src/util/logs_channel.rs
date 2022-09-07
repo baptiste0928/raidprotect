@@ -60,7 +60,7 @@ pub async fn guild_logs_channel(
 ) -> Result<Id<ChannelMarker>, anyhow::Error> {
     // If a channel is already configured, ensure it exists and return it.
     if let Some(channel) = logs_channel {
-        let cached = state.redis().get::<CachedChannel>(&channel).await?;
+        let cached = state.cache.get::<CachedChannel>(&channel).await?;
 
         if cached.is_some() {
             return Ok(channel);
@@ -110,7 +110,7 @@ async fn configure_logs_channel(
     };
 
     // Try to find an existing channel .
-    let guild_channels = state.redis().guild_channels(guild).await?;
+    let guild_channels = state.cache.guild_channels(guild).await?;
     let logs_channel = guild_channels.iter().find(|channel| {
         channel.kind == ChannelType::GuildText && channel.name == DEFAULT_LOGS_NAME
     });
@@ -121,9 +121,9 @@ async fn configure_logs_channel(
     };
 
     // Update the guild configuration
-    let mut config = state.mongodb().get_guild_or_create(guild).await?;
+    let mut config = state.database.get_guild_or_create(guild).await?;
     config.logs_chan = Some(logs_channel);
-    state.mongodb().update_guild(&config).await?;
+    state.database.update_guild(&config).await?;
 
     // Notify pending tasks that the channel has been created.
     sender.send(logs_channel).ok();
@@ -138,7 +138,7 @@ async fn update_logs_permissions(
     guild: Id<GuildMarker>,
 ) -> Id<ChannelMarker> {
     let permission_overwrite = HttpPermissionOverwrite {
-        id: state.current_user().cast(),
+        id: state.current_user.cast(),
         kind: HttpPermissionOverwriteType::Member,
         allow: Some(
             Permissions::VIEW_CHANNEL | Permissions::SEND_MESSAGES | Permissions::EMBED_LINKS,
@@ -173,7 +173,7 @@ async fn create_logs_channel(
             deny: Permissions::VIEW_CHANNEL,
         },
         PermissionOverwrite {
-            id: state.current_user().cast(),
+            id: state.current_user.cast(),
             kind: PermissionOverwriteType::Member,
             allow: Permissions::VIEW_CHANNEL
                 | Permissions::SEND_MESSAGES

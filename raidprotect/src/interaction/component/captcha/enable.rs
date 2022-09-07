@@ -59,11 +59,11 @@ impl CaptchaEnable {
     ) -> Result<InteractionResponse, anyhow::Error> {
         let guild = interaction.guild()?;
         let cached_guild = state
-            .redis()
+            .cache
             .get::<CachedGuild>(&guild.id)
             .await?
             .context("missing cached guild")?;
-        let mut config = state.mongodb().get_guild_or_create(guild.id).await?;
+        let mut config = state.database.get_guild_or_create(guild.id).await?;
 
         let lang = interaction.locale()?;
         let guild_lang = Lang::from(&*config.lang);
@@ -80,7 +80,7 @@ impl CaptchaEnable {
         // The permissions of the user performing the action are not checked,
         // since the button is sent attached to an ephemeral message.
         let permissions = state
-            .redis()
+            .cache
             .permissions(guild.id)
             .await?
             .current_member()
@@ -96,7 +96,7 @@ impl CaptchaEnable {
 
         // Create the `#verification` channel and the `@Unverified` role.
         let unverified_role = match state
-            .http()
+            .http
             .create_role(guild.id)
             .name(guild_lang.captcha_role_name())
             .color(0x99AAB5) // Default grey color
@@ -130,7 +130,7 @@ impl CaptchaEnable {
             },
             // Ensure the bot has necessary permissions in the channel.
             PermissionOverwrite {
-                id: state.current_user().cast(),
+                id: state.current_user.cast(),
                 kind: PermissionOverwriteType::Member,
                 allow: Permissions::VIEW_CHANNEL
                     | Permissions::SEND_MESSAGES
@@ -140,7 +140,7 @@ impl CaptchaEnable {
         ];
 
         let verification_channel = match state
-            .http()
+            .http
             .create_guild_channel(guild.id, guild_lang.captcha_channel_name())?
             .kind(ChannelType::GuildText)
             .position(0) // Put the channel at the top of the list.
@@ -177,7 +177,7 @@ impl CaptchaEnable {
         });
 
         let message = match state
-            .http()
+            .http
             .create_message(verification_channel.id)
             .embeds(&[embed])?
             .components(&[components])?
@@ -198,7 +198,7 @@ impl CaptchaEnable {
         config.captcha.message = Some(message.id);
         config.captcha.role = Some(unverified_role.id);
 
-        state.mongodb().update_guild(&config).await?;
+        state.database.update_guild(&config).await?;
 
         // Start the configuration of channels permissions.
         let state_clone = state.clone();
@@ -266,7 +266,7 @@ async fn logs_message(
         .build();
 
     state
-        .http()
+        .http
         .create_message(channel)
         .embeds(&[embed])?
         .exec()
@@ -292,7 +292,7 @@ async fn configure_channels(
     role: Id<RoleMarker>,
     verification: Id<ChannelMarker>,
 ) -> Result<(), anyhow::Error> {
-    let guild_channels = state.redis().guild_channels(guild).await?;
+    let guild_channels = state.cache.guild_channels(guild).await?;
 
     let mut categories = Vec::new();
     let mut channels = Vec::new();
@@ -329,7 +329,7 @@ async fn configure_channels(
     // Since the permissions for these channels could have been updated by the
     // category channels, the channel is retrieved from the cache again.
     for channel in channels {
-        let channel = match state.redis().get::<CachedChannel>(&channel).await? {
+        let channel = match state.cache.get::<CachedChannel>(&channel).await? {
             Some(channel) => channel,
             None => {
                 // Since some delay could have been elapsed since the previous
@@ -392,7 +392,7 @@ async fn update_channel_permissions(
     };
 
     if let Err(error) = state
-        .http()
+        .http
         .update_channel_permission(channel.id, &permission_overwrite)
         .exec()
         .await
