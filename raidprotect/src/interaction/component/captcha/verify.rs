@@ -1,6 +1,6 @@
 //! Captcha verification button and modal.
 
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use anyhow::Context;
 use raidprotect_captcha::{code::random_human_code, generate_captcha_png};
@@ -48,18 +48,18 @@ impl CaptchaVerifyButton {
     #[instrument(skip(state))]
     pub async fn handle(
         interaction: Interaction,
-        state: Arc<ClusterState>,
+        state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let guild = interaction.guild()?;
         let author = interaction.author_id().context("missing author_id")?;
         let lang = interaction.locale()?;
 
-        let config = state.mongodb().get_guild_or_create(guild.id).await?;
+        let config = state.database.get_guild_or_create(guild.id).await?;
         let guild_lang = Lang::from(&*config.lang);
 
         // Get the pending captcha from the cache.
         let mut captcha = match state
-            .redis()
+            .cache
             .get::<PendingCaptcha>(&(guild.id, author))
             .await?
         {
@@ -71,8 +71,9 @@ impl CaptchaVerifyButton {
 
         // Captcha has been regenerated too many times.
         if captcha.regenerate_count >= captcha::MAX_RETRY {
+            let state_clone = state.clone();
             tokio::spawn(kick_after(
-                state,
+                state_clone,
                 guild.id,
                 author,
                 captcha::KICK_AFTER,
@@ -93,7 +94,7 @@ impl CaptchaVerifyButton {
         captcha.code = code;
         captcha.regenerate_count += 1;
 
-        state.redis().set(&captcha).await?;
+        state.cache.set(&captcha).await?;
 
         // Send the verification message.
         let embed = EmbedBuilder::new()
@@ -137,7 +138,7 @@ impl CaptchaVerifyButton {
 }
 
 async fn kick_after(
-    state: Arc<ClusterState>,
+    state: ClusterState,
     guild: Id<GuildMarker>,
     user: Id<UserMarker>,
     after: Duration,
@@ -168,7 +169,7 @@ impl CaptchaValidateButton {
     #[instrument(skip(state))]
     pub async fn handle(
         interaction: Interaction,
-        state: Arc<ClusterState>,
+        state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let guild = interaction.guild()?;
         let author = interaction.author_id().context("missing author_id")?;
@@ -176,7 +177,7 @@ impl CaptchaValidateButton {
 
         // Ensure the user is not already verified.
         match state
-            .redis()
+            .cache
             .get::<PendingCaptcha>(&(guild.id, author))
             .await?
         {

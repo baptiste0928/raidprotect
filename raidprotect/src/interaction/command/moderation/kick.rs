@@ -76,7 +76,7 @@ impl KickCommand {
         };
 
         // Fetch the author and the bot permissions.
-        let permissions = state.redis().permissions(guild.id).await?;
+        let permissions = state.cache.permissions(guild.id).await?;
         let author_permissions = permissions.member(author_id, &member.roles).await?;
         let member_permissions = permissions.member(user.id, &member.roles).await?;
         let bot_permissions = permissions.current_member().await?;
@@ -104,7 +104,7 @@ impl KickCommand {
 
         // Send reason modal.
         let enforce_reason = state
-            .mongodb()
+            .database
             .get_guild_or_create(guild.id)
             .await?
             .moderation
@@ -165,7 +165,7 @@ impl KickCommand {
             user,
         };
 
-        state.redis().set(&pending).await?;
+        state.cache.set(&pending).await?;
 
         Ok(InteractionResponse::Modal {
             custom_id: custom_id.to_string(),

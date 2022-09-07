@@ -1,4 +1,4 @@
-use std::{str::FromStr, sync::Arc};
+use std::str::FromStr;
 
 use anyhow::bail;
 use tracing::{debug, error, warn};
@@ -26,16 +26,16 @@ use super::{
 use crate::{cluster::ClusterState, translations::Lang};
 
 /// Handle incoming [`Interaction`].
-pub async fn handle_interaction(interaction: Interaction, state: Arc<ClusterState>) {
+pub async fn handle_interaction(interaction: Interaction, state: &ClusterState) {
     let responder = InteractionResponder::from_interaction(&interaction);
     debug!(id = ?interaction.id, "received {} interaction", interaction.kind.kind());
 
     let lang = interaction.locale().unwrap_or(Lang::DEFAULT);
 
     let response = match interaction.kind {
-        InteractionType::ApplicationCommand => handle_command(interaction, state.clone()).await,
-        InteractionType::MessageComponent => handle_component(interaction, state.clone()).await,
-        InteractionType::ModalSubmit => handle_modal(interaction, state.clone()).await,
+        InteractionType::ApplicationCommand => handle_command(interaction, state).await,
+        InteractionType::MessageComponent => handle_component(interaction, state).await,
+        InteractionType::ModalSubmit => handle_modal(interaction, state).await,
         other => {
             warn!("received unexpected {} interaction", other.kind());
 
@@ -44,12 +44,12 @@ pub async fn handle_interaction(interaction: Interaction, state: Arc<ClusterStat
     };
 
     match response {
-        Ok(response) => responder.respond(&state, response).await,
+        Ok(response) => responder.respond(state, response).await,
         Err(error) => {
             error!(error = ?error, "error while processing interaction");
 
             responder
-                .respond(&state, embed::error::internal_error(lang))
+                .respond(state, embed::error::internal_error(lang))
                 .await;
         }
     }
@@ -58,7 +58,7 @@ pub async fn handle_interaction(interaction: Interaction, state: Arc<ClusterStat
 /// Handle incoming command interaction.
 async fn handle_command(
     interaction: Interaction,
-    state: Arc<ClusterState>,
+    state: &ClusterState,
 ) -> Result<InteractionResponse, anyhow::Error> {
     let name = match &interaction.data {
         Some(InteractionData::ApplicationCommand(data)) => &*data.name,
@@ -66,10 +66,10 @@ async fn handle_command(
     };
 
     match name {
-        "config" => ConfigCommand::handle(interaction, &state).await,
-        "help" => HelpCommand::handle(interaction, &state).await,
-        "kick" => KickCommand::handle(interaction, &state).await,
-        "profile" => ProfileCommand::handle(interaction, &state).await,
+        "config" => ConfigCommand::handle(interaction, state).await,
+        "help" => HelpCommand::handle(interaction, state).await,
+        "kick" => KickCommand::handle(interaction, state).await,
+        "profile" => ProfileCommand::handle(interaction, state).await,
         name => {
             warn!(name = name, "received unknown command");
 
@@ -81,7 +81,7 @@ async fn handle_command(
 /// Handle incoming component interaction
 async fn handle_component(
     interaction: Interaction,
-    state: Arc<ClusterState>,
+    state: &ClusterState,
 ) -> Result<InteractionResponse, anyhow::Error> {
     let custom_id = match &interaction.data {
         Some(InteractionData::MessageComponent(data)) => CustomId::from_str(&*data.custom_id)?,
@@ -93,7 +93,7 @@ async fn handle_component(
         "captcha-enable" => CaptchaEnable::handle(interaction, state).await,
         "captcha-validate" => CaptchaValidateButton::handle(interaction, state).await,
         "captcha-verify" => CaptchaVerifyButton::handle(interaction, state).await,
-        "post-in-chat" => PostInChat::handle(interaction, custom_id, &state).await,
+        "post-in-chat" => PostInChat::handle(interaction, custom_id, state).await,
         name => {
             warn!(name = name, "received unknown component");
 
@@ -105,7 +105,7 @@ async fn handle_component(
 /// Handle incoming modal interaction
 async fn handle_modal(
     interaction: Interaction,
-    _state: Arc<ClusterState>,
+    _state: &ClusterState,
 ) -> Result<InteractionResponse, anyhow::Error> {
     let custom_id = match &interaction.data {
         Some(InteractionData::ModalSubmit(data)) => CustomId::from_str(&*data.custom_id)?,
@@ -131,7 +131,7 @@ pub async fn register_commands(state: &ClusterState, application_id: Id<Applicat
         ProfileCommand::create_command().into(),
     ];
 
-    let client = state.http().interaction(application_id);
+    let client = state.http.interaction(application_id);
 
     if let Err(error) = client.set_global_commands(&commands).exec().await {
         error!(error = ?error, "failed to register commands");

@@ -1,7 +1,5 @@
 //! Captcha disable button.
 
-use std::sync::Arc;
-
 use anyhow::Context;
 use tracing::{error, warn};
 use twilight_http::request::AuditLogReason;
@@ -38,13 +36,13 @@ pub struct CaptchaDisable;
 impl CaptchaDisable {
     pub async fn handle(
         interaction: Interaction,
-        state: Arc<ClusterState>,
+        state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let guild = interaction.guild()?;
         let lang = interaction.locale()?;
         let author_id = interaction.author_id().context("missing author id")?;
 
-        let mut config = state.mongodb().get_guild_or_create(guild.id).await?;
+        let mut config = state.database.get_guild_or_create(guild.id).await?;
         let guild_lang = Lang::from(&*config.lang);
 
         // Ensure the captcha is enabled.
@@ -55,7 +53,7 @@ impl CaptchaDisable {
         // Try to delete the verification channel and the unverified role.
         if let Some(role) = config.captcha.role {
             if let Err(error) = state
-                .http()
+                .http
                 .delete_role(guild.id, role)
                 .reason(guild_lang.captcha_disable_reason())?
                 .exec()
@@ -67,7 +65,7 @@ impl CaptchaDisable {
 
         if let Some(channel) = config.captcha.channel {
             if let Err(error) = state
-                .http()
+                .http
                 .delete_channel(channel)
                 .reason(guild_lang.captcha_disable_reason())?
                 .exec()
@@ -79,12 +77,19 @@ impl CaptchaDisable {
 
         // Update the configuration.
         config.captcha = Default::default();
-        state.mongodb().update_guild(&config).await?;
+        state.database.update_guild(&config).await?;
 
         // Send message in logs channel.
+        let state_clone = state.clone();
         tokio::spawn(async move {
-            if let Err(error) =
-                logs_message(state, guild.id, config.logs_chan, author_id, guild_lang).await
+            if let Err(error) = logs_message(
+                &state_clone,
+                guild.id,
+                config.logs_chan,
+                author_id,
+                guild_lang,
+            )
+            .await
             {
                 error!(error = ?error, guild = ?guild.id, "failed to send captcha disable logs message");
             }
@@ -102,13 +107,13 @@ impl CaptchaDisable {
 }
 
 async fn logs_message(
-    state: Arc<ClusterState>,
+    state: &ClusterState,
     guild: Id<GuildMarker>,
     logs_channel: Option<Id<ChannelMarker>>,
     user: Id<UserMarker>,
     lang: Lang,
 ) -> Result<(), anyhow::Error> {
-    let channel = guild_logs_channel(&state, guild, logs_channel, lang).await?;
+    let channel = guild_logs_channel(state, guild, logs_channel, lang).await?;
 
     let embed = EmbedBuilder::new()
         .color(COLOR_RED)
@@ -116,7 +121,7 @@ async fn logs_message(
         .build();
 
     state
-        .http()
+        .http
         .create_message(channel)
         .embeds(&[embed])?
         .exec()

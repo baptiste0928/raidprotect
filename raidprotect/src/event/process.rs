@@ -1,4 +1,4 @@
-use std::{fmt::Debug, sync::Arc};
+use std::fmt::Debug;
 
 use async_trait::async_trait;
 use raidprotect_model::cache::discord::UpdateCache;
@@ -12,7 +12,7 @@ use crate::cluster::ClusterState;
 #[async_trait]
 pub trait ProcessEvent: Sized {
     /// Process incoming event.
-    async fn process(self, state: Arc<ClusterState>);
+    async fn process(self, state: ClusterState);
 }
 
 macro_rules! process_events {
@@ -27,7 +27,7 @@ macro_rules! process_events {
 }
 
 async fn process_cache_event<E: UpdateCache + Debug>(event: E, state: &ClusterState) {
-    if let Err(error) = event.update(state.redis(), state.current_user()).await {
+    if let Err(error) = event.update(&state.cache, state.current_user).await {
         error!(error = ?error, kind = E::NAME, "failed to update cache");
         debug!(event = ?event);
     }
@@ -38,7 +38,7 @@ macro_rules! process_cache_events {
         $(
             #[async_trait]
             impl ProcessEvent for incoming::$event {
-                async fn process(self, state: Arc<ClusterState>) {
+                async fn process(self, state: ClusterState) {
                     process_cache_event(self, &state).await;
                 }
             }
@@ -48,7 +48,7 @@ macro_rules! process_cache_events {
 
 #[async_trait]
 impl ProcessEvent for GatewayEvent {
-    async fn process(self, state: Arc<ClusterState>) {
+    async fn process(self, state: ClusterState) {
         use GatewayEvent::*;
 
         // `self` is renamed `__self` in async_trait macro expansion
@@ -92,24 +92,24 @@ process_cache_events! {
 
 #[async_trait]
 impl ProcessEvent for incoming::InteractionCreate {
-    async fn process(self, state: Arc<ClusterState>) {
-        crate::interaction::handle_interaction(self.0, state).await;
+    async fn process(self, state: ClusterState) {
+        crate::interaction::handle_interaction(self.0, &state).await;
     }
 }
 
 #[async_trait]
 impl ProcessEvent for incoming::MessageCreate {
-    async fn process(self, state: Arc<ClusterState>) {
+    async fn process(self, state: ClusterState) {
         if self.guild_id.is_some() && ALLOWED_MESSAGES_TYPES.contains(&self.kind) {
-            super::message::handle_message(self.0, state).await;
+            super::message::handle_message(self.0, &state).await;
         }
     }
 }
 
 #[async_trait]
 impl ProcessEvent for incoming::MemberAdd {
-    async fn process(self, state: Arc<ClusterState>) {
+    async fn process(self, state: ClusterState) {
         process_cache_event(self.clone(), &state).await;
-        super::captcha::member_add(&self.0, state).await;
+        super::captcha::member_add(&self.0, &state).await;
     }
 }

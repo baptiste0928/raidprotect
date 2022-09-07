@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 use once_cell::sync::Lazy;
 use tracing::{error, info};
@@ -31,9 +31,9 @@ static OLD_COMMANDS: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
 ///
 /// This method will forward message to the cache and various auto-moderation
 /// modules.
-pub async fn handle_message(message: Message, state: Arc<ClusterState>) {
+pub async fn handle_message(message: Message, state: &ClusterState) {
     let parsed = parse_message(&message);
-    state.redis().set(&parsed).await.ok();
+    state.cache.set(&parsed).await.ok();
 
     if is_old_command(&message.content) {
         let message = message.clone();
@@ -45,7 +45,7 @@ pub async fn handle_message(message: Message, state: Arc<ClusterState>) {
     info!("received message: {}", message.content) // Debug util real implementation
 }
 
-async fn warn_old_command(message: Message, state: Arc<ClusterState>) {
+async fn warn_old_command(message: Message, state: ClusterState) {
     let lang = message
         .author
         .locale
@@ -67,7 +67,7 @@ async fn warn_old_command(message: Message, state: Arc<ClusterState>) {
         .build();
 
     match state
-        .http()
+        .http
         .create_message(message.channel_id)
         .reply(message.id)
         .embeds(&[embed])
