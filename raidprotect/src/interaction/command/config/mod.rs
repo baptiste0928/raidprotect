@@ -22,7 +22,8 @@ use crate::{
     name = "config",
     desc = "Configure RaidProtect on your server",
     desc_localizations = "config_description",
-    default_permissions = "config_permissions"
+    default_permissions = "config_permissions",
+    dm_permission = false
 )]
 pub enum ConfigCommand {
     #[command(name = "captcha")]
