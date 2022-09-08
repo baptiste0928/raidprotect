@@ -10,10 +10,10 @@ publish = false
 [dependencies]
 raidprotect-model = { path = "../model" }
 
-anyhow = "1.0.61"
+anyhow = "1.0.64"
 
 # Tokio dependencies
-tokio = { version = "1.20.1", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1.21.0", features = ["rt-multi-thread", "macros"] }
 tracing = "0.1.36"
 
 # Axum and http dependencies

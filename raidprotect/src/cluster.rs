@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use anyhow::Context;
-use futures::StreamExt;
+use futures_util::StreamExt;
 use raidprotect_model::{
     cache::{discord::http::CacheHttp, CacheClient},
     config::BotConfig,

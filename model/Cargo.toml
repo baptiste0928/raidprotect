@@ -8,28 +8,28 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = { version = "1.0.61", features = ["backtrace"] }
+anyhow = { version = "1.0.64", features = ["backtrace"] }
 async-trait = "0.1.57"
 mongodb = { version = "2.3.0", features = ["zlib-compression"] }
 tracing = "0.1.36"
 
 # Models
-serde = { version = "1.0.143", features = ["derive"] }
+serde = { version = "1.0.144", features = ["derive"] }
 serde_with = "1.14.0"
-time = "0.3.13"
-url = { version = "2.2.2", features = ["serde"] }
+time = "0.3.14"
+url = { version = "2.3.1", features = ["serde"] }
 
 # Redis (client + serialization)
 bb8 = "0.8.0"
 bb8-redis = "0.11.0"
-redis = { version = "0.21.5", features = ["tokio-comp"], default-features = false }
+redis = { version = "0.21.6", features = ["tokio-comp"], default-features = false }
 rmp-serde = "1.1.0"
 
 # Twilight
 twilight-http = { version = "0.13.0", features = ["rustls-webpki-roots", "decompression"], default-features = false }
-twilight-model = "0.13.0"
-twilight-util = { version = "0.13.0", features = ["permission-calculator"] }
-twilight-validate = "0.13.0"
+twilight-model = "0.13.2"
+twilight-util = { version = "0.13.1", features = ["permission-calculator"] }
+twilight-validate = "0.13.1"
 
 # Configuration
 dotenv = "0.15.0"
@@ -39,5 +39,5 @@ tracing-subscriber = { version = "0.3.15", features = ["std", "fmt", "ansi"], de
 
 
 [dev-dependencies]
-serde_test = "1.0.143"
-pretty_assertions = "1.2.1"
+serde_test = "1.0.144"
+pretty_assertions = "1.3.0"
