@@ -33,7 +33,7 @@ use crate::{
     interaction::{
         embed::{self, COLOR_GREEN, COLOR_RED},
         response::InteractionResponse,
-        util::{CustomId, InteractionExt},
+        util::{CustomId, GuildConfigExt, GuildInteractionContext},
     },
     translations::Lang,
     util::{guild_logs_channel, TextProcessExt},
@@ -57,22 +57,20 @@ impl CaptchaEnable {
         interaction: Interaction,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
-        let guild = interaction.guild()?;
+        let ctx = GuildInteractionContext::new(interaction)?;
+        let mut config = ctx.config(state).await?;
+        let guild_lang = config.lang();
+
         let cached_guild = state
             .cache
-            .get::<CachedGuild>(&guild.id)
+            .get::<CachedGuild>(&ctx.guild_id)
             .await?
             .context("missing cached guild")?;
-        let mut config = state.database.get_guild_or_create(guild.id).await?;
-
-        let lang = interaction.locale()?;
-        let guild_lang = Lang::from(&*config.lang);
-        let author_id = interaction.author_id().context("missing author id")?;
 
         // Ensure the captcha is not already enabled.
         // The button could be clicked twice, this is a safety check.
         if config.captcha.enabled {
-            return Ok(embed::captcha::already_enabled(lang));
+            return Ok(embed::captcha::already_enabled(ctx.lang));
         }
 
         // Ensure the bot has the required permissions to enable the captcha.
@@ -81,7 +79,7 @@ impl CaptchaEnable {
         // since the button is sent attached to an ephemeral message.
         let permissions = state
             .cache
-            .permissions(guild.id)
+            .permissions(ctx.guild_id)
             .await?
             .current_member()
             .await?;
@@ -91,13 +89,13 @@ impl CaptchaEnable {
             .guild()
             .contains(Permissions::MANAGE_CHANNELS | Permissions::MANAGE_ROLES)
         {
-            return Ok(embed::captcha::missing_enable_permission(lang));
+            return Ok(embed::captcha::missing_enable_permission(ctx.lang));
         }
 
         // Create the `#verification` channel and the `@Unverified` role.
         let unverified_role = match state
             .http
-            .create_role(guild.id)
+            .create_role(ctx.guild_id)
             .name(guild_lang.captcha_role_name())
             .color(0x99AAB5) // Default grey color
             .permissions(Permissions::empty())
@@ -109,14 +107,14 @@ impl CaptchaEnable {
             Err(err) => {
                 error!(error = ?err, "failed to create the unverified role");
 
-                return Ok(embed::captcha::role_error(lang));
+                return Ok(embed::captcha::role_error(ctx.lang));
             }
         };
 
         let channel_permissions = vec![
             // Hide channel for @everyone.
             PermissionOverwrite {
-                id: guild.id.cast(),
+                id: ctx.guild_id.cast(),
                 kind: PermissionOverwriteType::Role,
                 allow: Permissions::empty(),
                 deny: Permissions::VIEW_CHANNEL,
@@ -141,7 +139,7 @@ impl CaptchaEnable {
 
         let verification_channel = match state
             .http
-            .create_guild_channel(guild.id, guild_lang.captcha_channel_name())?
+            .create_guild_channel(ctx.guild_id, guild_lang.captcha_channel_name())?
             .kind(ChannelType::GuildText)
             .position(0) // Put the channel at the top of the list.
             .permission_overwrites(&channel_permissions)
@@ -153,7 +151,7 @@ impl CaptchaEnable {
             Err(err) => {
                 error!(error = ?err, "failed to create the verification channel");
 
-                return Ok(embed::captcha::channel_error(lang));
+                return Ok(embed::captcha::channel_error(ctx.lang));
             }
         };
 
@@ -170,7 +168,7 @@ impl CaptchaEnable {
                 custom_id: Some(custom_id.to_string()),
                 disabled: false,
                 emoji: None,
-                label: Some(lang.captcha_verification_button().to_string()),
+                label: Some(ctx.lang.captcha_verification_button().to_string()),
                 style: ButtonStyle::Success,
                 url: None,
             })],
@@ -188,7 +186,7 @@ impl CaptchaEnable {
             Err(err) => {
                 error!(error = ?err, "failed to send the verification message");
 
-                return Ok(embed::error::internal_error(lang));
+                return Ok(embed::error::internal_error(ctx.lang));
             }
         };
 
@@ -205,13 +203,13 @@ impl CaptchaEnable {
         tokio::spawn(async move {
             if let Err(error) = configure_channels(
                 &state_clone,
-                guild.id,
+                ctx.guild_id,
                 unverified_role.id,
                 verification_channel.id,
             )
             .await
             {
-                error!(error = ?error, guild = ?guild.id, "failed to configure captcha channels permissions");
+                error!(error = ?error, guild = ?ctx.guild_id, "failed to configure captcha channels permissions");
             }
         });
 
@@ -220,32 +218,32 @@ impl CaptchaEnable {
         tokio::spawn(async move {
             if let Err(error) = logs_message(
                 &state_clone,
-                guild.id,
+                ctx.guild_id,
                 config.logs_chan,
-                author_id,
+                ctx.author.id,
                 guild_lang,
             )
             .await
             {
-                error!(error = ?error, guild = ?guild.id, "failed to send captcha enable logs message");
+                error!(error = ?error, guild = ?ctx.guild_id, "failed to send captcha enable logs message");
             }
         });
 
         // Send the confirmation message.
         let embed = EmbedBuilder::new()
-            .title(lang.captcha_enabled_title())
+            .title(ctx.lang.captcha_enabled_title())
             .color(COLOR_GREEN)
-            .description(lang.captcha_enabled_description(
+            .description(ctx.lang.captcha_enabled_description(
                 verification_channel.mention(),
                 unverified_role.mention(),
             ))
             .field(EmbedFieldBuilder::new(
-                lang.captcha_enabled_roles_title(),
-                lang.captcha_enabled_roles_description(),
+                ctx.lang.captcha_enabled_roles_title(),
+                ctx.lang.captcha_enabled_roles_description(),
             ))
             .field(EmbedFieldBuilder::new(
-                lang.captcha_enabled_rename_title(),
-                lang.captcha_enabled_rename_description(
+                ctx.lang.captcha_enabled_rename_title(),
+                ctx.lang.captcha_enabled_rename_description(
                     verification_channel.mention(),
                     unverified_role.mention(),
                 ),

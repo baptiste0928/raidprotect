@@ -4,10 +4,7 @@
 
 use twilight_interactions::command::{CommandModel, CreateCommand};
 use twilight_model::{
-    application::{
-        component::{button::ButtonStyle, ActionRow, Button, Component},
-        interaction::Interaction,
-    },
+    application::component::{button::ButtonStyle, ActionRow, Button, Component},
     channel::message::MessageFlags,
     http::interaction::InteractionResponseType,
 };
@@ -16,7 +13,9 @@ use twilight_util::builder::{embed::EmbedBuilder, InteractionResponseDataBuilder
 use crate::{
     cluster::ClusterState,
     desc_localizations, impl_command_handle,
-    interaction::{embed::COLOR_TRANSPARENT, response::InteractionResponse, util::InteractionExt},
+    interaction::{
+        embed::COLOR_TRANSPARENT, response::InteractionResponse, util::InteractionContext,
+    },
 };
 
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
@@ -34,16 +33,14 @@ desc_localizations!(help_description);
 impl HelpCommand {
     async fn exec(
         self,
-        interaction: Interaction,
+        ctx: InteractionContext,
         _state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
-        let lang = interaction.locale()?;
-
         // Create embed
         let embed = EmbedBuilder::new()
             .color(COLOR_TRANSPARENT)
-            .title(lang.help_embed_title())
-            .description(lang.help_embed_description());
+            .title(ctx.lang.help_embed_title())
+            .description(ctx.lang.help_embed_description());
 
         // Add components (buttons)
         let components = Component::ActionRow(ActionRow {
@@ -52,7 +49,7 @@ impl HelpCommand {
                     custom_id: None,
                     disabled: false,
                     emoji: None,
-                    label: Some(lang.help_support().into()),
+                    label: Some(ctx.lang.help_support().into()),
                     style: ButtonStyle::Link,
                     url: Some("https://raidpro.tk/discord".to_string()),
                 }),
@@ -60,7 +57,7 @@ impl HelpCommand {
                     custom_id: None,
                     disabled: false,
                     emoji: None,
-                    label: Some(lang.help_bot_invite().into()),
+                    label: Some(ctx.lang.help_bot_invite().into()),
                     style: ButtonStyle::Link,
                     url: Some("https://raidpro.tk/invite".to_string()),
                 }),

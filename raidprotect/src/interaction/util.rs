@@ -7,51 +7,147 @@ use std::{
 };
 
 use anyhow::{bail, Context};
+use raidprotect_model::database::model::GuildConfig;
+use tracing::instrument;
 use twilight_interactions::command::CommandModel;
 use twilight_model::{
     application::interaction::{Interaction, InteractionData},
     guild::PartialMember,
     id::{marker::GuildMarker, Id},
+    user::User,
 };
 
-use crate::translations::Lang;
+use crate::{cluster::ClusterState, translations::Lang};
+
+/// Wrapper around [`Interaction`] to provide some utility functions.
+#[derive(Debug)]
+pub struct InteractionContext {
+    /// The wrapped interaction.
+    pub interaction: Interaction,
+    /// User that invoked the interaction.
+    pub author: User,
+    /// Lang of the user that invoked the interaction.
+    pub lang: Lang,
+}
+
+impl InteractionContext {
+    /// Create a new [`InteractionContext`] from an [`Interaction`].
+    #[instrument]
+    pub fn new(interaction: Interaction) -> Result<Self, anyhow::Error> {
+        let author = interaction_user(&interaction).context("missing interaction user")?;
+        let locale = interaction
+            .locale
+            .as_ref()
+            .context("missing interaction locale")?;
+        let lang = Lang::from(&**locale);
+
+        Ok(Self {
+            interaction,
+            author,
+            lang,
+        })
+    }
+}
+
+fn interaction_user(interaction: &Interaction) -> Option<User> {
+    if let Some(member) = &interaction.member {
+        if let Some(user) = &member.user {
+            return Some(user.clone());
+        }
+    }
+
+    if let Some(user) = &interaction.user {
+        return Some(user.clone());
+    }
+
+    None
+}
+
+/// Wrapper around an [`Interaction`] that was invoked in a guild.
+///
+/// This type is similar to [`InteractionContext`], but provides additional
+/// fields for guild interactions.
+pub struct GuildInteractionContext {
+    /// The wrapped interaction.
+    pub interaction: Interaction,
+    /// User that invoked the interaction.
+    pub author: User,
+    /// Member object of the user that invoked the interaction.
+    pub member: PartialMember,
+    /// Lang of the user that invoked the interaction.
+    pub lang: Lang,
+    /// Id of the guild the interaction was invoked in.
+    pub guild_id: Id<GuildMarker>,
+}
+
+impl GuildInteractionContext {
+    /// Create a new [`GuildInteractionContext`] from an [`Interaction`].
+    #[instrument]
+    pub fn new(interaction: Interaction) -> Result<Self, anyhow::Error> {
+        let member = interaction
+            .member
+            .clone()
+            .context("missing interaction member")?;
+        let author = member
+            .user
+            .clone()
+            .context("missing interaction member user")?;
+        let guild_id = interaction
+            .guild_id
+            .context("missing interaction guild id")?;
+
+        let locale = interaction
+            .locale
+            .as_ref()
+            .context("missing interaction locale")?;
+        let lang = Lang::from(&**locale);
+
+        Ok(Self {
+            interaction,
+            author,
+            member,
+            lang,
+            guild_id,
+        })
+    }
+
+    /// Get the [`GuildConfig`] for the guild the interaction was invoked in.
+    pub async fn config(&self, state: &ClusterState) -> Result<GuildConfig, anyhow::Error> {
+        let config = state
+            .database
+            .get_guild_or_create(self.guild_id)
+            .await
+            .context("failed to get guild config")?;
+
+        Ok(config)
+    }
+}
 
 /// Extension trait adding methods to [`Interaction`].
 pub trait InteractionExt {
-    /// Get the guild the interaction was triggered in.
-    fn guild(&self) -> Result<GuildInteraction<'_>, anyhow::Error>;
-
     /// Get the user locale.
-    fn locale(&self) -> Result<Lang, anyhow::Error>;
+    fn lang(&self) -> Result<Lang, anyhow::Error>;
 }
 
 impl InteractionExt for Interaction {
-    fn guild(&self) -> Result<GuildInteraction<'_>, anyhow::Error> {
-        let id = self
-            .guild_id
-            .context("interaction not executed in a guild")?;
-        let member = self
-            .member
-            .as_ref()
-            .context("missing interaction member data")?;
-
-        Ok(GuildInteraction { id, member })
-    }
-
-    fn locale(&self) -> Result<Lang, anyhow::Error> {
+    fn lang(&self) -> Result<Lang, anyhow::Error> {
         let locale = self.locale.as_ref().context("missing locale")?;
 
         Ok(Lang::from(&**locale))
     }
 }
 
-/// Data for interactions triggered in a guild.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct GuildInteraction<'a> {
-    /// ID of the guild.
-    pub id: Id<GuildMarker>,
-    /// The member that triggered the command.
-    pub member: &'a PartialMember,
+/// Extension trait adding methods to [`GuildConfig`].
+pub trait GuildConfigExt {
+    /// Get the lang of the guild.
+    fn lang(&self) -> Lang;
+}
+
+impl GuildConfigExt for GuildConfig {
+    #[inline]
+    fn lang(&self) -> Lang {
+        Lang::from(&*self.lang)
+    }
 }
 
 /// Component custom id.
@@ -144,7 +240,7 @@ where
 /// it. The command type must implement [`CommandModel`] and have an `exec`
 /// method with the following signature:
 ///
-/// `async fn exec(self, interaction: Interaction, state: &ClusterState) -> Result<InteractionResponse, anyhow::Error>`
+/// `async fn exec(self, ctx: InteractionContext, state: &ClusterState) -> Result<InteractionResponse, anyhow::Error>`
 #[macro_export]
 macro_rules! impl_command_handle {
     ($name:path) => {
@@ -156,8 +252,38 @@ macro_rules! impl_command_handle {
             ) -> Result<$crate::interaction::response::InteractionResponse, ::anyhow::Error> {
                 let parsed =
                     $crate::interaction::util::parse_command_data::<Self>(&mut interaction)?;
+                let ctx = $crate::interaction::util::InteractionContext::new(interaction)?;
 
-                parsed.exec(interaction, state).await
+                parsed.exec(ctx, state).await
+            }
+        }
+    };
+}
+
+/// Implement `handle` method for a guild command type that is only available in
+/// guilds.
+///
+/// This macro is identical to [`impl_command_handle`] except that it will use
+/// [`GuildInteractionContext`] instead of [`InteractionContext`].
+///
+/// The command type must implement [`CommandModel`] and have an `exec` method
+/// with the following signature:
+///
+///`async fn exec(self, ctx: GuildInteractionContext, state: &ClusterState) -> Result<InteractionResponse, anyhow::Error>`
+#[macro_export]
+macro_rules! impl_guild_command_handle {
+    ($name:path) => {
+        impl $name {
+            #[::tracing::instrument]
+            pub async fn handle(
+                mut interaction: ::twilight_model::application::interaction::Interaction,
+                state: &$crate::cluster::ClusterState,
+            ) -> Result<$crate::interaction::response::InteractionResponse, ::anyhow::Error> {
+                let parsed =
+                    $crate::interaction::util::parse_command_data::<Self>(&mut interaction)?;
+                let ctx = $crate::interaction::util::GuildInteractionContext::new(interaction)?;
+
+                parsed.exec(ctx, state).await
             }
         }
     };

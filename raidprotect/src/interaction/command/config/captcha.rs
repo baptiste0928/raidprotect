@@ -5,10 +5,7 @@ use raidprotect_model::{cache::discord::permission::RoleOrdering, database::mode
 use twilight_interactions::command::{CommandModel, CreateCommand};
 use twilight_mention::Mention;
 use twilight_model::{
-    application::{
-        component::{button::ButtonStyle, ActionRow, Button, Component},
-        interaction::Interaction,
-    },
+    application::component::{button::ButtonStyle, ActionRow, Button, Component},
     channel::message::MessageFlags,
     guild::{Permissions, Role},
     http::interaction::InteractionResponseType,
@@ -25,7 +22,7 @@ use crate::{
     interaction::{
         embed::{self, COLOR_GREEN, COLOR_RED, COLOR_TRANSPARENT},
         response::InteractionResponse,
-        util::{CustomId, InteractionExt},
+        util::{CustomId, GuildInteractionContext},
     },
 };
 
@@ -55,16 +52,16 @@ desc_localizations!(captcha_description);
 impl CaptchaConfigCommand {
     pub(super) async fn exec(
         self,
-        interaction: Interaction,
+        ctx: GuildInteractionContext,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         match self {
-            CaptchaConfigCommand::Enable(command) => command.exec(interaction, state).await,
-            CaptchaConfigCommand::Disable(command) => command.exec(interaction, state).await,
-            CaptchaConfigCommand::Logs(command) => command.exec(interaction, state).await,
-            CaptchaConfigCommand::AutoroleAdd(command) => command.exec(interaction, state).await,
-            CaptchaConfigCommand::AutoroleRemove(command) => command.exec(interaction, state).await,
-            CaptchaConfigCommand::AutoroleList(command) => command.exec(interaction, state).await,
+            CaptchaConfigCommand::Enable(command) => command.exec(ctx, state).await,
+            CaptchaConfigCommand::Disable(command) => command.exec(ctx, state).await,
+            CaptchaConfigCommand::Logs(command) => command.exec(ctx, state).await,
+            CaptchaConfigCommand::AutoroleAdd(command) => command.exec(ctx, state).await,
+            CaptchaConfigCommand::AutoroleRemove(command) => command.exec(ctx, state).await,
+            CaptchaConfigCommand::AutoroleList(command) => command.exec(ctx, state).await,
         }
     }
 }
@@ -82,23 +79,18 @@ desc_localizations!(captcha_enable_description);
 impl CaptchaEnableCommand {
     async fn exec(
         self,
-        interaction: Interaction,
+        ctx: GuildInteractionContext,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
-        let lang = interaction.locale()?;
-        let guild_id = interaction.guild()?.id;
-
-        let config = state.database.get_guild(guild_id).await?;
-        let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
-
-        if captcha_enabled {
-            return Ok(embed::captcha::already_enabled(lang));
+        let config = ctx.config(state).await?;
+        if config.captcha.enabled {
+            return Ok(embed::captcha::already_enabled(ctx.lang));
         }
 
         let embed = EmbedBuilder::new()
             .color(COLOR_RED)
-            .title(lang.captcha_confirm_title())
-            .description(lang.captcha_confirm_description())
+            .title(ctx.lang.captcha_confirm_title())
+            .description(ctx.lang.captcha_confirm_description())
             .build();
 
         let custom_id = CustomId::name("captcha-enable");
@@ -108,7 +100,7 @@ impl CaptchaEnableCommand {
                     custom_id: Some(custom_id.to_string()),
                     disabled: false,
                     emoji: None,
-                    label: Some(lang.captcha_confirm_button().to_string()),
+                    label: Some(ctx.lang.captcha_confirm_button().to_string()),
                     style: ButtonStyle::Success,
                     url: None,
                 }),
@@ -116,7 +108,7 @@ impl CaptchaEnableCommand {
                     custom_id: None,
                     disabled: false,
                     emoji: None,
-                    label: Some(lang.learn_more().to_string()),
+                    label: Some(ctx.lang.learn_more().to_string()),
                     style: ButtonStyle::Link,
                     url: Some("https://docs.raidprotect.org/".to_string()),
                 }),
@@ -149,20 +141,14 @@ desc_localizations!(captcha_disable_description);
 impl CaptchaDisableCommand {
     async fn exec(
         self,
-        interaction: Interaction,
+        ctx: GuildInteractionContext,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
-        let lang = interaction.locale()?;
-        let guild_id = interaction.guild()?.id;
-
-        let config = state.database.get_guild(guild_id).await?;
-        let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
-
-        if !captcha_enabled {
-            return Ok(embed::captcha::not_enabled(lang));
+        let config = ctx.config(state).await?;
+        if !config.captcha.enabled {
+            return Ok(embed::captcha::not_enabled(ctx.lang));
         }
 
-        let config = config.unwrap(); // SAFETY: `captcha_enabled` is true here.
         let verification = match config.captcha.channel {
             Some(channel) => channel.mention(),
             None => bail!("captcha channel not set"),
@@ -174,8 +160,11 @@ impl CaptchaDisableCommand {
 
         let embed = EmbedBuilder::new()
             .color(COLOR_RED)
-            .title(lang.captcha_disable_confirm_title())
-            .description(lang.captcha_disable_confirm_description(unverified, verification))
+            .title(ctx.lang.captcha_disable_confirm_title())
+            .description(
+                ctx.lang
+                    .captcha_disable_confirm_description(unverified, verification),
+            )
             .build();
 
         let custom_id = CustomId::name("captcha-disable");
@@ -184,7 +173,7 @@ impl CaptchaDisableCommand {
                 custom_id: Some(custom_id.to_string()),
                 disabled: false,
                 emoji: None,
-                label: Some(lang.captcha_disable_confirm_button().to_string()),
+                label: Some(ctx.lang.captcha_disable_confirm_button().to_string()),
                 style: ButtonStyle::Danger,
                 url: None,
             })],
@@ -220,23 +209,18 @@ desc_localizations!(captcha_logs_description);
 impl CaptchaLogsCommand {
     async fn exec(
         self,
-        interaction: Interaction,
+        ctx: GuildInteractionContext,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
-        let lang = interaction.locale()?;
-        let guild_id = interaction.guild()?.id;
-
-        let config = state.database.get_guild(guild_id).await?;
-        let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
-
-        if !captcha_enabled {
-            return Ok(embed::captcha::not_enabled(lang));
+        let mut config = ctx.config(state).await?;
+        if !config.captcha.enabled {
+            return Ok(embed::captcha::not_enabled(ctx.lang));
         }
 
         // Ensure RaidProtect has permissions to send messages in the channel.
         let (permissions, _) = state
             .cache
-            .permissions(guild_id)
+            .permissions(ctx.guild_id)
             .await?
             .current_member()
             .await?
@@ -244,20 +228,21 @@ impl CaptchaLogsCommand {
             .await?;
 
         if !permissions.contains(Permissions::SEND_MESSAGES | Permissions::EMBED_LINKS) {
-            return Ok(embed::captcha::missing_logs_permission(lang));
+            return Ok(embed::captcha::missing_logs_permission(ctx.lang));
         }
 
         // Update the config.
-        let mut config = config.unwrap(); // SAFETY: `captcha_enabled` is true here
         config.captcha.logs = Some(self.channel);
-
         state.database.update_guild(&config).await?;
 
         // Send the embed.
         let embed = EmbedBuilder::new()
             .color(COLOR_GREEN)
-            .title(lang.config_updated_title())
-            .description(lang.captcha_logs_confirm_description(self.channel.mention()))
+            .title(ctx.lang.config_updated_title())
+            .description(
+                ctx.lang
+                    .captcha_logs_confirm_description(self.channel.mention()),
+            )
             .build();
 
         Ok(InteractionResponse::EphemeralEmbed(embed))
@@ -280,44 +265,38 @@ desc_localizations!(captcha_autorole_add_description);
 impl CaptchaAutoroleAddCommand {
     async fn exec(
         self,
-        interaction: Interaction,
+        ctx: GuildInteractionContext,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
-        let lang = interaction.locale()?;
-        let guild_id = interaction.guild()?.id;
+        let mut config = ctx.config(state).await?;
 
-        let config = state.database.get_guild(guild_id).await?;
-        let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
-
-        if !captcha_enabled {
-            return Ok(embed::captcha::not_enabled(lang));
+        if !config.captcha.enabled {
+            return Ok(embed::captcha::not_enabled(ctx.lang));
         }
 
         // Ensure RaidProtect has permissions to give this role.
         let permissions = state
             .cache
-            .permissions(guild_id)
+            .permissions(ctx.guild_id)
             .await?
             .current_member()
             .await?;
 
         if !permissions.guild().contains(Permissions::MANAGE_ROLES) {
-            return Ok(embed::captcha::missing_role_permission(lang));
+            return Ok(embed::captcha::missing_role_permission(ctx.lang));
         }
 
         if RoleOrdering::from(&self.role) >= permissions.highest_role() {
-            return Ok(embed::captcha::role_hierarchy(lang));
+            return Ok(embed::captcha::role_hierarchy(ctx.lang));
         }
 
         // Update the configuration.
-        let mut config = config.unwrap(); // SAFETY: `captcha_enabled` is true here
-
         if config.captcha.verified_roles.contains(&self.role.id) {
-            return Ok(embed::captcha::role_already_added(lang));
+            return Ok(embed::captcha::role_already_added(ctx.lang));
         }
 
         if config.captcha.verified_roles.len() >= CaptchaConfig::MAX_VERIFIED_ROLES_LEN {
-            return Ok(embed::captcha::role_too_many(lang));
+            return Ok(embed::captcha::role_too_many(ctx.lang));
         }
 
         config.captcha.verified_roles.push(self.role.id);
@@ -326,8 +305,11 @@ impl CaptchaAutoroleAddCommand {
         // Send the embed.
         let embed = EmbedBuilder::new()
             .color(COLOR_GREEN)
-            .title(lang.config_updated_title())
-            .description(lang.captcha_autorole_add_confirm_description(self.role.mention()))
+            .title(ctx.lang.config_updated_title())
+            .description(
+                ctx.lang
+                    .captcha_autorole_add_confirm_description(self.role.mention()),
+            )
             .build();
 
         Ok(InteractionResponse::EphemeralEmbed(embed))
@@ -350,24 +332,17 @@ desc_localizations!(captcha_autorole_remove_description);
 impl CaptchaAutoroleRemoveCommand {
     async fn exec(
         self,
-        interaction: Interaction,
+        ctx: GuildInteractionContext,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
-        let lang = interaction.locale()?;
-        let guild_id = interaction.guild()?.id;
-
-        let config = state.database.get_guild(guild_id).await?;
-        let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
-
-        if !captcha_enabled {
-            return Ok(embed::captcha::not_enabled(lang));
+        let mut config = ctx.config(state).await?;
+        if !config.captcha.enabled {
+            return Ok(embed::captcha::not_enabled(ctx.lang));
         }
 
         // Update the configuration.
-        let mut config = config.unwrap(); // SAFETY: `captcha_enabled` is true here
-
         if !config.captcha.verified_roles.contains(&self.role) {
-            return Ok(embed::captcha::role_not_configured(lang));
+            return Ok(embed::captcha::role_not_configured(ctx.lang));
         }
 
         config.captcha.verified_roles.retain(|r| r != &self.role);
@@ -376,8 +351,11 @@ impl CaptchaAutoroleRemoveCommand {
         // Send the embed.
         let embed = EmbedBuilder::new()
             .color(COLOR_GREEN)
-            .title(lang.config_updated_title())
-            .description(lang.captcha_autorole_remove_confirm_description(self.role.mention()))
+            .title(ctx.lang.config_updated_title())
+            .description(
+                ctx.lang
+                    .captcha_autorole_remove_confirm_description(self.role.mention()),
+            )
             .build();
 
         Ok(InteractionResponse::EphemeralEmbed(embed))
@@ -397,21 +375,15 @@ desc_localizations!(captcha_autorole_list_description);
 impl CaptchaAutoroleListCommand {
     async fn exec(
         self,
-        interaction: Interaction,
+        ctx: GuildInteractionContext,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
-        let lang = interaction.locale()?;
-        let guild_id = interaction.guild()?.id;
-
-        let config = state.database.get_guild(guild_id).await?;
-        let captcha_enabled = config.as_ref().map(|c| c.captcha.enabled).unwrap_or(false);
-
-        if !captcha_enabled {
-            return Ok(embed::captcha::not_enabled(lang));
+        let config = ctx.config(state).await?;
+        if !config.captcha.enabled {
+            return Ok(embed::captcha::not_enabled(ctx.lang));
         }
 
         // Get the roles list.
-        let config = config.unwrap(); // SAFETY: `captcha_enabled` is true here
         let roles = config
             .captcha
             .verified_roles
@@ -424,14 +396,14 @@ impl CaptchaAutoroleListCommand {
         let embed = if roles.is_empty() {
             EmbedBuilder::new()
                 .color(COLOR_RED)
-                .title(lang.captcha_autorole_empty_title())
-                .description(lang.captcha_autorole_empty_description())
+                .title(ctx.lang.captcha_autorole_empty_title())
+                .description(ctx.lang.captcha_autorole_empty_description())
                 .build()
         } else {
             EmbedBuilder::new()
                 .color(COLOR_TRANSPARENT)
-                .title(lang.captcha_autorole_list_title())
-                .description(lang.captcha_autorole_list(roles))
+                .title(ctx.lang.captcha_autorole_list_title())
+                .description(ctx.lang.captcha_autorole_list(roles))
                 .build()
         };
 

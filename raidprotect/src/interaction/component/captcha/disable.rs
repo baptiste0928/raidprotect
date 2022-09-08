@@ -1,6 +1,5 @@
 //! Captcha disable button.
 
-use anyhow::Context;
 use tracing::{error, warn};
 use twilight_http::request::AuditLogReason;
 use twilight_mention::Mention;
@@ -18,7 +17,7 @@ use crate::{
     interaction::{
         embed::{self, COLOR_GREEN, COLOR_RED},
         response::InteractionResponse,
-        util::InteractionExt,
+        util::{GuildConfigExt, GuildInteractionContext},
     },
     translations::Lang,
     util::guild_logs_channel,
@@ -38,28 +37,25 @@ impl CaptchaDisable {
         interaction: Interaction,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
-        let guild = interaction.guild()?;
-        let lang = interaction.locale()?;
-        let author_id = interaction.author_id().context("missing author id")?;
-
-        let mut config = state.database.get_guild_or_create(guild.id).await?;
-        let guild_lang = Lang::from(&*config.lang);
+        let ctx = GuildInteractionContext::new(interaction)?;
+        let mut config = ctx.config(state).await?;
+        let guild_lang = config.lang();
 
         // Ensure the captcha is enabled.
         if !config.captcha.enabled {
-            return Ok(embed::captcha::not_enabled(lang));
+            return Ok(embed::captcha::not_enabled(ctx.lang));
         }
 
         // Try to delete the verification channel and the unverified role.
         if let Some(role) = config.captcha.role {
             if let Err(error) = state
                 .http
-                .delete_role(guild.id, role)
+                .delete_role(ctx.guild_id, role)
                 .reason(guild_lang.captcha_disable_reason())?
                 .exec()
                 .await
             {
-                warn!(error = ?error, guild = ?guild.id, role = ?role, "failed to delete unverified role");
+                warn!(error = ?error, guild = ?ctx.guild_id, role = ?role, "failed to delete unverified role");
             }
         }
 
@@ -71,7 +67,7 @@ impl CaptchaDisable {
                 .exec()
                 .await
             {
-                warn!(error = ?error, guild = ?guild.id, channel = ?channel, "failed to delete verification channel");
+                warn!(error = ?error, guild = ?ctx.guild_id, channel = ?channel, "failed to delete verification channel");
             }
         }
 
@@ -84,22 +80,22 @@ impl CaptchaDisable {
         tokio::spawn(async move {
             if let Err(error) = logs_message(
                 &state_clone,
-                guild.id,
+                ctx.guild_id,
                 config.logs_chan,
-                author_id,
+                ctx.author.id,
                 guild_lang,
             )
             .await
             {
-                error!(error = ?error, guild = ?guild.id, "failed to send captcha disable logs message");
+                error!(error = ?error, guild = ?ctx.guild_id, "failed to send captcha disable logs message");
             }
         });
 
         // Send the confirmation message.
         let embed = EmbedBuilder::new()
-            .title(lang.captcha_disabled_title())
+            .title(ctx.lang.captcha_disabled_title())
             .color(COLOR_GREEN)
-            .description(lang.captcha_disabled_description())
+            .description(ctx.lang.captcha_disabled_description())
             .build();
 
         Ok(InteractionResponse::EphemeralEmbed(embed))
