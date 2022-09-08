@@ -11,15 +11,15 @@ publish = false
 raidprotect-captcha = { path = "../captcha" }
 raidprotect-model = { path = "../model" }
 
-anyhow = { version = "1.0.61", features = ["backtrace"] }
-async-trait = "0.1.57"
-once_cell = "1.13.0"
+anyhow = { version = "1.0.64", features = ["backtrace"] }
+once_cell = "1.14.0"
 rosetta-i18n = "0.1.2"
-time = "0.3.13"
+time = "0.3.14"
 
-# Tokio ecosystem
-futures = "0.3.23"
-tokio = { version = "1.20.1", features = ["macros", "rt-multi-thread", "sync", "time", "signal"] }
+# Async
+async-trait = "0.1.57"
+futures-util = { version = "0.3.24", default-features = false }
+tokio = { version = "1.21.0", features = ["macros", "rt-multi-thread", "sync", "time", "signal"] }
 tracing = "0.1.36"
 
 # Twilight
@@ -27,14 +27,14 @@ twilight-gateway = { version = "0.13.0", features = ["rustls-webpki-roots", "zli
 twilight-http = { version = "0.13.0", features = ["rustls-webpki-roots", "decompression"], default-features = false }
 twilight-interactions = "0.13.0"
 twilight-mention = "0.13.0"
-twilight-model = "0.13.0"
-twilight-util = { version = "0.13.0", features = ["builder", "snowflake"] }
+twilight-model = "0.13.2"
+twilight-util = { version = "0.13.1", features = ["builder", "snowflake"] }
 
 # Message parsing
 any_ascii = "0.3.1"
 linkify = "0.9.0"
 unicode-segmentation = "1.9.0"
-url = "2.2.2"
+url = "2.3.1"
 
 [build-dependencies]
 rosetta-build = "0.1.2"

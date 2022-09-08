@@ -59,21 +59,17 @@ impl CachedChannel {
 
     /// Whether a [`ChannelType`] can be cached with this model.
     pub(crate) fn is_cached(kind: ChannelType) -> bool {
-        match kind {
+        matches!(
+            kind,
             ChannelType::GuildText
-            | ChannelType::GuildVoice
-            | ChannelType::GuildStageVoice
-            | ChannelType::GuildCategory
-            | ChannelType::GuildNews
-            | ChannelType::GuildPublicThread
-            | ChannelType::GuildPrivateThread
-            | ChannelType::GuildNewsThread => true,
-            ChannelType::Private
-            | ChannelType::Group
-            | ChannelType::GuildDirectory
-            | ChannelType::GuildForum
-            | ChannelType::Unknown(_) => false,
-        }
+                | ChannelType::GuildVoice
+                | ChannelType::GuildStageVoice
+                | ChannelType::GuildCategory
+                | ChannelType::GuildNews
+                | ChannelType::GuildPublicThread
+                | ChannelType::GuildPrivateThread
+                | ChannelType::GuildNewsThread
+        )
     }
 }
 
