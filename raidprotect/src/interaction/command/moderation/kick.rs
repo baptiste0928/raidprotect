@@ -8,14 +8,10 @@
 //! sent in the guild's logs channel. The kicked user receives a pm with the
 //! reason of the kick.
 
-use anyhow::Context;
 use raidprotect_model::{cache::model::interaction::PendingSanction, database::model::ModlogType};
 use twilight_interactions::command::{CommandModel, CreateCommand, ResolvedUser};
 use twilight_model::{
-    application::{
-        component::{text_input::TextInputStyle, ActionRow, Component, TextInput},
-        interaction::Interaction,
-    },
+    application::component::{text_input::TextInputStyle, ActionRow, Component, TextInput},
     guild::Permissions,
     id::{marker::InteractionMarker, Id},
     user::User,
@@ -23,11 +19,11 @@ use twilight_model::{
 
 use crate::{
     cluster::ClusterState,
-    desc_localizations, impl_command_handle,
+    desc_localizations, impl_guild_command_handle,
     interaction::{
         embed,
         response::InteractionResponse,
-        util::{CustomId, InteractionExt},
+        util::{CustomId, GuildInteractionContext},
     },
     translations::Lang,
     util::TextProcessExt,
@@ -52,7 +48,7 @@ pub struct KickCommand {
     pub reason: Option<String>,
 }
 
-impl_command_handle!(KickCommand);
+impl_guild_command_handle!(KickCommand);
 desc_localizations!(kick_description);
 
 impl KickCommand {
@@ -62,32 +58,28 @@ impl KickCommand {
 
     async fn exec(
         self,
-        interaction: Interaction,
+        ctx: GuildInteractionContext,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
-        let guild = interaction.guild()?;
-        let author_id = interaction.author_id().context("missing author_id")?;
-
         let user = self.user.resolved;
-        let lang = interaction.locale()?;
         let member = match self.user.member {
             Some(member) => member,
-            None => return Ok(embed::kick::not_member(user.name, lang)),
+            None => return Ok(embed::kick::not_member(user.name, ctx.lang)),
         };
 
         // Fetch the author and the bot permissions.
-        let permissions = state.cache.permissions(guild.id).await?;
-        let author_permissions = permissions.member(author_id, &member.roles).await?;
+        let permissions = state.cache.permissions(ctx.guild_id).await?;
+        let author_permissions = permissions.member(ctx.author.id, &member.roles).await?;
         let member_permissions = permissions.member(user.id, &member.roles).await?;
         let bot_permissions = permissions.current_member().await?;
 
         // Check if the author and the bot have required permissions.
         if member_permissions.is_owner() {
-            return Ok(embed::kick::member_owner(lang));
+            return Ok(embed::kick::member_owner(ctx.lang));
         }
 
         if !bot_permissions.guild().contains(Permissions::KICK_MEMBERS) {
-            return Ok(embed::kick::bot_missing_permission(lang));
+            return Ok(embed::kick::bot_missing_permission(ctx.lang));
         }
 
         // Check if the role hierarchy allow the author and the bot to perform
@@ -95,17 +87,17 @@ impl KickCommand {
         let member_highest_role = member_permissions.highest_role();
 
         if member_highest_role >= author_permissions.highest_role() {
-            return Ok(embed::kick::user_hierarchy(lang));
+            return Ok(embed::kick::user_hierarchy(ctx.lang));
         }
 
         if member_highest_role >= bot_permissions.highest_role() {
-            return Ok(embed::kick::bot_hierarchy(lang));
+            return Ok(embed::kick::bot_hierarchy(ctx.lang));
         }
 
         // Send reason modal.
         let enforce_reason = state
             .database
-            .get_guild_or_create(guild.id)
+            .get_guild_or_create(ctx.guild_id)
             .await?
             .moderation
             .enforce_reason;
@@ -113,7 +105,8 @@ impl KickCommand {
         match self.reason {
             Some(_reason) => Ok(InteractionResponse::EphemeralDeferredMessage),
             None => {
-                KickCommand::reason_modal(interaction.id, user, enforce_reason, state, lang).await
+                KickCommand::reason_modal(ctx.interaction.id, user, enforce_reason, state, ctx.lang)
+                    .await
             }
         }
     }

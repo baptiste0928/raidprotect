@@ -2,7 +2,6 @@
 
 use std::time::Duration;
 
-use anyhow::Context;
 use raidprotect_captcha::{code::random_human_code, generate_captcha_png};
 use raidprotect_model::cache::model::interaction::PendingCaptcha;
 use tracing::{error, instrument};
@@ -33,7 +32,7 @@ use crate::{
     interaction::{
         embed::{self, COLOR_TRANSPARENT},
         response::InteractionResponse,
-        util::{CustomId, InteractionExt},
+        util::{CustomId, GuildConfigExt, GuildInteractionContext},
     },
     translations::Lang,
 };
@@ -50,37 +49,34 @@ impl CaptchaVerifyButton {
         interaction: Interaction,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
-        let guild = interaction.guild()?;
-        let author = interaction.author_id().context("missing author_id")?;
-        let lang = interaction.locale()?;
-
-        let config = state.database.get_guild_or_create(guild.id).await?;
-        let guild_lang = Lang::from(&*config.lang);
+        let ctx = GuildInteractionContext::new(interaction)?;
 
         // Get the pending captcha from the cache.
         let mut captcha = match state
             .cache
-            .get::<PendingCaptcha>(&(guild.id, author))
+            .get::<PendingCaptcha>(&(ctx.guild_id, ctx.author.id))
             .await?
         {
             Some(captcha) => captcha,
             None => {
-                return Ok(embed::captcha::captcha_not_found(lang));
+                return Ok(embed::captcha::captcha_not_found(ctx.lang));
             }
         };
 
         // Captcha has been regenerated too many times.
         if captcha.regenerate_count >= captcha::MAX_RETRY {
+            let config = ctx.config(state).await?;
             let state_clone = state.clone();
+
             tokio::spawn(kick_after(
                 state_clone,
-                guild.id,
-                author,
+                ctx.guild_id,
+                ctx.author.id,
                 captcha::KICK_AFTER,
-                guild_lang,
+                config.lang(),
             ));
 
-            return Ok(embed::captcha::regenerate_error(lang));
+            return Ok(embed::captcha::regenerate_error(ctx.lang));
         }
 
         // Generate the captcha code.
@@ -98,9 +94,9 @@ impl CaptchaVerifyButton {
 
         // Send the verification message.
         let embed = EmbedBuilder::new()
-            .title(lang.captcha_image_title())
+            .title(ctx.lang.captcha_image_title())
             .color(COLOR_TRANSPARENT)
-            .description(lang.captcha_image_description())
+            .description(ctx.lang.captcha_image_description())
             .image(ImageSource::attachment("captcha.png")?)
             .build();
 
@@ -108,7 +104,7 @@ impl CaptchaVerifyButton {
         let component = Component::ActionRow(ActionRow {
             components: vec![Component::Button(Button {
                 custom_id: Some(custom_id.to_string()),
-                label: Some(lang.captcha_image_button().to_string()),
+                label: Some(ctx.lang.captcha_image_button().to_string()),
                 style: ButtonStyle::Success,
                 disabled: false,
                 emoji: None,
@@ -120,7 +116,7 @@ impl CaptchaVerifyButton {
             file: image,
             filename: "captcha.png".to_string(),
             id: 0,
-            description: Some(lang.captcha_image_alt().to_string()),
+            description: Some(ctx.lang.captcha_image_alt().to_string()),
         };
 
         let response = InteractionResponseDataBuilder::new()
@@ -142,7 +138,7 @@ async fn kick_after(
     guild: Id<GuildMarker>,
     user: Id<UserMarker>,
     after: Duration,
-    lang: Lang,
+    guild_lang: Lang,
 ) {
     tokio::time::sleep(after).await;
 
@@ -155,7 +151,12 @@ async fn kick_after(
         }
     };
 
-    if let Err(error) = req.reason(lang.captcha_kick_reason()).unwrap().exec().await {
+    if let Err(error) = req
+        .reason(guild_lang.captcha_kick_reason())
+        .unwrap()
+        .exec()
+        .await
+    {
         error!(error = ?error, "failed to kick user after captcha");
     }
 }
@@ -171,19 +172,17 @@ impl CaptchaValidateButton {
         interaction: Interaction,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
-        let guild = interaction.guild()?;
-        let author = interaction.author_id().context("missing author_id")?;
-        let lang = interaction.locale()?;
+        let ctx = GuildInteractionContext::new(interaction)?;
 
         // Ensure the user is not already verified.
         match state
             .cache
-            .get::<PendingCaptcha>(&(guild.id, author))
+            .get::<PendingCaptcha>(&(ctx.guild_id, ctx.author.id))
             .await?
         {
             Some(captcha) => captcha,
             None => {
-                return Ok(embed::captcha::captcha_not_found(lang));
+                return Ok(embed::captcha::captcha_not_found(ctx.lang));
             }
         };
 
@@ -194,7 +193,7 @@ impl CaptchaValidateButton {
         let components = vec![Component::ActionRow(ActionRow {
             components: vec![Component::TextInput(TextInput {
                 custom_id: input_custom_id.to_string(),
-                label: lang.captcha_input_label().to_string(),
+                label: ctx.lang.captcha_input_label().to_string(),
                 max_length: Some(captcha::DEFAULT_LENGTH as u16),
                 min_length: Some(captcha::DEFAULT_LENGTH as u16),
                 placeholder: Some("-".repeat(captcha::DEFAULT_LENGTH)),
@@ -206,7 +205,7 @@ impl CaptchaValidateButton {
 
         Ok(InteractionResponse::Modal {
             custom_id: modal_custom_id.to_string(),
-            title: lang.captcha_image_title().to_string(),
+            title: ctx.lang.captcha_image_title().to_string(),
             components,
         })
     }

@@ -30,7 +30,7 @@ pub async fn handle_interaction(interaction: Interaction, state: &ClusterState) 
     let responder = InteractionResponder::from_interaction(&interaction);
     debug!(id = ?interaction.id, "received {} interaction", interaction.kind.kind());
 
-    let lang = interaction.locale().unwrap_or(Lang::DEFAULT);
+    let lang = interaction.lang().unwrap_or(Lang::DEFAULT);
 
     let response = match interaction.kind {
         InteractionType::ApplicationCommand => handle_command(interaction, state).await,
@@ -73,7 +73,7 @@ async fn handle_command(
         name => {
             warn!(name = name, "received unknown command");
 
-            Ok(embed::error::unknown_command(interaction.locale()?))
+            Ok(embed::error::unknown_command(interaction.lang()?))
         }
     }
 }
@@ -97,7 +97,7 @@ async fn handle_component(
         name => {
             warn!(name = name, "received unknown component");
 
-            Ok(embed::error::unknown_command(interaction.locale()?))
+            Ok(embed::error::unknown_command(interaction.lang()?))
         }
     }
 }
@@ -117,7 +117,7 @@ async fn handle_modal(
         name => {
             warn!(name = name, "received unknown modal");
 
-            Ok(embed::error::unknown_command(interaction.locale()?))
+            Ok(embed::error::unknown_command(interaction.lang()?))
         }
     }
 }

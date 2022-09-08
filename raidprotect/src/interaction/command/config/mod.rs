@@ -7,11 +7,12 @@ mod captcha;
 
 pub use captcha::CaptchaConfigCommand;
 use twilight_interactions::command::{CommandModel, CreateCommand};
-use twilight_model::{application::interaction::Interaction, guild::Permissions};
+use twilight_model::guild::Permissions;
 
 use crate::{
-    cluster::ClusterState, desc_localizations, impl_command_handle,
-    interaction::response::InteractionResponse,
+    cluster::ClusterState,
+    desc_localizations, impl_guild_command_handle,
+    interaction::{response::InteractionResponse, util::GuildInteractionContext},
 };
 
 /// Configuration command model.
@@ -29,7 +30,7 @@ pub enum ConfigCommand {
     Captcha(CaptchaConfigCommand),
 }
 
-impl_command_handle!(ConfigCommand);
+impl_guild_command_handle!(ConfigCommand);
 desc_localizations!(config_description);
 
 fn config_permissions() -> Permissions {
@@ -39,11 +40,11 @@ fn config_permissions() -> Permissions {
 impl ConfigCommand {
     async fn exec(
         self,
-        interaction: Interaction,
+        ctx: GuildInteractionContext,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         match self {
-            Self::Captcha(command) => command.exec(interaction, state).await,
+            Self::Captcha(command) => command.exec(ctx, state).await,
         }
     }
 }

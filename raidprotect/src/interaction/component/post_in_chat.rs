@@ -23,7 +23,7 @@ use crate::{
     interaction::{
         embed,
         response::InteractionResponse,
-        util::{CustomId, InteractionExt},
+        util::{CustomId, GuildConfigExt, GuildInteractionContext},
     },
     translations::Lang,
 };
@@ -90,26 +90,24 @@ impl PostInChat {
         custom_id: CustomId,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
+        let ctx = GuildInteractionContext::new(interaction)?;
+
         // Fetch component from redis
         let component_id = custom_id
             .id
             .ok_or_else(|| anyhow!("missing component id in custom_id"))?;
         let mut component = match state.cache.get::<PostInChatButton>(&component_id).await? {
             Some(component) => component,
-            None => return Ok(embed::error::expired_interaction(interaction.locale()?)),
+            None => return Ok(embed::error::expired_interaction(ctx.lang)),
         };
-
-        // Get guild language
-        let guild = interaction.guild()?;
-        let config = state.database.get_guild_or_create(guild.id).await?;
-        let lang = Lang::from(&*config.lang);
 
         // Remove ephemeral flag
         if let Some(flags) = component.response.flags.as_mut() {
             flags.set(MessageFlags::EPHEMERAL, false);
         }
 
-        component.response.content = Some(lang.post_in_chat_author(component.author_id));
+        let config = ctx.config(state).await?;
+        component.response.content = Some(config.lang().post_in_chat_author(component.author_id));
 
         Ok(InteractionResponse::Raw {
             kind: InteractionResponseType::ChannelMessageWithSource,

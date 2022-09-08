@@ -4,16 +4,12 @@
 
 use std::time::Duration;
 
-use anyhow::Context;
 use twilight_interactions::command::{CommandModel, CreateCommand, ResolvedUser};
 use twilight_mention::{
     timestamp::{Timestamp, TimestampStyle},
     Mention,
 };
-use twilight_model::application::{
-    component::{button::ButtonStyle, ActionRow, Button, Component},
-    interaction::Interaction,
-};
+use twilight_model::application::component::{button::ButtonStyle, ActionRow, Button, Component};
 use twilight_util::{
     builder::{
         embed::{EmbedBuilder, EmbedFieldBuilder, EmbedFooterBuilder, ImageSource},
@@ -27,7 +23,7 @@ use crate::{
     desc_localizations, impl_command_handle,
     interaction::{
         component::PostInChat, embed::COLOR_TRANSPARENT, response::InteractionResponse,
-        util::InteractionExt,
+        util::InteractionContext,
     },
     util::resource::avatar_url,
 };
@@ -51,16 +47,15 @@ desc_localizations!(profile_description);
 impl ProfileCommand {
     async fn exec(
         self,
-        interaction: Interaction,
+        ctx: InteractionContext,
         state: &ClusterState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let user = self.user.resolved;
-        let lang = interaction.locale()?;
 
         let avatar = avatar_url(&user, "jpg", 1024);
         let mut embed = EmbedBuilder::new()
             .color(COLOR_TRANSPARENT)
-            .title(lang.profile_title(user.discriminator(), &user.name))
+            .title(ctx.lang.profile_title(user.discriminator(), &user.name))
             .footer(EmbedFooterBuilder::new(format!("ID: {}", user.id)).build())
             .thumbnail(ImageSource::url(&avatar)?);
 
@@ -71,7 +66,7 @@ impl ProfileCommand {
             Timestamp::new(created_at, Some(TimestampStyle::RelativeTime)).mention();
 
         embed = embed.field(EmbedFieldBuilder::new(
-            lang.profile_created_at(),
+            ctx.lang.profile_created_at(),
             format!("{timestamp_long} ({timestamp_relative})"),
         ));
 
@@ -84,7 +79,7 @@ impl ProfileCommand {
                 Timestamp::new(joined_at as u64, Some(TimestampStyle::RelativeTime)).mention();
 
             embed = embed.field(EmbedFieldBuilder::new(
-                lang.profile_joined_at(),
+                ctx.lang.profile_joined_at(),
                 format!("{timestamp_long} ({timestamp_relative})"),
             ));
         }
@@ -94,7 +89,7 @@ impl ProfileCommand {
                 custom_id: None,
                 disabled: false,
                 emoji: None,
-                label: Some(lang.profile_avatar_button().into()),
+                label: Some(ctx.lang.profile_avatar_button().into()),
                 style: ButtonStyle::Link,
                 url: Some(avatar),
             })],
@@ -104,8 +99,7 @@ impl ProfileCommand {
             .embeds([embed.validate()?.build()])
             .components([components])
             .build();
-        let author_id = interaction.author_id().context("missing author id")?;
 
-        PostInChat::create(response, interaction.id, author_id, state, lang).await
+        PostInChat::create(response, ctx.interaction.id, ctx.author.id, state, ctx.lang).await
     }
 }
