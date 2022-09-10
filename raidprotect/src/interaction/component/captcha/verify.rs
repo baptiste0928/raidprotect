@@ -124,7 +124,6 @@ impl CaptchaVerifyButton {
             }));
         }
 
-
         let component = Component::ActionRow(ActionRow { components });
         let attachment = Attachment {
             file: image,
