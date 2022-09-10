@@ -15,10 +15,7 @@ use super::{
     command::{
         config::ConfigCommand, help::HelpCommand, moderation::KickCommand, profile::ProfileCommand,
     },
-    component::{
-        captcha::{CaptchaDisable, CaptchaEnable, CaptchaValidateButton, CaptchaVerifyButton},
-        PostInChat,
-    },
+    component::{captcha::*, PostInChat},
     embed,
     response::{InteractionResponder, InteractionResponse},
     util::{CustomId, InteractionExt},
@@ -105,7 +102,7 @@ async fn handle_component(
 /// Handle incoming modal interaction
 async fn handle_modal(
     interaction: Interaction,
-    _state: &ClusterState,
+    state: &ClusterState,
 ) -> Result<InteractionResponse, anyhow::Error> {
     let custom_id = match &interaction.data {
         Some(InteractionData::ModalSubmit(data)) => CustomId::from_str(&*data.custom_id)?,
@@ -113,7 +110,8 @@ async fn handle_modal(
     };
 
     match &*custom_id.name {
-        "sanction" => bail!("not implemented"),
+        "captcha-modal" => CaptchaModal::handle(interaction, state).await,
+        // "sanction" => bail!("not implemented"),
         name => {
             warn!(name = name, "received unknown modal");
 

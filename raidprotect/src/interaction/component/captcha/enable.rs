@@ -31,7 +31,7 @@ use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 use crate::{
     cluster::ClusterState,
     interaction::{
-        embed::{self, COLOR_GREEN, COLOR_RED},
+        embed::{self, COLOR_RED, COLOR_SUCCESS},
         response::InteractionResponse,
         util::{CustomId, GuildConfigExt, GuildInteractionContext},
     },
@@ -232,7 +232,7 @@ impl CaptchaEnable {
         // Send the confirmation message.
         let embed = EmbedBuilder::new()
             .title(ctx.lang.captcha_enabled_title())
-            .color(COLOR_GREEN)
+            .color(COLOR_SUCCESS)
             .description(ctx.lang.captcha_enabled_description(
                 verification_channel.mention(),
                 unverified_role.mention(),

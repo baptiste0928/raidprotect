@@ -141,3 +141,14 @@ pub fn captcha_not_found(lang: Lang) -> InteractionResponse {
 
     InteractionResponse::EphemeralEmbed(embed)
 }
+
+/// Entered code is invalid.
+pub fn captcha_invalid_code(lang: Lang) -> InteractionResponse {
+    let embed = EmbedBuilder::new()
+        .title(lang.captcha_invalid_title())
+        .color(COLOR_RED)
+        .description(lang.captcha_invalid_description())
+        .build();
+
+    InteractionResponse::EphemeralEmbed(embed)
+}
