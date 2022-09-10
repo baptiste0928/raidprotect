@@ -85,6 +85,18 @@ impl CacheClient {
 
         Ok(())
     }
+
+    /// Delete a value from the cache.
+    #[instrument(skip(self))]
+    pub async fn delete<T: RedisModel>(&self, value: &T) -> Result<(), anyhow::Error> {
+        let mut conn = self.conn().await?;
+        let key = value.key();
+
+        trace!("deleting value for key {}", key);
+        conn.del(key).await?;
+
+        Ok(())
+    }
 }
 
 /// Type representing a model stored in the cache.

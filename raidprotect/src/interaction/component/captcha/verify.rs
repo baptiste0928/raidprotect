@@ -1,7 +1,5 @@
 //! Captcha verification button and modal.
 
-use std::time::Duration;
-
 use raidprotect_captcha::{code::random_human_code, generate_captcha_png};
 use raidprotect_model::cache::model::interaction::PendingCaptcha;
 use tracing::{error, instrument};
@@ -52,11 +50,7 @@ impl CaptchaVerifyButton {
         let ctx = GuildInteractionContext::new(interaction)?;
 
         // Get the pending captcha from the cache.
-        let mut captcha = match state
-            .cache
-            .get::<PendingCaptcha>(&(ctx.guild_id, ctx.author.id))
-            .await?
-        {
+        let mut captcha = match get_captcha(&ctx, state).await? {
             Some(captcha) => captcha,
             None => {
                 return Ok(embed::captcha::captcha_not_found(ctx.lang));
@@ -68,13 +62,9 @@ impl CaptchaVerifyButton {
             let config = ctx.config(state).await?;
             let state_clone = state.clone();
 
-            tokio::spawn(kick_after(
-                state_clone,
-                ctx.guild_id,
-                ctx.author.id,
-                captcha::KICK_AFTER,
-                config.lang(),
-            ));
+            tokio::spawn(async move {
+                kick_after(&state_clone, ctx.guild_id, ctx.author.id, config.lang()).await
+            });
 
             return Ok(embed::captcha::regenerate_error(ctx.lang));
         }
@@ -146,14 +136,14 @@ impl CaptchaVerifyButton {
     }
 }
 
-async fn kick_after(
-    state: ClusterState,
+/// Kick user that failed to verify after 10 seconds.
+pub async fn kick_after(
+    state: &ClusterState,
     guild: Id<GuildMarker>,
     user: Id<UserMarker>,
-    after: Duration,
     guild_lang: Lang,
 ) {
-    tokio::time::sleep(after).await;
+    tokio::time::sleep(captcha::KICK_AFTER).await;
 
     let http = state.cache_http(guild);
     let req = match http.remove_guild_member(user).await {
@@ -187,13 +177,9 @@ impl CaptchaValidateButton {
     ) -> Result<InteractionResponse, anyhow::Error> {
         let ctx = GuildInteractionContext::new(interaction)?;
 
-        // Ensure the user is not already verified.
-        match state
-            .cache
-            .get::<PendingCaptcha>(&(ctx.guild_id, ctx.author.id))
-            .await?
-        {
-            Some(captcha) => captcha,
+        // Get the captcha code length from the cache.
+        let code_length = match get_captcha(&ctx, state).await? {
+            Some(captcha) => captcha.code.len(),
             None => {
                 return Ok(embed::captcha::captcha_not_found(ctx.lang));
             }
@@ -207,9 +193,9 @@ impl CaptchaValidateButton {
             components: vec![Component::TextInput(TextInput {
                 custom_id: input_custom_id.to_string(),
                 label: ctx.lang.captcha_input_label().to_string(),
-                max_length: Some(captcha::DEFAULT_LENGTH as u16),
-                min_length: Some(captcha::DEFAULT_LENGTH as u16),
-                placeholder: Some("-".repeat(captcha::DEFAULT_LENGTH)),
+                max_length: Some(code_length as u16),
+                min_length: Some(code_length as u16),
+                placeholder: Some("-".repeat(code_length)),
                 required: Some(true),
                 style: TextInputStyle::Short,
                 value: None,
@@ -222,4 +208,17 @@ impl CaptchaValidateButton {
             components,
         })
     }
+}
+
+/// Get the captcha key from the current context.
+pub fn captcha_key(ctx: &GuildInteractionContext) -> (Id<GuildMarker>, Id<UserMarker>) {
+    (ctx.guild_id, ctx.author.id)
+}
+
+/// Get the pending captcha from the cache.
+pub async fn get_captcha(
+    ctx: &GuildInteractionContext,
+    state: &ClusterState,
+) -> Result<Option<PendingCaptcha>, anyhow::Error> {
+    state.cache.get::<PendingCaptcha>(&captcha_key(ctx)).await
 }

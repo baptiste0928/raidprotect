@@ -6,12 +6,12 @@ use std::{
     str::FromStr,
 };
 
-use anyhow::{bail, Context};
+use anyhow::{anyhow, bail, Context};
 use raidprotect_model::database::model::GuildConfig;
 use tracing::instrument;
 use twilight_interactions::command::CommandModel;
 use twilight_model::{
-    application::interaction::{Interaction, InteractionData},
+    application::interaction::{modal::ModalInteractionData, Interaction, InteractionData},
     guild::PartialMember,
     id::{marker::GuildMarker, Id},
     user::User,
@@ -232,6 +232,51 @@ where
     };
 
     T::from_interaction(data.into()).context("failed to parse command data")
+}
+
+/// Parse incoming [`ModalSubmit`] interaction and return the inner data.
+///
+/// This takes a mutable [`Interaction`] since the inner [`ModalInteractionData`]
+/// is replaced with [`None`] to avoid useless clones.
+///
+/// [`ModalSubmit`]: twilight_model::application::interaction::InteractionType::ModalSubmit
+/// [`ModalInteractionData`]: twilight_model::application::interaction::modal::ModalInteractionData
+pub fn parse_modal_data(
+    interaction: &mut Interaction,
+) -> Result<ModalInteractionData, anyhow::Error> {
+    match mem::take(&mut interaction.data) {
+        Some(InteractionData::ModalSubmit(data)) => Ok(data),
+        _ => bail!("unable to parse modal data, received unknown data type"),
+    }
+}
+
+/// Parse a field from [`ModalInteractionData`].
+///
+/// This function try to find a field with the given name in the modal data and
+/// return its value as a string.
+pub fn parse_modal_field<'a>(
+    data: &'a ModalInteractionData,
+    name: &str,
+) -> Result<Option<&'a str>, anyhow::Error> {
+    let mut components = data.components.iter().flat_map(|c| &c.components);
+
+    match components.find(|c| &*c.custom_id == name) {
+        Some(component) => Ok(component.value.as_deref()),
+        None => bail!("missing modal field: {}", name),
+    }
+}
+
+/// Parse a required field from [`ModalInteractionData`].
+///
+/// This function is the same as [`parse_modal_field`] but returns an error if
+/// the field value is [`None`].
+pub fn parse_modal_field_required<'a>(
+    data: &'a ModalInteractionData,
+    name: &str,
+) -> Result<&'a str, anyhow::Error> {
+    let value = parse_modal_field(data, name)?;
+
+    value.ok_or_else(|| anyhow!("required modal field is empty: {}", name))
 }
 
 /// Implement `handle` method for a command type.

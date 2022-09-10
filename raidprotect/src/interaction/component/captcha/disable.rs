@@ -15,7 +15,7 @@ use twilight_util::builder::embed::EmbedBuilder;
 use crate::{
     cluster::ClusterState,
     interaction::{
-        embed::{self, COLOR_GREEN, COLOR_RED},
+        embed::{self, COLOR_RED, COLOR_SUCCESS},
         response::InteractionResponse,
         util::{GuildConfigExt, GuildInteractionContext},
     },
@@ -94,7 +94,7 @@ impl CaptchaDisable {
         // Send the confirmation message.
         let embed = EmbedBuilder::new()
             .title(ctx.lang.captcha_disabled_title())
-            .color(COLOR_GREEN)
+            .color(COLOR_SUCCESS)
             .description(ctx.lang.captcha_disabled_description())
             .build();
 

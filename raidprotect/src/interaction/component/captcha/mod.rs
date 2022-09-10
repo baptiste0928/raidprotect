@@ -4,8 +4,10 @@
 
 mod disable;
 mod enable;
+mod modal;
 mod verify;
 
 pub use disable::CaptchaDisable;
 pub use enable::CaptchaEnable;
+pub use modal::CaptchaModal;
 pub use verify::{CaptchaValidateButton, CaptchaVerifyButton};

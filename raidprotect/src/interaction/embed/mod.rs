@@ -15,4 +15,4 @@ pub const COLOR_TRANSPARENT: u32 = 0x2f3136;
 /// Light green color.
 ///
 /// Used for success messages, like after a configuration change.
-pub const COLOR_GREEN: u32 = 0xa0d995;
+pub const COLOR_SUCCESS: u32 = 0xa0d995;

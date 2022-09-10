@@ -20,7 +20,7 @@ use crate::{
     cluster::ClusterState,
     desc_localizations,
     interaction::{
-        embed::{self, COLOR_GREEN, COLOR_RED, COLOR_TRANSPARENT},
+        embed::{self, COLOR_RED, COLOR_SUCCESS, COLOR_TRANSPARENT},
         response::InteractionResponse,
         util::{CustomId, GuildInteractionContext},
     },
@@ -237,7 +237,7 @@ impl CaptchaLogsCommand {
 
         // Send the embed.
         let embed = EmbedBuilder::new()
-            .color(COLOR_GREEN)
+            .color(COLOR_SUCCESS)
             .title(ctx.lang.config_updated_title())
             .description(
                 ctx.lang
@@ -304,7 +304,7 @@ impl CaptchaAutoroleAddCommand {
 
         // Send the embed.
         let embed = EmbedBuilder::new()
-            .color(COLOR_GREEN)
+            .color(COLOR_SUCCESS)
             .title(ctx.lang.config_updated_title())
             .description(
                 ctx.lang
@@ -350,7 +350,7 @@ impl CaptchaAutoroleRemoveCommand {
 
         // Send the embed.
         let embed = EmbedBuilder::new()
-            .color(COLOR_GREEN)
+            .color(COLOR_SUCCESS)
             .title(ctx.lang.config_updated_title())
             .description(
                 ctx.lang
