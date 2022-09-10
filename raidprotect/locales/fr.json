@@ -97,5 +97,6 @@
   "captcha_image_alt": "Image du captcha",
   "captcha_not_found_description": "RaidProtect ne trouve pas de vérification en attente pour vous. Si vous n'arrivez pas à accéder au reste du serveur, contactez des responsables.",
   "captcha_input_label": "Entrez le code ci-dessous",
-  "captcha_expired_reason": "Vérification non completée dans les délais"
+  "captcha_expired_reason": "Vérification non completée dans les délais",
+  "captcha_image_regenerate": "Regénérer"
 }
