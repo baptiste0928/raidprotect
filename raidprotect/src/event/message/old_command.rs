@@ -10,19 +10,19 @@ use crate::{cluster::ClusterState, interaction::embed::COLOR_TRANSPARENT, transl
 /// Mapping of old command names to new command names.
 static OLD_COMMANDS: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
     HashMap::from([
-        ("?kick", "/kick"),
+        ("?about", "/help"),
         ("?ban", "/ban"),
-        ("?clear", "/clear"),
-        ("?raidmode", "/raidmode"),
-        ("?settings", "/config"),
         ("?captcha", "/config captcha"),
-        ("?userinfo", "/profile"),
-        ("?ui", "/profile"),
+        ("?clear", "/clear"),
         ("?help", "/help"),
         ("?invite", "/help"),
-        ("?about", "/help"),
-        ("?stats", "/help"),
+        ("?kick", "/kick"),
         ("?ping", "/ping"),
+        ("?raidmode", "/raidmode"),
+        ("?settings", "/config"),
+        ("?stats", "/help"),
+        ("?ui", "/profile"),
+        ("?userinfo", "/profile"),
     ])
 });
 
