@@ -4,6 +4,7 @@
 //! detection.
 
 mod handle;
+mod old_command;
 
 pub mod parser;
 
