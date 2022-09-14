@@ -1,5 +1,6 @@
+use anyhow::Context;
 use tracing::{error, info};
-use twilight_model::channel::Message;
+use twilight_model::{channel::Message, gateway::payload::incoming::MessageDelete};
 
 use super::{
     old_command::{is_old_command, warn_old_command},
@@ -11,7 +12,7 @@ use crate::cluster::ClusterState;
 ///
 /// This method will forward message to the cache and various auto-moderation
 /// modules.
-pub async fn handle_message(message: Message, state: &ClusterState) {
+pub async fn handle_message_create(message: Message, state: &ClusterState) {
     // Ignore messages from bots.
     if message.author.bot {
         return;
@@ -32,4 +33,31 @@ pub async fn handle_message(message: Message, state: &ClusterState) {
     }
 
     info!("received message: {}", message.content) // Debug util real implementation
+}
+
+/// Handle deleted [`Message`].
+pub async fn handle_message_delete(event: MessageDelete, state: &ClusterState) {
+    if let Err(error) = handle_message_delete_inner(event, state).await {
+        error!(error = ?error, "error while handle message delete");
+    }
+}
+
+async fn handle_message_delete_inner(
+    event: MessageDelete,
+    state: &ClusterState,
+) -> Result<(), anyhow::Error> {
+    let guild_id = event
+        .guild_id
+        .context("missing guild_id in message delete event")?;
+
+    let config = state
+        .database
+        .get_guild_or_create(guild_id)
+        .await
+        .context("failed to get guild configuration")?;
+
+    // Resend the captcha message if deleted.
+    if Some(event.id) == config.captcha.message {}
+
+    Ok(())
 }
