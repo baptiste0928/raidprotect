@@ -14,7 +14,7 @@ use twilight_model::{
     },
     channel::{
         permission_overwrite::{PermissionOverwrite, PermissionOverwriteType},
-        ChannelType,
+        ChannelType, Message,
     },
     guild::Permissions,
     http::permission_overwrite::{
@@ -156,33 +156,16 @@ impl CaptchaEnable {
         };
 
         // Send the verification message in the channel.
-        let embed = EmbedBuilder::new()
-            .title(guild_lang.captcha_verification_title(cached_guild.name.truncate(30)))
-            .description(guild_lang.captcha_verification_description())
-            .color(COLOR_RED)
-            .build();
-
-        let custom_id = CustomId::name("captcha-verify");
-        let components = Component::ActionRow(ActionRow {
-            components: vec![Component::Button(Button {
-                custom_id: Some(custom_id.to_string()),
-                disabled: false,
-                emoji: None,
-                label: Some(ctx.lang.captcha_verification_button().to_string()),
-                style: ButtonStyle::Success,
-                url: None,
-            })],
-        });
-
-        let message = match state
-            .http
-            .create_message(verification_channel.id)
-            .embeds(&[embed])?
-            .components(&[components])?
-            .exec()
-            .await
+        let message = match verification_message(
+            verification_channel.id,
+            ctx.guild_id,
+            guild_lang,
+            &cached_guild.name,
+            state,
+        )
+        .await
         {
-            Ok(response) => response.model().await?,
+            Ok(message) => message,
             Err(err) => {
                 error!(error = ?err, "failed to send the verification message");
 
@@ -252,6 +235,46 @@ impl CaptchaEnable {
 
         Ok(InteractionResponse::EphemeralEmbed(embed))
     }
+}
+
+/// Send the captcha verification message in the channel.
+pub async fn verification_message(
+    channel: Id<ChannelMarker>,
+    guild: Id<GuildMarker>,
+    guild_lang: Lang,
+    guild_name: &str,
+    state: &ClusterState,
+) -> Result<Message, anyhow::Error> {
+    let embed = EmbedBuilder::new()
+        .title(guild_lang.captcha_verification_title(guild_name.max_len(30)))
+        .description(guild_lang.captcha_verification_description())
+        .color(COLOR_RED)
+        .build();
+
+    let custom_id = CustomId::name("captcha-verify");
+    let components = Component::ActionRow(ActionRow {
+        components: vec![Component::Button(Button {
+            custom_id: Some(custom_id.to_string()),
+            disabled: false,
+            emoji: None,
+            label: Some(guild_lang.captcha_verification_button().to_string()),
+            style: ButtonStyle::Success,
+            url: None,
+        })],
+    });
+
+    let message = state
+        .cache_http(guild)
+        .create_message(channel)
+        .await?
+        .embeds(&[embed])?
+        .components(&[components])?
+        .exec()
+        .await?
+        .model()
+        .await?;
+
+    Ok(message)
 }
 
 /// Send a message in the logs channel to notify that the captcha has been

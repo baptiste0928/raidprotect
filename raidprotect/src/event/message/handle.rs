@@ -1,4 +1,5 @@
 use anyhow::Context;
+use raidprotect_model::{cache::discord::CachedGuild, database::model::GuildConfig};
 use tracing::{error, info};
 use twilight_model::{channel::Message, gateway::payload::incoming::MessageDelete};
 
@@ -6,7 +7,10 @@ use super::{
     old_command::{is_old_command, warn_old_command},
     parser::parse_message,
 };
-use crate::cluster::ClusterState;
+use crate::{
+    cluster::ClusterState,
+    interaction::{component::captcha::verification_message, util::GuildConfigExt},
+};
 
 /// Handle incoming [`Message`].
 ///
@@ -42,6 +46,7 @@ pub async fn handle_message_delete(event: MessageDelete, state: &ClusterState) {
     }
 }
 
+/// Handle deleted [`Message`] (inner function to make error handling easier).
 async fn handle_message_delete_inner(
     event: MessageDelete,
     state: &ClusterState,
@@ -50,14 +55,40 @@ async fn handle_message_delete_inner(
         .guild_id
         .context("missing guild_id in message delete event")?;
 
-    let config = state
+    let mut config = state
         .database
         .get_guild_or_create(guild_id)
         .await
         .context("failed to get guild configuration")?;
 
     // Resend the captcha message if deleted.
-    if Some(event.id) == config.captcha.message {}
+    if Some(event.id) == config.captcha.message {
+        if let Err(error) = resend_captcha_message(&mut config, state).await {
+            error!(error = ?error, "failed to resend captcha message");
+        }
+    }
+
+    Ok(())
+}
+
+/// Resend the captcha message.
+async fn resend_captcha_message(
+    config: &mut GuildConfig,
+    state: &ClusterState,
+) -> Result<(), anyhow::Error> {
+    let channel = config.captcha.channel.context("missing captcha channel")?;
+    let cached_guild = state
+        .cache
+        .get::<CachedGuild>(&config.id)
+        .await?
+        .context("missing guild in cache")?;
+
+    let message =
+        verification_message(channel, config.id, config.lang(), &cached_guild.name, state).await?;
+
+    // Update guild configuration.
+    config.captcha.message = Some(message.id);
+    state.database.update_guild(config).await?;
 
     Ok(())
 }
