@@ -68,7 +68,8 @@ impl ProcessEvent for GatewayEvent {
             RoleDelete,
             MemberAdd,
             MemberUpdate,
-            MessageCreate
+            MessageCreate,
+            MessageDelete
         }
     }
 }
@@ -98,18 +99,27 @@ impl ProcessEvent for incoming::InteractionCreate {
 }
 
 #[async_trait]
+impl ProcessEvent for incoming::MemberAdd {
+    async fn process(self, state: ClusterState) {
+        process_cache_event(self.clone(), &state).await;
+        super::captcha::member_add(&self.0, &state).await;
+    }
+}
+
+#[async_trait]
 impl ProcessEvent for incoming::MessageCreate {
     async fn process(self, state: ClusterState) {
         if self.guild_id.is_some() && ALLOWED_MESSAGES_TYPES.contains(&self.kind) {
-            super::message::handle_message(self.0, &state).await;
+            super::message::handle_message_create(self.0, &state).await;
         }
     }
 }
 
 #[async_trait]
-impl ProcessEvent for incoming::MemberAdd {
+impl ProcessEvent for incoming::MessageDelete {
     async fn process(self, state: ClusterState) {
-        process_cache_event(self.clone(), &state).await;
-        super::captcha::member_add(&self.0, &state).await;
+        if self.guild_id.is_some() {
+            super::message::handle_message_delete(self, &state).await;
+        }
     }
 }

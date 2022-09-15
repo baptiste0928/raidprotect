@@ -1,6 +1,6 @@
 //! Text processing utilities.
 
-/// Extension trait for [`String`] with text processing utilities.
+/// Extension trait for [`String`] and [`str`] with text processing utilities.
 pub trait TextProcessExt {
     /// Remove Discord markdown from the String.
     ///
@@ -18,10 +18,10 @@ pub trait TextProcessExt {
     /// assert_eq!("this will be truncated".to_string().truncate(10), "this wi...".to_string());
     /// assert_eq!("this not".to_string().truncate(10), "this not".to_string());
     /// ```
-    fn truncate(&self, max: usize) -> String;
+    fn max_len(&self, max: usize) -> String;
 }
 
-impl TextProcessExt for String {
+impl TextProcessExt for &str {
     fn remove_markdown(&self) -> String {
         self.chars()
             .filter_map(|c| match c {
@@ -36,7 +36,7 @@ impl TextProcessExt for String {
             .collect()
     }
 
-    fn truncate(&self, max: usize) -> String {
+    fn max_len(&self, max: usize) -> String {
         debug_assert!(max >= 3, "cannot truncate to less than 3 characters");
 
         if self.len() < max {
@@ -45,6 +45,16 @@ impl TextProcessExt for String {
 
         let (start, _) = self.split_at(max - 3);
         start.to_string() + "..."
+    }
+}
+
+impl TextProcessExt for String {
+    fn remove_markdown(&self) -> String {
+        self.as_str().remove_markdown()
+    }
+
+    fn max_len(&self, max: usize) -> String {
+        self.as_str().max_len(max)
     }
 }
 
@@ -63,13 +73,13 @@ mod tests {
     #[test]
     fn test_truncate() {
         assert_eq!(
-            "hello world".to_string().truncate(9),
+            "hello world".to_string().max_len(9),
             "hello ...".to_string()
         );
         assert_eq!(
-            "hello world".to_string().truncate(15),
+            "hello world".to_string().max_len(15),
             "hello world".to_string()
         );
-        assert_eq!("hello world".to_string().truncate(3), "...".to_string());
+        assert_eq!("hello world".to_string().max_len(3), "...".to_string());
     }
 }

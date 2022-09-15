@@ -122,7 +122,7 @@ impl KickCommand {
         state: &ClusterState,
         lang: Lang,
     ) -> Result<InteractionResponse, anyhow::Error> {
-        let username = user.name.truncate(15);
+        let username = user.name.max_len(15);
         let components = vec![
             Component::ActionRow(ActionRow {
                 components: vec![Component::TextInput(TextInput {

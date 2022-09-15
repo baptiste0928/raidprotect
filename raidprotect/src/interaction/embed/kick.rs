@@ -9,7 +9,7 @@ use crate::{interaction::response::InteractionResponse, translations::Lang, util
 pub fn not_member(user: String, lang: Lang) -> InteractionResponse {
     let embed = EmbedBuilder::new()
         .color(COLOR_RED)
-        .description(lang.kick_not_member(user.remove_markdown().truncate(30)))
+        .description(lang.kick_not_member(user.remove_markdown().max_len(30)))
         .build();
 
     InteractionResponse::EphemeralEmbed(embed)
