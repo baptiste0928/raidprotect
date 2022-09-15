@@ -62,7 +62,7 @@ async fn handle_message_delete_inner(
         .context("failed to get guild configuration")?;
 
     // Resend the captcha message if deleted.
-    if Some(event.id) == config.captcha.message {
+    if config.captcha.enabled && Some(event.id) == config.captcha.message {
         if let Err(error) = resend_captcha_message(&mut config, state).await {
             error!(error = ?error, "failed to resend captcha message");
         }
