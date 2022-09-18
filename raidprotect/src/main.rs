@@ -10,10 +10,10 @@
 //! - `model`: models shared between crates
 //! - `util`: contain utilities such as logging and shutdown
 
-mod cluster;
 mod event;
 mod feature;
 mod interaction;
+mod shard;
 mod util;
 
 use anyhow::{Context, Result};
@@ -30,17 +30,15 @@ async fn main() -> Result<()> {
 
     // Initialize shard cluster
     let shutdown = Shutdown::new();
-    let cluster = cluster::ShardCluster::new(config)
+    let shards = shard::BotShards::new(config)
         .await
         .context("failed to start shard cluster")?;
 
-    // Start the shard cluster
-    let cluster_run = tokio::spawn(cluster.start(shutdown.subscriber()));
-    info!("started shard cluster");
+    // Start the shards and wait for the shutdown signal
+    let shards_run = tokio::spawn(shards.handle(shutdown.clone()));
 
-    // Wait for shutdown
     tokio::select! {
-        _ = cluster_run => (),
+        _ = shards_run => (),
         _ = wait_shutdown() => debug!("shutdown signal received")
     };
 

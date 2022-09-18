@@ -23,7 +23,6 @@ use twilight_util::builder::embed::EmbedBuilder;
 
 use super::verify::{get_captcha, kick_after};
 use crate::{
-    cluster::ClusterState,
     interaction::{
         embed,
         response::InteractionResponse,
@@ -31,6 +30,7 @@ use crate::{
             parse_modal_data, parse_modal_field_required, GuildConfigExt, GuildInteractionContext,
         },
     },
+    shard::BotState,
 };
 
 /// Captcha verification modal.
@@ -42,7 +42,7 @@ impl CaptchaModal {
     #[instrument(skip(state))]
     pub async fn handle(
         mut interaction: Interaction,
-        state: &ClusterState,
+        state: &BotState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let data = parse_modal_data(&mut interaction)?;
         let ctx = GuildInteractionContext::new(interaction)?;
@@ -96,7 +96,7 @@ impl CaptchaModal {
 async fn update_roles(
     user_id: Id<UserMarker>,
     config: &GuildConfig,
-    state: &ClusterState,
+    state: &BotState,
 ) -> Result<(), anyhow::Error> {
     // Get the current member roles.
     let member = state
@@ -161,7 +161,7 @@ async fn update_roles(
 async fn check_role_permission(
     permissions: &CachePermissions<'_>,
     role_id: Id<RoleMarker>,
-    state: &ClusterState,
+    state: &BotState,
 ) -> bool {
     let role = match state.cache.get::<CachedRole>(&role_id).await {
         Ok(Some(role)) => role,

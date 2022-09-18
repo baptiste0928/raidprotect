@@ -20,10 +20,10 @@ use super::{
     response::{InteractionResponder, InteractionResponse},
     util::{CustomId, InteractionExt},
 };
-use crate::{cluster::ClusterState, translations::Lang};
+use crate::{shard::BotState, translations::Lang};
 
 /// Handle incoming [`Interaction`].
-pub async fn handle_interaction(interaction: Interaction, state: &ClusterState) {
+pub async fn handle_interaction(interaction: Interaction, state: &BotState) {
     let responder = InteractionResponder::from_interaction(&interaction);
     debug!(id = ?interaction.id, "received {} interaction", interaction.kind.kind());
 
@@ -55,7 +55,7 @@ pub async fn handle_interaction(interaction: Interaction, state: &ClusterState) 
 /// Handle incoming command interaction.
 async fn handle_command(
     interaction: Interaction,
-    state: &ClusterState,
+    state: &BotState,
 ) -> Result<InteractionResponse, anyhow::Error> {
     let name = match &interaction.data {
         Some(InteractionData::ApplicationCommand(data)) => &*data.name,
@@ -78,7 +78,7 @@ async fn handle_command(
 /// Handle incoming component interaction
 async fn handle_component(
     interaction: Interaction,
-    state: &ClusterState,
+    state: &BotState,
 ) -> Result<InteractionResponse, anyhow::Error> {
     let custom_id = match &interaction.data {
         Some(InteractionData::MessageComponent(data)) => CustomId::from_str(&*data.custom_id)?,
@@ -102,7 +102,7 @@ async fn handle_component(
 /// Handle incoming modal interaction
 async fn handle_modal(
     interaction: Interaction,
-    state: &ClusterState,
+    state: &BotState,
 ) -> Result<InteractionResponse, anyhow::Error> {
     let custom_id = match &interaction.data {
         Some(InteractionData::ModalSubmit(data)) => CustomId::from_str(&*data.custom_id)?,
@@ -121,7 +121,7 @@ async fn handle_modal(
 }
 
 /// Register commands to the Discord API.
-pub async fn register_commands(state: &ClusterState, application_id: Id<ApplicationMarker>) {
+pub async fn register_commands(state: &BotState, application_id: Id<ApplicationMarker>) {
     let commands: Vec<Command> = vec![
         ConfigCommand::create_command().into(),
         HelpCommand::create_command().into(),

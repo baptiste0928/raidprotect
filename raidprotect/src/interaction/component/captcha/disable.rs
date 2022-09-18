@@ -13,12 +13,12 @@ use twilight_model::{
 use twilight_util::builder::embed::EmbedBuilder;
 
 use crate::{
-    cluster::ClusterState,
     interaction::{
         embed::{self, COLOR_RED, COLOR_SUCCESS},
         response::InteractionResponse,
         util::{GuildConfigExt, GuildInteractionContext},
     },
+    shard::BotState,
     translations::Lang,
     util::guild_logs_channel,
 };
@@ -35,7 +35,7 @@ pub struct CaptchaDisable;
 impl CaptchaDisable {
     pub async fn handle(
         interaction: Interaction,
-        state: &ClusterState,
+        state: &BotState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let ctx = GuildInteractionContext::new(interaction)?;
         let mut config = ctx.config(state).await?;
@@ -103,7 +103,7 @@ impl CaptchaDisable {
 }
 
 async fn logs_message(
-    state: &ClusterState,
+    state: &BotState,
     guild: Id<GuildMarker>,
     logs_channel: Option<Id<ChannelMarker>>,
     user: Id<UserMarker>,

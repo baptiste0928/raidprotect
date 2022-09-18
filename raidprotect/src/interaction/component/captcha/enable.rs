@@ -8,11 +8,9 @@ use tracing::{debug, error, trace};
 use twilight_http::request::AuditLogReason;
 use twilight_mention::Mention;
 use twilight_model::{
-    application::{
-        component::{button::ButtonStyle, ActionRow, Button, Component},
-        interaction::Interaction,
-    },
+    application::interaction::Interaction,
     channel::{
+        message::component::{ActionRow, Button, ButtonStyle, Component},
         permission_overwrite::{PermissionOverwrite, PermissionOverwriteType},
         ChannelType, Message,
     },
@@ -29,12 +27,12 @@ use twilight_model::{
 use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 
 use crate::{
-    cluster::ClusterState,
     interaction::{
         embed::{self, COLOR_RED, COLOR_SUCCESS},
         response::InteractionResponse,
         util::{CustomId, GuildConfigExt, GuildInteractionContext},
     },
+    shard::BotState,
     translations::Lang,
     util::{guild_logs_channel, TextProcessExt},
 };
@@ -55,7 +53,7 @@ pub struct CaptchaEnable;
 impl CaptchaEnable {
     pub async fn handle(
         interaction: Interaction,
-        state: &ClusterState,
+        state: &BotState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let ctx = GuildInteractionContext::new(interaction)?;
         let mut config = ctx.config(state).await?;
@@ -243,7 +241,7 @@ pub async fn verification_message(
     guild: Id<GuildMarker>,
     guild_lang: Lang,
     guild_name: &str,
-    state: &ClusterState,
+    state: &BotState,
 ) -> Result<Message, anyhow::Error> {
     let embed = EmbedBuilder::new()
         .title(guild_lang.captcha_verification_title(guild_name.max_len(30)))
@@ -280,7 +278,7 @@ pub async fn verification_message(
 /// Send a message in the logs channel to notify that the captcha has been
 /// enabled.
 async fn logs_message(
-    state: &ClusterState,
+    state: &BotState,
     guild: Id<GuildMarker>,
     logs_channel: Option<Id<ChannelMarker>>,
     user: Id<UserMarker>,
@@ -315,7 +313,7 @@ async fn logs_message(
 /// The category channels are iterated first, since a lot of channels can inherit
 /// from their permissions. The verification channel is skipped.
 async fn configure_channels(
-    state: &ClusterState,
+    state: &BotState,
     guild: Id<GuildMarker>,
     role: Id<RoleMarker>,
     verification: Id<ChannelMarker>,
@@ -376,7 +374,7 @@ async fn configure_channels(
 
 /// Updates a channel permissions for the unverified role.
 async fn update_channel_permissions(
-    state: &ClusterState,
+    state: &BotState,
     channel: &CachedChannel,
     guild: Id<GuildMarker>,
     role: Id<RoleMarker>,

@@ -6,13 +6,13 @@ use tracing::{debug, error, trace};
 use twilight_model::gateway::{event::Event as GatewayEvent, payload::incoming};
 
 use super::message::ALLOWED_MESSAGES_TYPES;
-use crate::cluster::ClusterState;
+use crate::shard::BotState;
 
 /// Process incoming events.
 #[async_trait]
 pub trait ProcessEvent: Sized {
     /// Process incoming event.
-    async fn process(self, state: ClusterState);
+    async fn process(self, state: BotState);
 }
 
 macro_rules! process_events {
@@ -26,7 +26,7 @@ macro_rules! process_events {
     };
 }
 
-async fn process_cache_event<E: UpdateCache + Debug>(event: E, state: &ClusterState) {
+async fn process_cache_event<E: UpdateCache + Debug>(event: E, state: &BotState) {
     if let Err(error) = event.update(&state.cache, state.current_user).await {
         error!(error = ?error, kind = E::NAME, "failed to update cache");
         debug!(event = ?event);
@@ -38,7 +38,7 @@ macro_rules! process_cache_events {
         $(
             #[async_trait]
             impl ProcessEvent for incoming::$event {
-                async fn process(self, state: ClusterState) {
+                async fn process(self, state: BotState) {
                     process_cache_event(self, &state).await;
                 }
             }
@@ -48,7 +48,7 @@ macro_rules! process_cache_events {
 
 #[async_trait]
 impl ProcessEvent for GatewayEvent {
-    async fn process(self, state: ClusterState) {
+    async fn process(self, state: BotState) {
         use GatewayEvent::*;
 
         // `self` is renamed `__self` in async_trait macro expansion
@@ -93,14 +93,14 @@ process_cache_events! {
 
 #[async_trait]
 impl ProcessEvent for incoming::InteractionCreate {
-    async fn process(self, state: ClusterState) {
+    async fn process(self, state: BotState) {
         crate::interaction::handle_interaction(self.0, &state).await;
     }
 }
 
 #[async_trait]
 impl ProcessEvent for incoming::MemberAdd {
-    async fn process(self, state: ClusterState) {
+    async fn process(self, state: BotState) {
         process_cache_event(self.clone(), &state).await;
         super::captcha::member_add(&self.0, &state).await;
     }
@@ -108,7 +108,7 @@ impl ProcessEvent for incoming::MemberAdd {
 
 #[async_trait]
 impl ProcessEvent for incoming::MessageCreate {
-    async fn process(self, state: ClusterState) {
+    async fn process(self, state: BotState) {
         if self.guild_id.is_some() && ALLOWED_MESSAGES_TYPES.contains(&self.kind) {
             super::message::handle_message_create(self.0, &state).await;
         }
@@ -117,7 +117,7 @@ impl ProcessEvent for incoming::MessageCreate {
 
 #[async_trait]
 impl ProcessEvent for incoming::MessageDelete {
-    async fn process(self, state: ClusterState) {
+    async fn process(self, state: BotState) {
         if self.guild_id.is_some() {
             super::message::handle_message_delete(self, &state).await;
         }

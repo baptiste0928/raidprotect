@@ -33,7 +33,7 @@ use twilight_model::{
 };
 use twilight_util::builder::embed::EmbedBuilder;
 
-use crate::{cluster::ClusterState, interaction::embed::COLOR_RED, translations::Lang};
+use crate::{interaction::embed::COLOR_RED, shard::BotState, translations::Lang};
 
 /// Default logs channel name.
 const DEFAULT_LOGS_NAME: &str = "raidprotect-logs";
@@ -53,7 +53,7 @@ static PENDING_CHANNELS: Lazy<RwLock<PendingChannelsMap>> =
 ///
 /// See the [module documentation](super) for more information.
 pub async fn guild_logs_channel(
-    state: &ClusterState,
+    state: &BotState,
     guild: Id<GuildMarker>,
     logs_channel: Option<Id<ChannelMarker>>,
     lang: Lang,
@@ -95,7 +95,7 @@ pub async fn guild_logs_channel(
 
 /// Try to find an existing logs channel, or create a new one.
 async fn configure_logs_channel(
-    state: &ClusterState,
+    state: &BotState,
     guild: Id<GuildMarker>,
     lang: Lang,
 ) -> Result<Id<ChannelMarker>, anyhow::Error> {
@@ -133,7 +133,7 @@ async fn configure_logs_channel(
 
 /// Update permissions for an existing logs channel.
 async fn update_logs_permissions(
-    state: &ClusterState,
+    state: &BotState,
     channel: &CachedChannel,
     guild: Id<GuildMarker>,
 ) -> Id<ChannelMarker> {
@@ -159,7 +159,7 @@ async fn update_logs_permissions(
 
 /// Create a new logs channel in the guild.
 async fn create_logs_channel(
-    state: &ClusterState,
+    state: &BotState,
     guild: Id<GuildMarker>,
     lang: Lang,
 ) -> Result<Id<ChannelMarker>, anyhow::Error> {
@@ -209,7 +209,7 @@ async fn create_logs_channel(
 
 /// Send an informational message to the logs channel.
 async fn send_logs_message(
-    state: &ClusterState,
+    state: &BotState,
     guild: Id<GuildMarker>,
     channel: Id<ChannelMarker>,
     lang: Lang,

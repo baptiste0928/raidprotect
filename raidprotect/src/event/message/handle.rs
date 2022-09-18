@@ -8,15 +8,15 @@ use super::{
     parser::parse_message,
 };
 use crate::{
-    cluster::ClusterState,
     interaction::{component::captcha::verification_message, util::GuildConfigExt},
+    shard::BotState,
 };
 
 /// Handle incoming [`Message`].
 ///
 /// This method will forward message to the cache and various auto-moderation
 /// modules.
-pub async fn handle_message_create(message: Message, state: &ClusterState) {
+pub async fn handle_message_create(message: Message, state: &BotState) {
     // Ignore messages from bots.
     if message.author.bot {
         return;
@@ -40,7 +40,7 @@ pub async fn handle_message_create(message: Message, state: &ClusterState) {
 }
 
 /// Handle deleted [`Message`].
-pub async fn handle_message_delete(event: MessageDelete, state: &ClusterState) {
+pub async fn handle_message_delete(event: MessageDelete, state: &BotState) {
     if let Err(error) = handle_message_delete_inner(event, state).await {
         error!(error = ?error, "error while handle message delete");
     }
@@ -49,7 +49,7 @@ pub async fn handle_message_delete(event: MessageDelete, state: &ClusterState) {
 /// Handle deleted [`Message`] (inner function to make error handling easier).
 async fn handle_message_delete_inner(
     event: MessageDelete,
-    state: &ClusterState,
+    state: &BotState,
 ) -> Result<(), anyhow::Error> {
     let guild_id = event
         .guild_id
@@ -74,7 +74,7 @@ async fn handle_message_delete_inner(
 /// Resend the captcha message.
 async fn resend_captcha_message(
     config: &mut GuildConfig,
-    state: &ClusterState,
+    state: &BotState,
 ) -> Result<(), anyhow::Error> {
     let channel = config.captcha.channel.context("missing captcha channel")?;
     let cached_guild = state

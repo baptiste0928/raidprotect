@@ -6,16 +6,16 @@ use tracing::{debug, error, instrument};
 use twilight_http::request::AuditLogReason;
 use twilight_model::guild::Member;
 
-use crate::{cluster::ClusterState, feature::captcha, translations::Lang};
+use crate::{feature::captcha, shard::BotState, translations::Lang};
 
 /// Handle `MemberAdd` event.
-pub async fn member_add(member: &Member, state: &ClusterState) {
+pub async fn member_add(member: &Member, state: &BotState) {
     if let Err(error) = member_add_inner(member, state).await {
         error!(error = ?error, member = ?member, "error while processing `MemberAdd` event");
     }
 }
 
-async fn member_add_inner(member: &Member, state: &ClusterState) -> Result<(), anyhow::Error> {
+async fn member_add_inner(member: &Member, state: &BotState) -> Result<(), anyhow::Error> {
     // Ensure the member has joined recently to ignore members sent on bot
     // startup.
     let now = OffsetDateTime::now_utc();
@@ -74,7 +74,7 @@ async fn member_add_inner(member: &Member, state: &ClusterState) -> Result<(), a
 
 /// Kick the user if the captcha has not been validated in time.
 #[instrument(skip(state))]
-async fn captcha_expire(state: ClusterState, captcha: PendingCaptcha, lang: Lang) {
+async fn captcha_expire(state: BotState, captcha: PendingCaptcha, lang: Lang) {
     // Sleep until the captcha expiration.
     let duration = captcha.expires_at - OffsetDateTime::now_utc();
 
@@ -101,7 +101,7 @@ async fn captcha_expire(state: ClusterState, captcha: PendingCaptcha, lang: Lang
 }
 
 async fn kick_user_expired(
-    state: &ClusterState,
+    state: &BotState,
     captcha: PendingCaptcha,
     lang: Lang,
 ) -> Result<(), anyhow::Error> {

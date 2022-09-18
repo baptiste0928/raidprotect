@@ -17,7 +17,7 @@ use twilight_model::{
     user::User,
 };
 
-use crate::{cluster::ClusterState, translations::Lang};
+use crate::{shard::BotState, translations::Lang};
 
 /// Wrapper around [`Interaction`] to provide some utility functions.
 #[derive(Debug)]
@@ -112,7 +112,7 @@ impl GuildInteractionContext {
     }
 
     /// Get the [`GuildConfig`] for the guild the interaction was invoked in.
-    pub async fn config(&self, state: &ClusterState) -> Result<GuildConfig, anyhow::Error> {
+    pub async fn config(&self, state: &BotState) -> Result<GuildConfig, anyhow::Error> {
         let config = state
             .database
             .get_guild_or_create(self.guild_id)
@@ -293,7 +293,7 @@ macro_rules! impl_command_handle {
             #[::tracing::instrument]
             pub async fn handle(
                 mut interaction: ::twilight_model::application::interaction::Interaction,
-                state: &$crate::cluster::ClusterState,
+                state: &$crate::shard::BotState,
             ) -> Result<$crate::interaction::response::InteractionResponse, ::anyhow::Error> {
                 let parsed =
                     $crate::interaction::util::parse_command_data::<Self>(&mut interaction)?;
@@ -322,7 +322,7 @@ macro_rules! impl_guild_command_handle {
             #[::tracing::instrument]
             pub async fn handle(
                 mut interaction: ::twilight_model::application::interaction::Interaction,
-                state: &$crate::cluster::ClusterState,
+                state: &$crate::shard::BotState,
             ) -> Result<$crate::interaction::response::InteractionResponse, ::anyhow::Error> {
                 let parsed =
                     $crate::interaction::util::parse_command_data::<Self>(&mut interaction)?;

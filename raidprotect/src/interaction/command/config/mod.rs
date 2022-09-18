@@ -10,9 +10,9 @@ use twilight_interactions::command::{CommandModel, CreateCommand};
 use twilight_model::guild::Permissions;
 
 use crate::{
-    cluster::ClusterState,
     desc_localizations, impl_guild_command_handle,
     interaction::{response::InteractionResponse, util::GuildInteractionContext},
+    shard::BotState,
 };
 
 /// Configuration command model.
@@ -42,7 +42,7 @@ impl ConfigCommand {
     async fn exec(
         self,
         ctx: GuildInteractionContext,
-        state: &ClusterState,
+        state: &BotState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         match self {
             Self::Captcha(command) => command.exec(ctx, state).await,

@@ -26,10 +26,10 @@ redis = { version = "0.21.6", features = ["tokio-comp"], default-features = fals
 rmp-serde = "1.1.0"
 
 # Twilight
-twilight-http = { version = "0.13.0", features = ["rustls-webpki-roots", "decompression"], default-features = false }
-twilight-model = "0.13.2"
-twilight-util = { version = "0.13.1", features = ["permission-calculator"] }
-twilight-validate = "0.13.1"
+twilight-http = { rev = "d4113302", git = "https://github.com/twilight-rs/twilight", features = ["rustls-webpki-roots", "decompression"], default-features = false }
+twilight-model = { rev = "d4113302", git = "https://github.com/twilight-rs/twilight" }
+twilight-util = { rev = "d4113302", git = "https://github.com/twilight-rs/twilight", features = ["permission-calculator"] }
+twilight-validate = { rev = "d4113302", git = "https://github.com/twilight-rs/twilight" }
 
 # Configuration
 dotenv = "0.15.0"

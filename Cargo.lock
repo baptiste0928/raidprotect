@@ -2670,9 +2670,8 @@ dependencies = [
 
 [[package]]
 name = "twilight-gateway"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a461bda77e2c634d1b2511ab094908f05a1977e8d963940a26b4eca8fb37c2c2"
+version = "0.13.2"
+source = "git+https://github.com/twilight-rs/twilight?rev=d4113302#d41133026b4f4d884ba54d5e71d319b9d930c32c"
 dependencies = [
  "bitflags",
  "flate2",
@@ -2687,26 +2686,22 @@ dependencies = [
  "twilight-gateway-queue",
  "twilight-http",
  "twilight-model",
- "url",
  "webpki-roots",
 ]
 
 [[package]]
 name = "twilight-gateway-queue"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b6fe5aa417d1705793a9588d6782880e7834432f01ff65abe67ef6f23d9dd53"
+version = "0.13.1"
+source = "git+https://github.com/twilight-rs/twilight?rev=d4113302#d41133026b4f4d884ba54d5e71d319b9d930c32c"
 dependencies = [
  "tokio",
  "tracing",
- "twilight-http",
 ]
 
 [[package]]
 name = "twilight-http"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35d52f07b516fb6c8e2b36ff0a6353781bf0a108b4cffd638d256aa2fdda02f8"
+version = "0.13.1"
+source = "git+https://github.com/twilight-rs/twilight?rev=d4113302#d41133026b4f4d884ba54d5e71d319b9d930c32c"
 dependencies = [
  "brotli",
  "hyper",
@@ -2724,9 +2719,8 @@ dependencies = [
 
 [[package]]
 name = "twilight-http-ratelimiting"
-version = "0.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b75d1f386856ab4e769d26f31c76f6eacd55ae6125d288d1fc68c75632012f9e"
+version = "0.13.2"
+source = "git+https://github.com/twilight-rs/twilight?rev=d4113302#d41133026b4f4d884ba54d5e71d319b9d930c32c"
 dependencies = [
  "futures-util",
  "http",
@@ -2737,8 +2731,7 @@ dependencies = [
 [[package]]
 name = "twilight-interactions"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fc905d2e73ba314e4022ef8c048d609dd73bb6fb206dd190285365ab6863c25"
+source = "git+https://github.com/baptiste0928/twilight-interactions?rev=9315604f#9315604f1c4d3d73992a255ce6a055b431b5a426"
 dependencies = [
  "twilight-interactions-derive",
  "twilight-model",
@@ -2747,8 +2740,7 @@ dependencies = [
 [[package]]
 name = "twilight-interactions-derive"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2d900b509a3ec5ebbf8f53e04f66f42b2f4c50769cad91da50a878a8ed2009b"
+source = "git+https://github.com/baptiste0928/twilight-interactions?rev=9315604f#9315604f1c4d3d73992a255ce6a055b431b5a426"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2758,17 +2750,15 @@ dependencies = [
 [[package]]
 name = "twilight-mention"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b0d118aaa449890c97bf2204cd28f71f79f0fa3eb0d2e064c0a66f1c443d886"
+source = "git+https://github.com/twilight-rs/twilight?rev=d4113302#d41133026b4f4d884ba54d5e71d319b9d930c32c"
 dependencies = [
  "twilight-model",
 ]
 
 [[package]]
 name = "twilight-model"
-version = "0.13.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60367fe4ab87ac8ebd31077add81282cb99cc8519060834d5fed77521ab2d97b"
+version = "0.13.4"
+source = "git+https://github.com/twilight-rs/twilight?rev=d4113302#d41133026b4f4d884ba54d5e71d319b9d930c32c"
 dependencies = [
  "bitflags",
  "serde",
@@ -2780,9 +2770,8 @@ dependencies = [
 
 [[package]]
 name = "twilight-util"
-version = "0.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "beafc38c96767c39f0db6015d13fb87bf5f116257420a1c3bbabc95174f8e94d"
+version = "0.13.2"
+source = "git+https://github.com/twilight-rs/twilight?rev=d4113302#d41133026b4f4d884ba54d5e71d319b9d930c32c"
 dependencies = [
  "twilight-model",
  "twilight-validate",
@@ -2791,8 +2780,7 @@ dependencies = [
 [[package]]
 name = "twilight-validate"
 version = "0.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c17e502d312ae4c78ff55fe55c0ad23d68e3a4394591c16ed350e3d362d9826"
+source = "git+https://github.com/twilight-rs/twilight?rev=d4113302#d41133026b4f4d884ba54d5e71d319b9d930c32c"
 dependencies = [
  "twilight-model",
 ]

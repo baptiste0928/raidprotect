@@ -11,20 +11,20 @@
 use raidprotect_model::{cache::model::interaction::PendingSanction, database::model::ModlogType};
 use twilight_interactions::command::{CommandModel, CreateCommand, ResolvedUser};
 use twilight_model::{
-    application::component::{text_input::TextInputStyle, ActionRow, Component, TextInput},
+    channel::message::component::{ActionRow, Component, TextInput, TextInputStyle},
     guild::Permissions,
     id::{marker::InteractionMarker, Id},
     user::User,
 };
 
 use crate::{
-    cluster::ClusterState,
     desc_localizations, impl_guild_command_handle,
     interaction::{
         embed,
         response::InteractionResponse,
         util::{CustomId, GuildInteractionContext},
     },
+    shard::BotState,
     translations::Lang,
     util::TextProcessExt,
 };
@@ -59,7 +59,7 @@ impl KickCommand {
     async fn exec(
         self,
         ctx: GuildInteractionContext,
-        state: &ClusterState,
+        state: &BotState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let user = self.user.resolved;
         let member = match self.user.member {
@@ -119,7 +119,7 @@ impl KickCommand {
         interaction_id: Id<InteractionMarker>,
         user: User,
         enforce_reason: bool,
-        state: &ClusterState,
+        state: &BotState,
         lang: Lang,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let username = user.name.max_len(15);

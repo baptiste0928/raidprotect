@@ -5,7 +5,7 @@ use once_cell::sync::Lazy;
 use twilight_model::channel::Message;
 use twilight_util::builder::embed::EmbedBuilder;
 
-use crate::{cluster::ClusterState, interaction::embed::COLOR_TRANSPARENT, translations::Lang};
+use crate::{interaction::embed::COLOR_TRANSPARENT, shard::BotState, translations::Lang};
 
 /// Mapping of old command names to new command names.
 static OLD_COMMANDS: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
@@ -36,7 +36,7 @@ pub fn is_old_command(content: &str) -> bool {
 }
 
 /// Send a warning message to the user that they used an old command.
-pub async fn warn_old_command(message: Message, state: &ClusterState) -> Result<(), anyhow::Error> {
+pub async fn warn_old_command(message: Message, state: &BotState) -> Result<(), anyhow::Error> {
     let lang = message
         .author
         .locale

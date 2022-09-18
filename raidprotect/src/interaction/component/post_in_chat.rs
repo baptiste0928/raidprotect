@@ -6,11 +6,11 @@
 use anyhow::anyhow;
 use raidprotect_model::cache::model::interaction::PostInChatButton;
 use twilight_model::{
-    application::{
-        component::{button::ButtonStyle, ActionRow, Button, Component},
-        interaction::Interaction,
+    application::interaction::Interaction,
+    channel::message::{
+        component::{ActionRow, Button, ButtonStyle},
+        Component, MessageFlags, ReactionType,
     },
-    channel::{message::MessageFlags, ReactionType},
     http::interaction::{InteractionResponseData, InteractionResponseType},
     id::{
         marker::{InteractionMarker, UserMarker},
@@ -19,12 +19,12 @@ use twilight_model::{
 };
 
 use crate::{
-    cluster::ClusterState,
     interaction::{
         embed,
         response::InteractionResponse,
         util::{CustomId, GuildConfigExt, GuildInteractionContext},
     },
+    shard::BotState,
     translations::Lang,
 };
 
@@ -37,7 +37,7 @@ impl PostInChat {
         mut response: InteractionResponseData,
         interaction_id: Id<InteractionMarker>,
         author_id: Id<UserMarker>,
-        state: &ClusterState,
+        state: &BotState,
         lang: Lang,
     ) -> Result<InteractionResponse, anyhow::Error> {
         // Store button state in redis
@@ -88,7 +88,7 @@ impl PostInChat {
     pub async fn handle(
         interaction: Interaction,
         custom_id: CustomId,
-        state: &ClusterState,
+        state: &BotState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let ctx = GuildInteractionContext::new(interaction)?;
 

@@ -4,8 +4,8 @@
 
 use tracing::error;
 use twilight_model::{
-    application::{component::Component, interaction::Interaction},
-    channel::{embed::Embed, message::MessageFlags},
+    application::interaction::Interaction,
+    channel::message::{Component, Embed, MessageFlags},
     http::interaction::{
         InteractionResponse as HttpInteractionResponse, InteractionResponseData,
         InteractionResponseType,
@@ -17,7 +17,7 @@ use twilight_model::{
 };
 use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::cluster::ClusterState;
+use crate::shard::BotState;
 
 /// Credentials used to respond to an interaction.
 #[derive(Debug)]
@@ -41,7 +41,7 @@ impl InteractionResponder {
     }
 
     /// Send a response to an interaction.
-    pub async fn respond(&self, state: &ClusterState, response: InteractionResponse) {
+    pub async fn respond(&self, state: &BotState, response: InteractionResponse) {
         let client = state.http.interaction(self.application_id);
 
         if let Err(error) = client

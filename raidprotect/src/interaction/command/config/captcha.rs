@@ -5,8 +5,10 @@ use raidprotect_model::{cache::discord::permission::RoleOrdering, database::mode
 use twilight_interactions::command::{CommandModel, CreateCommand};
 use twilight_mention::Mention;
 use twilight_model::{
-    application::component::{button::ButtonStyle, ActionRow, Button, Component},
-    channel::message::MessageFlags,
+    channel::message::{
+        component::{ActionRow, Button, ButtonStyle, Component},
+        MessageFlags,
+    },
     guild::{Permissions, Role},
     http::interaction::InteractionResponseType,
     id::{
@@ -17,13 +19,13 @@ use twilight_model::{
 use twilight_util::builder::{embed::EmbedBuilder, InteractionResponseDataBuilder};
 
 use crate::{
-    cluster::ClusterState,
     desc_localizations,
     interaction::{
         embed::{self, COLOR_RED, COLOR_SUCCESS, COLOR_TRANSPARENT},
         response::InteractionResponse,
         util::{CustomId, GuildInteractionContext},
     },
+    shard::BotState,
 };
 
 #[derive(Debug, Clone, CommandModel, CreateCommand)]
@@ -53,7 +55,7 @@ impl CaptchaConfigCommand {
     pub(super) async fn exec(
         self,
         ctx: GuildInteractionContext,
-        state: &ClusterState,
+        state: &BotState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         match self {
             CaptchaConfigCommand::Enable(command) => command.exec(ctx, state).await,
@@ -80,7 +82,7 @@ impl CaptchaEnableCommand {
     async fn exec(
         self,
         ctx: GuildInteractionContext,
-        state: &ClusterState,
+        state: &BotState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let config = ctx.config(state).await?;
         if config.captcha.enabled {
@@ -142,7 +144,7 @@ impl CaptchaDisableCommand {
     async fn exec(
         self,
         ctx: GuildInteractionContext,
-        state: &ClusterState,
+        state: &BotState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let config = ctx.config(state).await?;
         if !config.captcha.enabled {
@@ -210,7 +212,7 @@ impl CaptchaLogsCommand {
     async fn exec(
         self,
         ctx: GuildInteractionContext,
-        state: &ClusterState,
+        state: &BotState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let mut config = ctx.config(state).await?;
         if !config.captcha.enabled {
@@ -266,7 +268,7 @@ impl CaptchaAutoroleAddCommand {
     async fn exec(
         self,
         ctx: GuildInteractionContext,
-        state: &ClusterState,
+        state: &BotState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let mut config = ctx.config(state).await?;
 
@@ -333,7 +335,7 @@ impl CaptchaAutoroleRemoveCommand {
     async fn exec(
         self,
         ctx: GuildInteractionContext,
-        state: &ClusterState,
+        state: &BotState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let mut config = ctx.config(state).await?;
         if !config.captcha.enabled {
@@ -376,7 +378,7 @@ impl CaptchaAutoroleListCommand {
     async fn exec(
         self,
         ctx: GuildInteractionContext,
-        state: &ClusterState,
+        state: &BotState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let config = ctx.config(state).await?;
         if !config.captcha.enabled {

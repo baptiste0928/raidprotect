@@ -23,12 +23,12 @@ tokio = { version = "1.21.0", features = ["macros", "rt-multi-thread", "sync", "
 tracing = "0.1.36"
 
 # Twilight
-twilight-gateway = { version = "0.13.0", features = ["rustls-webpki-roots", "zlib-stock"], default-features = false }
-twilight-http = { version = "0.13.0", features = ["rustls-webpki-roots", "decompression"], default-features = false }
-twilight-interactions = "0.13.0"
-twilight-mention = "0.13.0"
-twilight-model = "0.13.2"
-twilight-util = { version = "0.13.1", features = ["builder", "snowflake"] }
+twilight-gateway = { rev = "d4113302", git = "https://github.com/twilight-rs/twilight", features = ["twilight-http", "rustls-webpki-roots", "zlib-stock"], default-features = false }
+twilight-http = { rev = "d4113302", git = "https://github.com/twilight-rs/twilight", features = ["rustls-webpki-roots", "decompression"], default-features = false }
+twilight-interactions = { rev = "9315604f", git = "https://github.com/baptiste0928/twilight-interactions"}
+twilight-mention = { rev = "d4113302", git = "https://github.com/twilight-rs/twilight" }
+twilight-model = { rev = "d4113302", git = "https://github.com/twilight-rs/twilight" }
+twilight-util = { rev = "d4113302", git = "https://github.com/twilight-rs/twilight", features = ["builder", "snowflake"] }
 
 # Message parsing
 any_ascii = "0.3.1"

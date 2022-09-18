@@ -9,7 +9,7 @@ use twilight_mention::{
     timestamp::{Timestamp, TimestampStyle},
     Mention,
 };
-use twilight_model::application::component::{button::ButtonStyle, ActionRow, Button, Component};
+use twilight_model::channel::message::component::{ActionRow, Button, ButtonStyle, Component};
 use twilight_util::{
     builder::{
         embed::{EmbedBuilder, EmbedFieldBuilder, EmbedFooterBuilder, ImageSource},
@@ -19,12 +19,12 @@ use twilight_util::{
 };
 
 use crate::{
-    cluster::ClusterState,
     desc_localizations, impl_command_handle,
     interaction::{
         component::PostInChat, embed::COLOR_TRANSPARENT, response::InteractionResponse,
         util::InteractionContext,
     },
+    shard::BotState,
     util::resource::avatar_url,
 };
 
@@ -48,7 +48,7 @@ impl ProfileCommand {
     async fn exec(
         self,
         ctx: InteractionContext,
-        state: &ClusterState,
+        state: &BotState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let user = self.user.resolved;
 

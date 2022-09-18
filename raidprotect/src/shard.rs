@@ -9,8 +9,12 @@ use raidprotect_model::{
     config::BotConfig,
     database::DbClient,
 };
-use tracing::{info, info_span, instrument, trace};
-use twilight_gateway::{cluster::Events, Cluster, Intents};
+use tracing::{debug, error, info, info_span, instrument, trace, warn};
+use twilight_gateway::{
+    message::CloseFrame,
+    stream::{self, ShardEventStream},
+    Config, Intents, Shard,
+};
 use twilight_http::Client as HttpClient;
 use twilight_model::{
     gateway::{
@@ -29,20 +33,18 @@ use crate::{
 
 /// Discord shards cluster.
 ///
-/// This type is a wrapper around twilight [`Cluster`] and manages incoming
+/// This type is a wrapper around twilight [`Shard`]s and manages incoming
 /// events from Discord.
 #[derive(Debug)]
-pub struct ShardCluster {
-    /// Inner shard cluster managed by twilight
-    cluster: Arc<Cluster>,
-    /// Events stream
-    events: Events,
-    /// Shared cluster state
-    state: ClusterState,
+pub struct BotShards {
+    /// Started bot shards.
+    shards: Vec<Shard>,
+    /// Shared bot state
+    state: BotState,
 }
 
-impl ShardCluster {
-    /// Initialize a new [`ShardCluster`].
+impl BotShards {
+    /// Initialize a new [`BotShards`].
     ///
     /// This method also initialize an [`HttpClient`] and a [`CacheClient`],
     /// that can be later retrieved using corresponding methods.
@@ -59,6 +61,7 @@ impl ShardCluster {
 
         info!("logged as {} with ID {}", application.name, current_user);
 
+        // Initialize database connections.
         let redis = CacheClient::connect(&config.database.redis_uri).await?;
         redis.ping().await.context("failed to connect to redis")?;
 
@@ -72,57 +75,83 @@ impl ShardCluster {
             .await
             .context("failed to connect to mongodb")?;
 
+        // Start bot shards.
         let intents = Intents::GUILDS
             | Intents::GUILD_MEMBERS
             | Intents::GUILD_MESSAGES
             | Intents::MESSAGE_CONTENT;
 
-        let (cluster, events) = Cluster::builder(config.token, intents)
-            .http_client(http.clone())
+        let config = Config::builder(config.token, intents)
             .presence(presence())
-            .build()
-            .await?;
+            .build();
+        let per_shard_config = |_| config.clone();
 
-        info!("started cluster with {} shards", cluster.shards().len());
+        info!("starting cluster ...");
 
-        let state = ClusterState::new(redis, mongodb, http, current_user);
+        let mut shards = Vec::new();
+        let mut start_stream = stream::start_recommended(&http, per_shard_config)
+            .await
+            .context("failed to fetch recommended shard configuration")?;
+
+        while let Some(shard_result) = start_stream.next().await {
+            let shard = shard_result.context("failed to start shard")?;
+            debug!("shard {} started", shard.id());
+
+            shards.push(shard);
+        }
+
+        info!("started bot with {} shards", shards.len());
+
+        let state = BotState::new(redis, mongodb, http, current_user);
 
         register_commands(&state, application.id).await;
 
-        Ok(Self {
-            cluster: Arc::new(cluster),
-            events,
-            state,
-        })
+        Ok(Self { shards, state })
     }
 
-    /// Start the cluster and handle incoming events.
+    /// Handle incoming from Discord.
     ///
-    /// A [`ShutdownSubscriber`] must be provided to gracefully stop the cluster.
+    /// A [`ShutdownSubscriber`] must be provided to gracefully stop the bot.
     #[instrument(name = "start_cluster", skip_all)]
-    pub async fn start(mut self, mut shutdown: ShutdownSubscriber) {
-        // Start the cluster
-        let cluster = self.cluster.clone();
-        tokio::spawn(async move {
-            cluster.up().await;
-        });
-
-        // Handle incoming events
+    pub async fn handle(mut self, mut shutdown: ShutdownSubscriber) {
         tokio::select! {
-            _ = self.handle_events() => {},
+            _ = self.handle_events_inner() => {},
             _ = shutdown.wait_shutdown() => {},
         };
 
-        self.cluster.down();
+        info!("shutting down shards ...");
+        for mut shard in self.shards {
+            if let Err(error) = shard.close(CloseFrame::NORMAL).await {
+                warn!(error = ?error, "failed to close shard {}", shard.id());
+            }
+        }
     }
 
-    /// Handle incoming events
-    async fn handle_events(&mut self) {
-        while let Some((_shard_id, event)) = self.events.next().await {
+    async fn handle_events_inner(&mut self) {
+        let mut stream = ShardEventStream::new(self.shards.iter_mut());
+
+        loop {
+            let (shard, event) = match stream.next().await {
+                Some((shard, Ok(event))) => (shard, event),
+                Some((shard, Err(error))) => {
+                    if error.is_fatal() {
+                        error!(?error, shard = ?shard.id(), "fatal error while receiving error, shutting down");
+
+                        break;
+                    } else {
+                        warn!(?error, shard = ?shard.id(), "error while receiving event");
+
+                        continue;
+                    }
+                }
+                None => break,
+            };
+
+            // Process event.
             let span = info_span!("handle_event");
 
             span.in_scope(|| {
-                trace!(event = ?event, "received event");
+                trace!(event = ?event, shard = ?shard.id(), "received event");
 
                 let state = self.state.clone();
                 tokio::spawn(event.process(state));
@@ -147,20 +176,20 @@ fn presence() -> UpdatePresencePayload {
     }
 }
 
-/// Current state of the cluster.
+/// Current state of the bot.
 ///
 /// This type hold shared types such as the cache or the http client. It implement
 /// [`Clone`] since all underlying types are wrapped in an [`Arc`].
 #[derive(Debug, Clone)]
-pub struct ClusterState {
+pub struct BotState {
     pub cache: CacheClient,
     pub database: DbClient,
     pub http: Arc<HttpClient>,
     pub current_user: Id<ApplicationMarker>,
 }
 
-impl ClusterState {
-    /// Initialize a new [`ClusterState`].
+impl BotState {
+    /// Initialize a new [`BotState`].
     pub fn new(
         cache: CacheClient,
         mongodb: DbClient,

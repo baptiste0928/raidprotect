@@ -5,14 +5,11 @@ use raidprotect_model::cache::model::interaction::PendingCaptcha;
 use tracing::{error, instrument};
 use twilight_http::request::AuditLogReason;
 use twilight_model::{
-    application::{
-        component::{
-            button::ButtonStyle, text_input::TextInputStyle, ActionRow, Button, Component,
-            TextInput,
-        },
-        interaction::Interaction,
+    application::interaction::Interaction,
+    channel::message::{
+        component::{ActionRow, Button, ButtonStyle, Component, TextInput, TextInputStyle},
+        MessageFlags,
     },
-    channel::message::MessageFlags,
     http::{attachment::Attachment, interaction::InteractionResponseType},
     id::{
         marker::{GuildMarker, UserMarker},
@@ -25,13 +22,13 @@ use twilight_util::builder::{
 };
 
 use crate::{
-    cluster::ClusterState,
     feature::captcha,
     interaction::{
         embed::{self, COLOR_TRANSPARENT},
         response::InteractionResponse,
         util::{CustomId, GuildConfigExt, GuildInteractionContext},
     },
+    shard::BotState,
     translations::Lang,
 };
 
@@ -45,7 +42,7 @@ impl CaptchaVerifyButton {
     #[instrument(skip(state))]
     pub async fn handle(
         interaction: Interaction,
-        state: &ClusterState,
+        state: &BotState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let ctx = GuildInteractionContext::new(interaction)?;
 
@@ -138,7 +135,7 @@ impl CaptchaVerifyButton {
 
 /// Kick user that failed to verify after 10 seconds.
 pub async fn kick_after(
-    state: &ClusterState,
+    state: &BotState,
     guild: Id<GuildMarker>,
     user: Id<UserMarker>,
     guild_lang: Lang,
@@ -173,7 +170,7 @@ impl CaptchaValidateButton {
     #[instrument(skip(state))]
     pub async fn handle(
         interaction: Interaction,
-        state: &ClusterState,
+        state: &BotState,
     ) -> Result<InteractionResponse, anyhow::Error> {
         let ctx = GuildInteractionContext::new(interaction)?;
 
@@ -218,7 +215,7 @@ pub fn captcha_key(ctx: &GuildInteractionContext) -> (Id<GuildMarker>, Id<UserMa
 /// Get the pending captcha from the cache.
 pub async fn get_captcha(
     ctx: &GuildInteractionContext,
-    state: &ClusterState,
+    state: &BotState,
 ) -> Result<Option<PendingCaptcha>, anyhow::Error> {
     state.cache.get::<PendingCaptcha>(&captcha_key(ctx)).await
 }
