@@ -190,11 +190,11 @@ impl FromStr for CustomId {
 
         match value.split_once(':') {
             Some((name, id)) => Ok(CustomId {
-                name: name.to_string(),
-                id: Some(id.to_string()),
+                name: name.to_owned(),
+                id: Some(id.to_owned()),
             }),
             None => Ok(CustomId {
-                name: value.to_string(),
+                name: value.to_owned(),
                 id: None,
             }),
         }

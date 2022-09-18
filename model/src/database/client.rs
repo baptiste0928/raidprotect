@@ -22,7 +22,7 @@ impl DbClient {
         let mut config = options::ClientOptions::parse(uri).await?;
 
         // Set default configuration options
-        config.app_name = Some(config.app_name.unwrap_or_else(|| "raidprotect".to_string()));
+        config.app_name = Some(config.app_name.unwrap_or_else(|| "raidprotect".to_owned()));
         config.connect_timeout = Some(Duration::from_secs(2));
         config.server_selection_timeout = Some(Duration::from_secs(2));
         config.compressors = Some(vec![options::Compressor::Zlib { level: None }]);

@@ -13,21 +13,21 @@ fn test_modlog_full() {
         guild_id: Id::new(1),
         user: ModlogUser {
             id: Id::new(2),
-            name: "username".to_string(),
+            name: "username".to_owned(),
             discriminator: 1234,
             avatar: Some(ImageHash::parse("1acefe340fafb4ecefae407f3abdb323".as_bytes()).unwrap()),
         },
         moderator: ModlogUser {
             id: Id::new(3),
-            name: "moderator".to_string(),
+            name: "moderator".to_owned(),
             discriminator: 4567,
             avatar: Some(
                 ImageHash::parse("a_b2a6536641da91a0b59bd66557c56c36".as_bytes()).unwrap(),
             ),
         },
         date: OffsetDateTime::from_unix_timestamp(1_628_594_197_123).unwrap(),
-        reason: Some("reason".to_string()),
-        notes: Some("notes".to_string()),
+        reason: Some("reason".to_owned()),
+        notes: Some("notes".to_owned()),
     };
 
     assert_tokens(
@@ -131,21 +131,21 @@ fn test_modlog_bson() {
         guild_id: Id::new(1),
         user: ModlogUser {
             id: Id::new(2),
-            name: "username".to_string(),
+            name: "username".to_owned(),
             discriminator: 1234,
             avatar: Some(ImageHash::parse("1acefe340fafb4ecefae407f3abdb323".as_bytes()).unwrap()),
         },
         moderator: ModlogUser {
             id: Id::new(3),
-            name: "moderator".to_string(),
+            name: "moderator".to_owned(),
             discriminator: 4567,
             avatar: Some(
                 ImageHash::parse("a_b2a6536641da91a0b59bd66557c56c36".as_bytes()).unwrap(),
             ),
         },
         date: OffsetDateTime::from_unix_timestamp(1_628_594_197_123).unwrap(),
-        reason: Some("reason".to_string()),
-        notes: Some("notes".to_string()),
+        reason: Some("reason".to_owned()),
+        notes: Some("notes".to_owned()),
     };
 
     let expected = bson::doc! {

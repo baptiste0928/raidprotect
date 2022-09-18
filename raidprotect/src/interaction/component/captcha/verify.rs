@@ -93,7 +93,7 @@ impl CaptchaVerifyButton {
         let continue_id = CustomId::name("captcha-validate");
         let mut components = vec![Component::Button(Button {
             custom_id: Some(continue_id.to_string()),
-            label: Some(ctx.lang.captcha_image_button().to_string()),
+            label: Some(ctx.lang.captcha_image_button().to_owned()),
             style: ButtonStyle::Success,
             disabled: false,
             emoji: None,
@@ -106,7 +106,7 @@ impl CaptchaVerifyButton {
             let regenerate_id = CustomId::name("captcha-verify");
             components.push(Component::Button(Button {
                 custom_id: Some(regenerate_id.to_string()),
-                label: Some(ctx.lang.captcha_image_regenerate().to_string()),
+                label: Some(ctx.lang.captcha_image_regenerate().to_owned()),
                 style: ButtonStyle::Secondary,
                 disabled: false,
                 emoji: None,
@@ -117,9 +117,9 @@ impl CaptchaVerifyButton {
         let component = Component::ActionRow(ActionRow { components });
         let attachment = Attachment {
             file: image,
-            filename: "captcha.png".to_string(),
+            filename: "captcha.png".to_owned(),
             id: 0,
-            description: Some(ctx.lang.captcha_image_alt().to_string()),
+            description: Some(ctx.lang.captcha_image_alt().to_owned()),
         };
 
         let response = InteractionResponseDataBuilder::new()
@@ -192,7 +192,7 @@ impl CaptchaValidateButton {
         let components = vec![Component::ActionRow(ActionRow {
             components: vec![Component::TextInput(TextInput {
                 custom_id: input_custom_id.to_string(),
-                label: ctx.lang.captcha_input_label().to_string(),
+                label: ctx.lang.captcha_input_label().to_owned(),
                 max_length: Some(code_length as u16),
                 min_length: Some(code_length as u16),
                 placeholder: Some("-".repeat(code_length)),
@@ -204,7 +204,7 @@ impl CaptchaValidateButton {
 
         Ok(InteractionResponse::Modal {
             custom_id: modal_custom_id.to_string(),
-            title: ctx.lang.captcha_image_title().to_string(),
+            title: ctx.lang.captcha_image_title().to_owned(),
             components,
         })
     }

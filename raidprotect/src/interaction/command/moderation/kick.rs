@@ -126,11 +126,11 @@ impl KickCommand {
         let components = vec![
             Component::ActionRow(ActionRow {
                 components: vec![Component::TextInput(TextInput {
-                    custom_id: "reason".to_string(),
-                    label: lang.modal_kick_reason_label().to_string(),
+                    custom_id: "reason".to_owned(),
+                    label: lang.modal_kick_reason_label().to_owned(),
                     max_length: Some(100),
                     min_length: None,
-                    placeholder: Some(lang.modal_reason_placeholder().to_string()),
+                    placeholder: Some(lang.modal_reason_placeholder().to_owned()),
                     required: Some(enforce_reason),
                     style: TextInputStyle::Short,
                     value: None,
@@ -138,11 +138,11 @@ impl KickCommand {
             }),
             Component::ActionRow(ActionRow {
                 components: vec![Component::TextInput(TextInput {
-                    custom_id: "notes".to_string(),
-                    label: lang.modal_notes_label().to_string(),
+                    custom_id: "notes".to_owned(),
+                    label: lang.modal_notes_label().to_owned(),
                     max_length: Some(1000),
                     min_length: None,
-                    placeholder: Some(lang.modal_notes_placeholder().to_string()),
+                    placeholder: Some(lang.modal_notes_placeholder().to_owned()),
                     required: Some(false),
                     style: TextInputStyle::Paragraph,
                     value: None,

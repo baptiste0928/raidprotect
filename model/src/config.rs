@@ -86,9 +86,9 @@ pub mod shared {
     impl Default for DatabaseConfig {
         fn default() -> Self {
             Self {
-                redis_uri: "redis://localhost:6379".to_string(),
-                mongodb_uri: "mongodb://localhost:27017".to_string(),
-                mongodb_database: "raidprotect".to_string(),
+                redis_uri: "redis://localhost:6379".to_owned(),
+                mongodb_uri: "mongodb://localhost:27017".to_owned(),
+                mongodb_database: "raidprotect".to_owned(),
             }
         }
     }

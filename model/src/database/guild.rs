@@ -46,7 +46,7 @@ pub struct GuildConfig {
 }
 
 fn default_lang() -> String {
-    "fr".to_string() // TODO: change default lang to english
+    "fr".to_owned() // TODO: change default lang to english
 }
 
 impl GuildConfig {
