@@ -61,9 +61,9 @@ impl PostInChat {
             custom_id: Some(custom_id.to_string()),
             disabled: false,
             emoji: Some(ReactionType::Unicode {
-                name: "💬".to_string(),
+                name: "💬".to_owned(),
             }),
-            label: Some(lang.post_in_chat_button().to_string()),
+            label: Some(lang.post_in_chat_button().to_owned()),
             style: ButtonStyle::Primary,
             url: None,
         });

@@ -51,7 +51,7 @@ impl HelpCommand {
                     emoji: None,
                     label: Some(ctx.lang.help_support().into()),
                     style: ButtonStyle::Link,
-                    url: Some("https://raidpro.tk/discord".to_string()),
+                    url: Some("https://raidpro.tk/discord".to_owned()),
                 }),
                 Component::Button(Button {
                     custom_id: None,
@@ -59,7 +59,7 @@ impl HelpCommand {
                     emoji: None,
                     label: Some(ctx.lang.help_bot_invite().into()),
                     style: ButtonStyle::Link,
-                    url: Some("https://raidpro.tk/invite".to_string()),
+                    url: Some("https://raidpro.tk/invite".to_owned()),
                 }),
             ],
         });

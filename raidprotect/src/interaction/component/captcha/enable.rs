@@ -257,7 +257,7 @@ pub async fn verification_message(
             custom_id: Some(custom_id.to_string()),
             disabled: false,
             emoji: None,
-            label: Some(guild_lang.captcha_verification_button().to_string()),
+            label: Some(guild_lang.captcha_verification_button().to_owned()),
             style: ButtonStyle::Success,
             url: None,
         })],

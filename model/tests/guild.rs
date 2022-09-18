@@ -49,7 +49,7 @@ fn test_guild_full() {
     let guild = GuildConfig {
         id: Id::new(1),
         logs_chan: Some(Id::new(2)),
-        lang: "en".to_string(),
+        lang: "en".to_owned(),
         moderation: ModerationConfig {
             roles: vec![Id::new(3), Id::new(4)],
             enforce_reason: true,
@@ -131,7 +131,7 @@ fn test_guild_bson() {
     let guild = GuildConfig {
         id: Id::new(1),
         logs_chan: Some(Id::new(2)),
-        lang: "en".to_string(),
+        lang: "en".to_owned(),
         moderation: ModerationConfig {
             roles: vec![Id::new(3), Id::new(4)],
             enforce_reason: true,
@@ -150,7 +150,7 @@ fn test_guild_bson() {
     let expected = bson::doc! {
         "_id": 1_i64,
         "logs_chan": 2_i64,
-        "lang": "en".to_string(),
+        "lang": "en".to_owned(),
         "moderation": {
             "roles": [3_i64, 4_i64],
             "enforce_reason": true,

@@ -15,13 +15,13 @@ pub trait TextProcessExt {
     ///
     /// ```
     /// # use raidprotect_util::text::TextProcessExt;
-    /// assert_eq!("this will be truncated".to_string().truncate(10), "this wi...".to_string());
-    /// assert_eq!("this not".to_string().truncate(10), "this not".to_string());
+    /// assert_eq!("this will be truncated".to_owned().truncate(10), "this wi...".to_owned());
+    /// assert_eq!("this not".to_owned().truncate(10), "this not".to_owned());
     /// ```
     fn max_len(&self, max: usize) -> String;
 }
 
-impl TextProcessExt for &str {
+impl TextProcessExt for str {
     fn remove_markdown(&self) -> String {
         self.chars()
             .filter_map(|c| match c {
@@ -40,11 +40,11 @@ impl TextProcessExt for &str {
         debug_assert!(max >= 3, "cannot truncate to less than 3 characters");
 
         if self.len() < max {
-            return self.to_string();
+            return self.to_owned();
         }
 
         let (start, _) = self.split_at(max - 3);
-        start.to_string() + "..."
+        start.to_owned() + "..."
     }
 }
 
@@ -64,22 +64,19 @@ mod tests {
 
     #[test]
     fn text_remove_markdown() {
-        let text = "*italics* _italics_ **bold** ~~strikethrough~~ `code` ||spoiler||".to_string();
-        let expected = "italics italics bold strikethrough code spoiler".to_string();
+        let text = "*italics* _italics_ **bold** ~~strikethrough~~ `code` ||spoiler||".to_owned();
+        let expected = "italics italics bold strikethrough code spoiler".to_owned();
 
         assert_eq!(text.remove_markdown(), expected);
     }
 
     #[test]
     fn test_truncate() {
+        assert_eq!("hello world".to_owned().max_len(9), "hello ...".to_owned());
         assert_eq!(
-            "hello world".to_string().max_len(9),
-            "hello ...".to_string()
+            "hello world".to_owned().max_len(15),
+            "hello world".to_owned()
         );
-        assert_eq!(
-            "hello world".to_string().max_len(15),
-            "hello world".to_string()
-        );
-        assert_eq!("hello world".to_string().max_len(3), "...".to_string());
+        assert_eq!("hello world".to_owned().max_len(3), "...".to_owned());
     }
 }

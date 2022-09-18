@@ -65,7 +65,7 @@ mod tests {
 
     #[test]
     fn test_not_member() {
-        not_member("test".to_string(), Lang::DEFAULT);
+        not_member("test".to_owned(), Lang::DEFAULT);
     }
 
     #[test]
