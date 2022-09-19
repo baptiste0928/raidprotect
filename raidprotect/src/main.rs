@@ -18,6 +18,7 @@ mod util;
 
 use anyhow::{Context, Result};
 use raidprotect_model::config::{parse_config, BotConfig};
+use tokio::task;
 use tracing::{debug, info};
 
 use crate::util::shutdown::{wait_shutdown, Shutdown};
@@ -35,15 +36,24 @@ async fn main() -> Result<()> {
         .context("failed to start shard cluster")?;
 
     // Start the shards and wait for the shutdown signal
-    let shards_run = tokio::spawn(shards.handle(shutdown.clone()));
+    //
+    // Since the handler is `!Send` due to twilight's internal implementation,
+    // we need to spawn the shards on the same thread as the main function.
+    let local = task::LocalSet::new();
 
-    tokio::select! {
-        _ = shards_run => (),
-        _ = wait_shutdown() => debug!("shutdown signal received")
-    };
+    local
+        .run_until(async {
+            let shards_handle = task::spawn_local(shards.handle(shutdown.subscriber()));
 
-    info!("shutting down ...");
-    shutdown.shutdown(5).await;
+            tokio::select! {
+                _ = shards_handle => (),
+                _ = wait_shutdown() => debug!("shutdown signal received")
+            };
+
+            info!("shutting down ...");
+            shutdown.shutdown(5).await;
+        })
+        .await;
 
     Ok(())
 }
