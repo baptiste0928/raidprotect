@@ -26,7 +26,7 @@ macro_rules! process_events {
     };
 }
 
-async fn process_cache_event<E: UpdateCache + Debug>(event: E, state: &ClusterState) {
+async fn process_cache_event<E: UpdateCache + Debug>(event: &E, state: &ClusterState) {
     if let Err(error) = event.update(&state.cache, state.current_user).await {
         error!(error = ?error, kind = E::NAME, "failed to update cache");
         debug!(event = ?event);
@@ -39,7 +39,7 @@ macro_rules! process_cache_events {
             #[async_trait]
             impl ProcessEvent for incoming::$event {
                 async fn process(self, state: ClusterState) {
-                    process_cache_event(self, &state).await;
+                    process_cache_event(&self, &state).await;
                 }
             }
         )+
@@ -80,7 +80,6 @@ process_cache_events! {
     GuildDelete,
     UnavailableGuild,
     GuildUpdate,
-    ChannelCreate,
     ChannelDelete,
     ChannelUpdate,
     ThreadCreate,
@@ -89,6 +88,15 @@ process_cache_events! {
     RoleCreate,
     RoleDelete,
     MemberUpdate
+}
+
+#[async_trait]
+impl ProcessEvent for incoming::ChannelCreate {
+    async fn process(self, state: ClusterState) {
+        process_cache_event(&self, &state).await;
+
+        super::captcha::channel_update(&self.0, &state).await;
+    }
 }
 
 #[async_trait]
@@ -101,7 +109,8 @@ impl ProcessEvent for incoming::InteractionCreate {
 #[async_trait]
 impl ProcessEvent for incoming::MemberAdd {
     async fn process(self, state: ClusterState) {
-        process_cache_event(self.clone(), &state).await;
+        process_cache_event(&self, &state).await;
+
         super::captcha::member_add(&self.0, &state).await;
     }
 }

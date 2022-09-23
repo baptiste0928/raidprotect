@@ -5,6 +5,8 @@
 //!
 //! - `MemberAdd`: when a member joins the server, the unverified role is added.
 
+mod channel;
 mod member_add;
 
+pub use channel::channel_update;
 pub use member_add::member_add;
