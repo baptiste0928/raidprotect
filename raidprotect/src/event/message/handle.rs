@@ -8,8 +8,8 @@ use super::{
     parser::parse_message,
 };
 use crate::{
-    cluster::ClusterState,
-    interaction::{component::captcha::verification_message, util::GuildConfigExt},
+    cluster::ClusterState, feature::captcha::verification_message,
+    interaction::util::GuildConfigExt,
 };
 
 /// Handle incoming [`Message`].

@@ -8,6 +8,6 @@ mod modal;
 mod verify;
 
 pub use disable::CaptchaDisable;
-pub use enable::{verification_message, CaptchaEnable};
+pub use enable::CaptchaEnable;
 pub use modal::CaptchaModal;
 pub use verify::{CaptchaValidateButton, CaptchaVerifyButton};

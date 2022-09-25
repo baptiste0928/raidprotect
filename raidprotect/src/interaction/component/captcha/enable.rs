@@ -4,23 +4,16 @@ use std::time::Duration;
 
 use anyhow::Context;
 use raidprotect_model::cache::discord::{CachedChannel, CachedGuild};
-use tracing::{debug, error, trace};
+use tracing::{debug, error};
 use twilight_http::request::AuditLogReason;
 use twilight_mention::Mention;
 use twilight_model::{
-    application::{
-        component::{button::ButtonStyle, ActionRow, Button, Component},
-        interaction::Interaction,
-    },
+    application::interaction::Interaction,
     channel::{
         permission_overwrite::{PermissionOverwrite, PermissionOverwriteType},
-        ChannelType, Message,
+        ChannelType,
     },
     guild::Permissions,
-    http::permission_overwrite::{
-        PermissionOverwrite as HttpPermissionOverwrite,
-        PermissionOverwriteType as HttpPermissionOverwriteType,
-    },
     id::{
         marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker},
         Id,
@@ -30,13 +23,14 @@ use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 
 use crate::{
     cluster::ClusterState,
+    feature::captcha::{update_channel_permissions, verification_message},
     interaction::{
         embed::{self, COLOR_RED, COLOR_SUCCESS},
         response::InteractionResponse,
-        util::{CustomId, GuildConfigExt, GuildInteractionContext},
+        util::{GuildConfigExt, GuildInteractionContext},
     },
     translations::Lang,
-    util::{guild_logs_channel, TextProcessExt},
+    util::guild_logs_channel,
 };
 
 /// Captcha enabling button.
@@ -237,46 +231,6 @@ impl CaptchaEnable {
     }
 }
 
-/// Send the captcha verification message in the channel.
-pub async fn verification_message(
-    channel: Id<ChannelMarker>,
-    guild: Id<GuildMarker>,
-    guild_lang: Lang,
-    guild_name: &str,
-    state: &ClusterState,
-) -> Result<Message, anyhow::Error> {
-    let embed = EmbedBuilder::new()
-        .title(guild_lang.captcha_verification_title(guild_name.max_len(30)))
-        .description(guild_lang.captcha_verification_description())
-        .color(COLOR_RED)
-        .build();
-
-    let custom_id = CustomId::name("captcha-verify");
-    let components = Component::ActionRow(ActionRow {
-        components: vec![Component::Button(Button {
-            custom_id: Some(custom_id.to_string()),
-            disabled: false,
-            emoji: None,
-            label: Some(guild_lang.captcha_verification_button().to_owned()),
-            style: ButtonStyle::Success,
-            url: None,
-        })],
-    });
-
-    let message = state
-        .cache_http(guild)
-        .create_message(channel)
-        .await?
-        .embeds(&[embed])?
-        .components(&[components])?
-        .exec()
-        .await?
-        .model()
-        .await?;
-
-    Ok(message)
-}
-
 /// Send a message in the logs channel to notify that the captcha has been
 /// enabled.
 async fn logs_message(
@@ -369,63 +323,6 @@ async fn configure_channels(
         };
 
         update_channel_permissions(state, &channel, guild, role).await?;
-    }
-
-    Ok(())
-}
-
-/// Updates a channel permissions for the unverified role.
-async fn update_channel_permissions(
-    state: &ClusterState,
-    channel: &CachedChannel,
-    guild: Id<GuildMarker>,
-    role: Id<RoleMarker>,
-) -> Result<(), anyhow::Error> {
-    trace!(channel = ?channel.id, role = ?role, guild = ?guild, "updating channel permissions for captcha");
-
-    // Get permissions for the unverified role. The permissions for everyone
-    // are also retrieved to avoid updating permissions unnecessarily for private
-    // channels.
-    let permissions = channel.permission_overwrites.clone().unwrap_or_default();
-
-    let role_permissions = permissions.iter().find(|p| p.id == role.cast());
-    let everyone_permissions = permissions.iter().find(|p| p.id == guild.cast());
-
-    // Skip updating permissions if the channel is private.
-    if everyone_permissions
-        .map(|p| p.deny)
-        .unwrap_or(Permissions::empty())
-        .contains(Permissions::VIEW_CHANNEL)
-    {
-        return Ok(());
-    }
-
-    // Skip updating permissions if the role is already denied to view the channel.
-    // This will be the case if the channel is a text channel that inherits from
-    // a category channel (that should have been updated first).
-    if role_permissions
-        .map(|p| p.deny)
-        .unwrap_or(Permissions::empty())
-        .contains(Permissions::VIEW_CHANNEL)
-    {
-        return Ok(());
-    }
-
-    // Update the permissions for the unverified role.
-    let permission_overwrite = HttpPermissionOverwrite {
-        id: role.cast(),
-        kind: HttpPermissionOverwriteType::Role,
-        allow: None,
-        deny: Some(Permissions::VIEW_CHANNEL),
-    };
-
-    if let Err(error) = state
-        .http
-        .update_channel_permission(channel.id, &permission_overwrite)
-        .exec()
-        .await
-    {
-        error!(error = ?error, "failed to update channel permissions for unverified role");
     }
 
     Ok(())
