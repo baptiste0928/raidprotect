@@ -14,7 +14,6 @@ notice = "warn"
 
 ignore = [
     "RUSTSEC-2020-0071",  # `mongodb` crate not affected by this vulnerability
-    "RUSTSEC-2021-0127",  # `serde_cbor` is a dev-dependency (from criterion)
 ]
 
 [licenses]

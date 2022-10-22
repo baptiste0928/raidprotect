@@ -8,36 +8,36 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = { version = "1.0.64", features = ["backtrace"] }
-async-trait = "0.1.57"
-mongodb = { version = "2.3.0", features = ["zlib-compression"] }
-tracing = "0.1.36"
+anyhow = { version = "1.0.66", features = ["backtrace"] }
+async-trait = "0.1.58"
+mongodb = { version = "2.3.1", features = ["zlib-compression"] }
+tracing = "0.1.37"
 
 # Models
-serde = { version = "1.0.144", features = ["derive"] }
+serde = { version = "1.0.147", features = ["derive"] }
 serde_with = "1.14.0"
-time = "0.3.14"
+time = "0.3.15"
 url = { version = "2.3.1", features = ["serde"] }
 
 # Redis (client + serialization)
 bb8 = "0.8.0"
-bb8-redis = "0.11.0"
-redis = { version = "0.21.6", features = ["tokio-comp"], default-features = false }
-rmp-serde = "1.1.0"
+bb8-redis = "0.12.0"
+redis = { version = "0.22.1", features = ["tokio-comp"], default-features = false }
+rmp-serde = "1.1.1"
 
 # Twilight
-twilight-http = { version = "0.13.0", features = ["rustls-webpki-roots", "decompression"], default-features = false }
-twilight-model = "0.13.2"
-twilight-util = { version = "0.13.1", features = ["permission-calculator"] }
+twilight-http = { version = "0.13.2", features = ["rustls-webpki-roots", "decompression"], default-features = false }
+twilight-model = "0.13.5"
+twilight-util = { version = "0.13.3", features = ["permission-calculator"] }
 twilight-validate = "0.13.1"
 
 # Configuration
 dotenv = "0.15.0"
 envy = "0.4.2"
 tracing-appender = "0.2.2"
-tracing-subscriber = { version = "0.3.15", features = ["std", "fmt", "ansi"], default-features = false }
+tracing-subscriber = { version = "0.3.16", features = ["std", "fmt", "ansi"], default-features = false }
 
 
 [dev-dependencies]
-serde_test = "1.0.144"
+serde_test = "1.0.147"
 pretty_assertions = "1.3.0"
