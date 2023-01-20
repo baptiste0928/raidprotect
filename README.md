@@ -1,3 +1,13 @@
+> **Note**  
+> As of 01/14/2023, **RaidProtect has been acquired by S*l*ash FR**. The
+> project remains alive, but the new development team decided to drop this
+> rewrite and keep the bot closed-source. This repository is now archived and
+> will not receive any further updates. **The license of this repository has
+> been changed to [MIT](LICENSE)** so you can use any part of this code for
+> your own projects without strict restrictions.
+
+-----
+
 <div align="center">
   <img src="https://user-images.githubusercontent.com/22115890/163787243-92a7bea2-2dee-44a9-aa31-67464f9f2493.png" alt="RaidProtect" width="390" height="50">
   <br /><br />
@@ -40,9 +50,9 @@ libraries. It offers many features, including:
 
 - **Real-time moderation** such as anti-spam to prevent malicious users from
   harming your community by punishing them immediately without human intervention.
-- **Protection against automated accounts** with active features like a captcha 
+- **Protection against automated accounts** with active features like a captcha
   to verify each user that join your server.
-- **Powerful moderation tools** to allow your moderators to manage punishments 
+- **Powerful moderation tools** to allow your moderators to manage punishments
   easily and keep track of each member.
 
 RaidProtect is trusted by thousands of servers around the world. To add it to
@@ -133,34 +143,7 @@ to do them. Don't forget to read the contribution guidelines first.
 **[➡️ Contribution guidelines](CONTRIBUTING.md)**
 
 ## License
-RaidProtect is licensed under the [GNU AGPL](LICENSE) license. This is a copyleft
-license, which gives you the right to use, modify and redistribute RaidProtect
-under the following conditions:
-
-- The source code of any modified version of the bot (*fork*) **MUST** be easily
-  published under the GNU AGPL license.
-- Any bot including all of a part of the RaidProtect source code **MUST** 
-  clearly state that it is derivated from RaidProtect.
-
-The conditions below are a summary and have no legal value. The full license is
-available in the [LICENSE](LICENSE) file.
-
-> RaidProtect
-> Copyright (C) 2022  RaidProtect Contributors
->
-> This program is free software: you can redistribute it and/or modify
-> it under the terms of the GNU Affero General Public License as published
-> by the Free Software Foundation, either version 3 of the License, or
-> (at your option) any later version.
->
-> This program is distributed in the hope that it will be useful,
-> but WITHOUT ANY WARRANTY; without even the implied warranty of
-> MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> GNU Affero General Public License for more details.
->
-> You should have received a copy of the GNU Affero General Public License
-> along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+RaidProtect is licensed under the [MIT](LICENSE) license.
 ### RaidProtect trademark and logo
 The use of the RaidProtect name and logo is allowed only for referring to this
 project. This must not imply any official involvement without prior permission.
